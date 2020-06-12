@@ -1,7 +1,7 @@
 --Thanks Puntherline for the whitelist portion of this code. 
 Config = {}
-Config.Whitelist = false                    --want to use whitelist?
-Config.Users = {                            --any identifier will work but I recommend license
+Config.Whitelist = false                    --Want to use whitelist?
+Config.Users = {                            --Any identifier will work but I recommend license
 }
 
 AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
@@ -12,7 +12,7 @@ AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
   local allowed = false
   local newInfo = ""
   local oldInfo = ""
-  --prevent connection right away
+  --Prevent connection right away
   deferrals.defer()
   deferrals.update(string.format('Hello %s please wait while your license ID is checked', name))
   
