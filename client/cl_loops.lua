@@ -18,7 +18,7 @@ Citizen.CreateThread(function()
     end
 end)
 
-CreateThread(function()
+--[[CreateThread(function()
     while true do 
         Wait(0)
         SetAmbientVehicleRangeMultiplierThisFrame(0.0)
@@ -27,4 +27,4 @@ CreateThread(function()
         SetVehicleDensityMultiplierThisFrame(0.0)
         SetPedDensityMultiplierThisFrame(0.0)
     end
-end)
+end)]]
