@@ -5,16 +5,47 @@
 local webhook = ''
 --Contact link
 local contactlink = ''
---Kick and error logging function
-function ValkyrieLog(color, name, message, footer)
+--Error Logging
+function ValkyrieError(message)
   local source = source
   local embed = {
     {
-      ['color'] = color,
-      ['title'] = name,
+      ['color'] = 15007744,
+      ['title'] = 'Valkyrie Error',
       ['description'] = message,
       ['footer'] = {
-        ['text'] = footer,
+        ['text'] = 'Valkyrie Anticheat',
+      },
+    }
+  }
+  PerformHttpRequest(webhook, function(err, text, headers) end, 'POST', json.encode({username = name, embeds = embed}), { ['Content-Type'] = 'application/json' })
+end
+--Identifiers
+function ValkyrieIdentifiers(player)
+  for k, v in ipairs(GetPlayerIdentifiers(player)) do
+    if string.sub(v, 1, string.len('license:')) == 'license:' then
+      license = v
+    elseif string.sub(v, 1, string.len('discord:')) == 'discord:' then
+      discord = v
+    elseif discord == nil or discord == '' then
+      discord = 'Discord identifier not found.'
+    elseif string.sub(v, 1, string.len('steam:')) == 'steam:' then
+      steam = v
+    elseif steam == nil or steam == '' then
+      steam = 'Steam identifier not found.'
+    end
+  end
+end
+--Kick logging
+function ValkyrieLog(message)
+  local source = source
+  local embed = {
+    {
+      ['color'] = 1,
+      ['title'] = 'Valkyrie',
+      ['description'] = message,
+      ['footer'] = {
+        ['text'] = 'Valkyrie Anticheat',
       },
     }
   }
@@ -22,13 +53,13 @@ function ValkyrieLog(color, name, message, footer)
 end
 --Kicking function
 function ValkyrieKickPlayer(player, reason)
-  if player == nil or player == '' then
+  if player == nil then
     return
-    ValkyrieLog(1, 'Valkyrie Error', 'No source was set for kicking function this is a fatal error, players will not be kicked!', 'Valkyrie Anticheat')
+    ValkyrieError('No source was set for kicking function this is a fatal error, players will not be kicked!')
   end
   if reason == nil or reason == '' then
     return
-    ValkyrieLog(1, 'Valkyrie Error', 'No reason was set for kicking function this is a fatal error, players will not be kicked!', 'Valkyrie Anticheat')
+    ValkyrieError('No reason was set for kicking function this is a fatal error, players will not be kicked!')
   end
   DropPlayer(player, 'Kicked \n You have been kicked for the following reason: ' ..reason..'. \n If you think this was a mistake contact us at ' ..contactlink.. '.')
 end
@@ -38,92 +69,81 @@ AddEventHandler('Valkyrie:ClientDetection', function(reason)
   local player = source
   ValkyrieKickPlayer(player, reason)
 end)
---List of blacklisted models vehicles, peds, and props.
-local BlacklistedModels = { 
-    [`TUG`] = true,
-    [`BUFFALO`] = true,
-    [`Nero`] = true,
-    [`Deluxo`] = true,
-    [`Raiden`] = true,
-    [`Bati2`] = true,
-    [`SultanRS`] = true,
-    [`TA21`] = true,
-    [`Lynx`] = true,
-    [`ZR380`] = true,
-    [`Streiter`] = true,
-    [`Neon`] = true,
-    [`Italigto`] = true,
-    [`Nero2`] = true,
-    [`Fmj`] = true,
-    [`le7b`] = true,
-    [`prototipo`] = true,
-    [`cyclone`] = true,
-    [`khanjali`] = true,
-    [`STROMBERG`] = true,
-    [`BARRAGE`] = true,
-    [`COMET5`] = true,
+--Blacklisted models vehicles, peds, and props can go here. This list WILL not kick players if they spawn them.
+local BlacklistedModels = {
+  [`TUG`] = true,
+  [`Deluxo`] = true,
+  [`ZR380`] = true,
+  [`khanjali`] = true,
+  [`STROMBERG`] = true,
+  [`BARRAGE`] = true,
+  [`TA21`] = true
+}
+--Banned models vehicles, peds, and props can go here. This list WILL kick players if they spawm them.
+local BannedModels = { 
+  [`TA21`] = true, --not sure what the hell this vehicle is
+  [`Cargoplane`] = true,
+  [`Avenger`] = true,
+  [`Blimp2`] = true, 
+  --[[
+    Most of the peds used in "main stream" mod menus.
+  ]]
+  [`a_c_chop`] = true,
+  [`ig_wade`] = true,
+  [`mp_m_niko_01`] = true,
+  [`s_m_m_security_01`] = true,
+  [`s_m_y_swat_01`] = true,
+  [`s_m_y_robber_01`] = true,
+  [`u_m_y_zombie_01`] = true,
 
-    [`Cargoplane`] = true,
-    [`Avenger`] = true,
-    [`Luxor`] = true,
-    [`Maverick`] = true,
-    [`Blimp2`] = true, 
-    --[[
-      Most of the peds used in "main stream" mod menus.
-    ]]
-    --abcdefghijklmnopqrstuvwxyz
-    [`a_c_chop`] = true,
-    [`a_m_o_acult_01`] = true,
-    [`ig_wade`] = true,
-    [`mp_m_niko_01`] = true,
-    [`s_m_m_security_01`] = true,
-    [`s_m_y_swat_01`] = true,
-    [`a_m_m_fatlatin_01`] = true,
-    [`mp_f_freemode_01`] = true,
-    [`mp_f_cocaine_01`] = true,
-    [`s_m_y_prisoner_01`] = true,
-    [`s_m_y_robber_01`] = true,
-    --[[
-      Most of the props used in "main stream" mod menus.
-    ]]
-    [`a_m_o_acult_01`] = true,
-    [`stt_prop_stunt_track_dwslope30`] = true,
-    [`s_m_y_swat_01`] = true,
-    [`s_m_y_hwaycop_01`] = true,
-    [`p_spinning_anus_s`] = true,
-    [`prop_windmill_01`] = true,
-    [`xs_prop_chips_tube_wl`] = true,
-    [`xs_prop_plastic_bottle_wl`] = true,
-    [`prop_weed_01`] = true,
-    [`prop_fnclink_05crnr1`] = true
+  --[[
+    Most of the props used in "mainstream" mod menus. Along with some additional ones.
+  ]]
+  [`stt_prop_stunt_track_dwslope30`] = true,
+  [`stt_prop_ramp_spiral_xxl`] = true,
+  [`stt_prop_ramp_adj_flip_mb`] = true,
+  [`stt_prop_ramp_adj_flip_s`] = true,
+  [`stt_prop_ramp_adj_flip_sb`] = true,
+  [`stt_prop_ramp_adj_hloop`] = true,
+  [`stt_prop_ramp_adj_loop`] = true,
+  [`stt_prop_ramp_jump_l`] = true,
+  [`stt_prop_ramp_jump_m`] = true,
+  [`stt_prop_ramp_jump_s`] = true,
+  [`stt_prop_ramp_jump_xl`] = true,
+  [`stt_prop_ramp_jump_xs`] = true,
+  [`stt_prop_ramp_jump_xxl`] = true,
+  [`stt_prop_ramp_multi_loop_rb`] = true,
+  [`stt_prop_ramp_spiral_l`] = true,
+  [`stt_prop_ramp_spiral_l_m`] = true,
+  [`stt_prop_ramp_spiral_l_s`] = true,
+  [`stt_prop_ramp_spiral_l_xxl`] = true,
+  [`stt_prop_ramp_spiral_m`] = true,
+  [`stt_prop_ramp_spiral_s`] = true,
+  [`stt_prop_ramp_spiral_xxl`] = true,
+  [`xs_prop_hamburgher_wl`] = true,
+  [`p_spinning_anus_s`] = true,
+  [`prop_windmill_01`] = true,
+  [`xs_prop_chips_tube_wl`] = true,
+  [`xs_prop_plastic_bottle_wl`] = true,
+  [`prop_weed_01`] = true,
+  [`prop_fnclink_05crnr1`] = true,
+  [`sr_prop_spec_tube_xxs_01a `] = true
 }
 --[[
-  Handler for checking then deleting blacklisted models.
-  No logging or kicking yet a lot of these models are spawned naturally, 
-  causing false positives to mitigate this you could set ped, parked vehicle, 
-  and random vehicle density to zero.  
+  Handler for checking then deleting blacklisted/banned models.
 ]]
 AddEventHandler('entityCreating', function(entity)
   if BlacklistedModels[GetEntityModel(entity)] then
+    CancelEvent()
+  end
+  if BannedModels[GetEntityModel(entity)] then
     local entityOwner = NetworkGetEntityOwner(entity)
     if entityOwner == nil or entityOwner == '' then
       return 
     end
-    for k, v in ipairs(GetPlayerIdentifiers(entityOwner)) do
-      if string.sub(v, 1, string.len('license:')) == 'license:' then
-        license = v
-      elseif string.sub(v, 1, string.len('discord:')) == 'discord:' then
-        discord = v
-      elseif discord == nil or discord == '' then
-        discord = 'Discord identifier not found.'
-      elseif string.sub(v, 1, string.len('steam:')) == 'steam:' then
-        steam = v
-      elseif steam == nil or steam == '' then
-        steam = 'Steam identifier not found.'
-      end
-    end
-    ValkyrieLog(1, 'Valkyrie', '**Player:** ' ..GetPlayerName(entityOwner).. '\n**' ..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**\n Was kicked for spawning a blacklisted object.', 'Valkyrie Anticheat')
-    ValkyrieKickPlayer(entityOwner, 'Blacklisted Model')
+    ValkyrieIdentifiers(entityOwner)
+    ValkyrieLog('**Player:** ' ..GetPlayerName(entityOwner).. '\n**' ..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**\n Was kicked for spawning a blacklisted object.')
+    ValkyrieKickPlayer(entityOwner, 'Banned Model')
     CancelEvent()
   end
 end)
@@ -359,22 +379,23 @@ local _blockedServerEvents  = {
 for k, eventName in ipairs(_blockedServerEvents) do
   RegisterNetEvent(eventName)
   AddEventHandler(eventName, function()
-    local _source= source
-    local name = GetPlayerName(_source)
-    for k, v in ipairs(GetPlayerIdentifiers(_source)) do
-      if string.sub(v, 1, string.len('license:')) == 'license:' then
-        license = v
-      elseif string.sub(v, 1, string.len('discord:')) == 'discord:' then
-        discord = v
-      elseif discord == nil or discord == '' then
-        discord = 'Discord identifier not found.'
-      elseif string.sub(v, 1, string.len('steam:')) == 'steam:' then
-        steam = v
-      elseif steam == nil or steam == '' then
-        steam = 'Steam identifier not found.'
-      end
-    end
-    --ValkyrieLog(1, 'Valkyrie', '**Player:** ' ..GetPlayerName(_source).. '\n**' ..license.. '**\n**' ..discord.. '** \n Was kicked from the server for triggering a blocked server event', 'Valkyrie Anitcheat')
+    local _source = source
+    ValkyrieIdentifiers(_source)
+    ValkyrieLog('**Player:** ' ..GetPlayerName(_source).. '\n**' ..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**\n Was kicked from the server for triggering a blocked server event')
     --ValkyrieKickPlayer(_source, 'Blocked Event ' ..eventName.. '')
   end)
 end
+
+local _blockedExplosion = { 1, 2, 4, 5, 25, 32, 33, 35, 36, 37, 38 }
+AddEventHandler('explosionEvent', function(sender, ev)
+  for _, v in ipairs(_blockedExplosion) do
+    if ev.damageScale <= 0 or ev.isInvisible == true or ev.isAudible == false then
+      return
+    end
+    if ev.explosionType == v and ev.damageScale >= 1 then
+      ValkyrieIdentifiers(sender)
+      ValkyrieLog('**Player:** ' ..GetPlayerName(sender).. '\n**' ..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**\n Created a blacklisted explosion and has been kicked.')
+      ValkyrieKickPlayer(sender, 'That\'s explosive 😮')
+    end
+  end
+end)
