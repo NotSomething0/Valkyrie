@@ -382,7 +382,7 @@ for k, eventName in ipairs(_blockedServerEvents) do
     local _source = source
     ValkyrieIdentifiers(_source)
     ValkyrieLog('**Player:** ' ..GetPlayerName(_source).. '\n**' ..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**\n Was kicked from the server for triggering a blocked server event')
-    --ValkyrieKickPlayer(_source, 'Blocked Event ' ..eventName.. '')
+    ValkyrieKickPlayer(_source, 'Blocked Event ' ..eventName.. '')
   end)
 end
 
