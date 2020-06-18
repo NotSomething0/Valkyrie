@@ -1,137 +1,78 @@
 --[[
     Valkyrie Anticheat
 ]] 
---Discord webhook
-local webhook = ''
---Contact link
-local contactlink = ''
---Error Logging
-function ValkyrieError(message)
-  local source = source
-  local embed = {
-    {
-      ['color'] = 15007744,
-      ['title'] = 'Valkyrie Error',
-      ['description'] = message,
-      ['footer'] = {
-        ['text'] = 'Valkyrie Anticheat',
-      },
-    }
-  }
-  PerformHttpRequest(webhook, function(err, text, headers) end, 'POST', json.encode({username = name, embeds = embed}), { ['Content-Type'] = 'application/json' })
-end
---Identifiers
-function ValkyrieIdentifiers(player)
-  for k, v in ipairs(GetPlayerIdentifiers(player)) do
-    if string.sub(v, 1, string.len('license:')) == 'license:' then
-      license = v
-    elseif string.sub(v, 1, string.len('discord:')) == 'discord:' then
-      discord = v
-    elseif discord == nil or discord == '' then
-      discord = 'Discord identifier not found.'
-    elseif string.sub(v, 1, string.len('steam:')) == 'steam:' then
-      steam = v
-    elseif steam == nil or steam == '' then
-      steam = 'Steam identifier not found.'
-    end
-  end
-end
---Kick logging
-function ValkyrieLog(message)
-  local source = source
-  local embed = {
-    {
-      ['color'] = 1,
-      ['title'] = 'Valkyrie',
-      ['description'] = message,
-      ['footer'] = {
-        ['text'] = 'Valkyrie Anticheat',
-      },
-    }
-  }
-  PerformHttpRequest(webhook, function(err, text, headers) end, 'POST', json.encode({username = name, embeds = embed}), { ['Content-Type'] = 'application/json' })
-end
---Kicking function
-function ValkyrieKickPlayer(player, reason)
-  if player == nil then
-    return
-    ValkyrieError('No source was set for kicking function this is a fatal error, players will not be kicked!')
-  end
-  if reason == nil or reason == '' then
-    return
-    ValkyrieError('No reason was set for kicking function this is a fatal error, players will not be kicked!')
-  end
-  DropPlayer(player, 'Kicked \n You have been kicked for the following reason: ' ..reason..'. \n If you think this was a mistake contact us at ' ..contactlink.. '.')
-end
 --Main "kicking handler" for the client.
 RegisterNetEvent('Valkyrie:ClientDetection')
-AddEventHandler('Valkyrie:ClientDetection', function(reason)
-  local player = source
-  ValkyrieKickPlayer(player, reason)
+AddEventHandler('Valkyrie:ClientDetection', function(user, log, reason)
+  local _source = source
+  ValkyrieIdentifiers(_source)
+  ValkyrieLog('**Player:** ' ..user.. '\n**' ..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**\n' ..log.. '')
+  ValkyrieKickPlayer(_source, reason)
 end)
 --Blacklisted models vehicles, peds, and props can go here. This list WILL not kick players if they spawn them.
 local BlacklistedModels = {
-  [`TUG`] = true,
-  [`Deluxo`] = true,
-  [`ZR380`] = true,
-  [`khanjali`] = true,
-  [`STROMBERG`] = true,
-  [`BARRAGE`] = true,
-  [`TA21`] = true
+  [`TUG`] = 'TUG',
+  [`Deluxo`] = 'Deluxo',
+  [`ZR380`] = 'ZR380',
+  [`khanjali`] = 'khanjali',
+  [`STROMBERG`] = 'STROMBERG',
+  [`BARRAGE`] = 'BARRAGE',
+  [`TA21`] = 'TA21',
+  [`s_m_m_security_01`] = 's_m_m_security_01',
+  [`a_m_o_acult_01`] = 's_m_m_security_01',
+  [`s_m_y_swat_01`] = 's_m_m_security_01'
 }
 --Banned models vehicles, peds, and props can go here. This list WILL kick players if they spawm them.
 local BannedModels = { 
-  [`TA21`] = true, --not sure what the hell this vehicle is
-  [`Cargoplane`] = true,
-  [`Avenger`] = true,
-  [`Blimp2`] = true, 
+  [`Cargoplane`] = 'Cargoplane',
+  [`Avenger`] = 'Avenger',
+  [`Blimp2`] = 'Blimp2', 
   --[[
     Most of the peds used in "main stream" mod menus.
   ]]
-  [`a_c_chop`] = true,
-  [`ig_wade`] = true,
-  [`mp_m_niko_01`] = true,
-  [`s_m_m_security_01`] = true,
-  [`s_m_y_swat_01`] = true,
-  [`s_m_y_robber_01`] = true,
-  [`u_m_y_zombie_01`] = true,
-
+  [`a_c_chop`] = 'a_c_chop',
+  [`ig_wade`] = 'ig_wade',
+  [`mp_m_niko_01`] = 'mp_m_niko_01',
+  [`s_m_y_robber_01`] = 's_m_y_robber_01',
+  [`u_m_y_zombie_01`] = 'u_m_y_zombie_01',
   --[[
     Most of the props used in "mainstream" mod menus. Along with some additional ones.
   ]]
-  [`stt_prop_stunt_track_dwslope30`] = true,
-  [`stt_prop_ramp_spiral_xxl`] = true,
-  [`stt_prop_ramp_adj_flip_mb`] = true,
-  [`stt_prop_ramp_adj_flip_s`] = true,
-  [`stt_prop_ramp_adj_flip_sb`] = true,
-  [`stt_prop_ramp_adj_hloop`] = true,
-  [`stt_prop_ramp_adj_loop`] = true,
-  [`stt_prop_ramp_jump_l`] = true,
-  [`stt_prop_ramp_jump_m`] = true,
-  [`stt_prop_ramp_jump_s`] = true,
-  [`stt_prop_ramp_jump_xl`] = true,
-  [`stt_prop_ramp_jump_xs`] = true,
-  [`stt_prop_ramp_jump_xxl`] = true,
-  [`stt_prop_ramp_multi_loop_rb`] = true,
-  [`stt_prop_ramp_spiral_l`] = true,
-  [`stt_prop_ramp_spiral_l_m`] = true,
-  [`stt_prop_ramp_spiral_l_s`] = true,
-  [`stt_prop_ramp_spiral_l_xxl`] = true,
-  [`stt_prop_ramp_spiral_m`] = true,
-  [`stt_prop_ramp_spiral_s`] = true,
-  [`stt_prop_ramp_spiral_xxl`] = true,
-  [`xs_prop_hamburgher_wl`] = true,
-  [`p_spinning_anus_s`] = true,
-  [`prop_windmill_01`] = true,
-  [`xs_prop_chips_tube_wl`] = true,
-  [`xs_prop_plastic_bottle_wl`] = true,
-  [`prop_weed_01`] = true,
-  [`prop_fnclink_05crnr1`] = true,
-  [`sr_prop_spec_tube_xxs_01a `] = true
+  [`stt_prop_stunt_track_dwslope30`] = 'stt_prop_stunt_track_dwslope30',
+  [`stt_prop_ramp_spiral_xxl`] = 'stt_prop_ramp_spiral_xxl',
+  [`stt_prop_ramp_adj_flip_mb`] = 'stt_prop_ramp_adj_flip_mb',
+  [`stt_prop_ramp_adj_flip_s`] = 'stt_prop_ramp_adj_flip_s',
+  [`stt_prop_ramp_adj_flip_sb`] = 'stt_prop_ramp_adj_flip_sb',
+  [`stt_prop_ramp_adj_hloop`] = 'stt_prop_ramp_adj_hloop',
+  [`stt_prop_ramp_adj_loop`] = 'stt_prop_ramp_adj_loop',
+  [`stt_prop_ramp_jump_l`] = 'stt_prop_ramp_jump_l',
+  [`stt_prop_ramp_jump_m`] = 'stt_prop_ramp_jump_m',
+  [`stt_prop_ramp_jump_s`] = 'stt_prop_ramp_jump_s',
+  [`stt_prop_ramp_jump_xl`] = 'stt_prop_ramp_jump_xl',
+  [`stt_prop_ramp_jump_xs`] = 'stt_prop_ramp_jump_xs',
+  [`stt_prop_ramp_jump_xxl`] = 'stt_prop_ramp_jump_xxl',
+  [`stt_prop_ramp_multi_loop_rb`] = 'stt_prop_ramp_multi_loop_rb24',
+  [`stt_prop_ramp_spiral_l`] = 'stt_prop_ramp_spiral_l',
+  [`stt_prop_ramp_spiral_l_m`] = 'stt_prop_ramp_spiral_l_m',
+  [`stt_prop_ramp_spiral_l_s`] = 'stt_prop_ramp_spiral_l_s',
+  [`stt_prop_ramp_spiral_l_xxl`] = 'stt_prop_ramp_spiral_l_xxl',
+  [`stt_prop_ramp_spiral_m`] = 'stt_prop_ramp_spiral_m',
+  [`stt_prop_ramp_spiral_s`] = 'stt_prop_ramp_spiral_s',
+  [`stt_prop_ramp_spiral_xxl`] = 'stt_prop_ramp_spiral_xxl',
+  [`xs_prop_hamburgher_wl`] = 'xs_prop_hamburgher_wl',
+  [`p_spinning_anus_s`] = 'p_spinning_anus_s',
+  [`prop_windmill_01`] = 'prop_windmill_01',
+  [`xs_prop_chips_tube_wl`] = 'xs_prop_chips_tube_wl',
+  [`xs_prop_plastic_bottle_wl`] = 'xs_prop_plastic_bottle_wl',
+  [`prop_weed_01`] = 'prop_weed_01',
+  [`prop_fnclink_05crnr1`] = 'prop_fnclink_05crnr1',
+  [`sr_prop_spec_tube_xxs_01a `] = 'sr_prop_spec_tube_xxs_01a',
+  [`prop_cs_dildo_01`] = 'prop_cs_dildo_01',
+  [`prop_ld_bomb_anim`] = 'prop_ld_bomb_anim',
+  [`prop_gas_tank_01a`] = 'prop_gas_tank_01a',
+  [`prop_gascyl_01a`] = 'prop_gascyl_01a'
 }
---[[
-  Handler for checking then deleting blacklisted/banned models.
-]]
+--Handler for checking then deleting blacklisted/banned models.
 AddEventHandler('entityCreating', function(entity)
   if BlacklistedModels[GetEntityModel(entity)] then
     CancelEvent()
@@ -381,11 +322,12 @@ for k, eventName in ipairs(_blockedServerEvents) do
   AddEventHandler(eventName, function()
     local _source = source
     ValkyrieIdentifiers(_source)
-    ValkyrieLog('**Player:** ' ..GetPlayerName(_source).. '\n**' ..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**\n Was kicked from the server for triggering a blocked server event')
-    ValkyrieKickPlayer(_source, 'Blocked Event ' ..eventName.. '')
+    ValkyrieLog('**Player:** ' ..GetPlayerName(_source).. '\n**' ..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**\n Was kicked from the server for triggering a blocked server event ' ..eventName.. '')
+    Wait(1)
+    ValkyrieKickPlayer(_source, 'Blocked Event: ' ..eventName.. '')
   end)
 end
-
+--List of blocked explosions
 local _blockedExplosion = { 1, 2, 4, 5, 25, 32, 33, 35, 36, 37, 38 }
 AddEventHandler('explosionEvent', function(sender, ev)
   for _, v in ipairs(_blockedExplosion) do
@@ -396,6 +338,106 @@ AddEventHandler('explosionEvent', function(sender, ev)
       ValkyrieIdentifiers(sender)
       ValkyrieLog('**Player:** ' ..GetPlayerName(sender).. '\n**' ..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**\n Created a blacklisted explosion and has been kicked.')
       ValkyrieKickPlayer(sender, 'That\'s explosive 😮')
+    end
+  end
+end)
+--List of blocked chat messages
+local _blockedMessages = {
+  "https://discord.gg/u9CxU33",
+  "^1Bombay ^4made by Sid ^5Official Discord: https://discord.gg/u9CxU33?",
+  "^1Bombay ^4made by Sid ^5Official Discord: https://discord.gg/u9CxU33? ~ https://discord.gg/u9CxU33",
+  "/ooc ^1Bombay Menu get at https://discord.gg/u9CxU33",
+  "Bombay Menu ;) https://discord.gg/u9CxU33",
+  "xaxaxaxaxaxaxaxaxax",
+  "~b~Brutan#7799",
+  "You just got fucked mate",
+  "Brutan Premium",
+  "^3 Brutan Premium BRUTAN ON YOUTUBE",
+  "d0pamine | Nertigel#5391",
+  "lynxmenu - Hello guys!",
+  "lynxmenu - Cheats & AntiCheats!",
+  "~b~https://discord.gg/pQwzbdf",
+  "You just got fucked mate",
+  "Luminous ~b~https://discord.gg/pQwzbdf",
+  "3You just got fucked by Luminous ^2Made by Plane#0007 ^1Purchase at ^4https://discord.gg/pQwzbdf",
+  "/ooc Add me Fallen#0811",
+  "Add me Fallen#0811",
+  "Yo add me Fallen#0811",
+  "/ooc Yo add me Fallen#0811 >:D Player Crash Attempt",
+  "Yo add me Fallen#0811 >:D Player Crash Attempt",
+  "Damm u smart",
+  " ^8Ham Mafia.co - ^1nig #0001 ^0 - ^0JOIN ^5DISCORD.GG/uMxGf4B1 ^0TO BUY NIGMENU v1 AND THE ^2BEST ^0LUA Executor",
+  " d0pamine.xyz | discord.gg/fjBp55t",
+  "\76\121\110\120\32\56\32\126\32\119\119\119\46\108\121\110\120\109\101\110\117\46\99\111\109",
+  "\89\111\117\32\103\111\116\32\114\97\112\101\100\32\98\121\32\76\121\110\120\32\56",
+  "Add me Baby Gangster#9026 , Dont Fake me",
+  "/ooc Yo add me Baby Gangster#9026 , sup",
+  "Yo add me Baby Gangster#9026",
+  "/tweet Yo add me Baby Gangster#9026",
+  "\76\121\110\120\32\56\32\126\32\119\119\119\46\108\121\110\120\109\101\110\117\46\99\111\109",
+  "/ooc Yo add me ! Baby Gangster#9026 >:D Player Crash Attempt",
+  "nigger",
+  "nigga",
+  "nig",
+  "Desudo",
+  "Brutan",
+  "EulenCheats",
+  "Lynx 8",
+  "www.lynxmenu.com",
+  "HamHaxia",
+  "Ham Mafia",
+  "www.renalua.com",
+  "Fallen#0811",
+  "Rena",
+  "HamHaxia", 
+  "Ham Mafia", 
+  "Xanax#0134", 
+  ">:D Player Crash",  
+  "34ByTe Community", 
+  "lynxmenu.com", 
+  "Anti-Lynx",
+  "Baran#8992",
+  "iLostName#7138",
+  "85.190.90.118",
+  "Melon#1379",
+  "hammafia.com",
+  "AlphaV ~ 5391",
+  "vjuton.pl",
+  "Soviet Bear",
+  "MARVIN menu",
+  "KoGuSzEk#3251",
+  "BAGGY menu <3 https://discord.gg/AGxGDzg",
+  "KoGuSzMENU <3 https://discord.gg/BbDMhJe",
+  "Desudo menu <3 https://discord.gg/hkZgrv3",
+  "Lynx 8 ~ www.lynxmenu.com",
+  "Lynx 7 ~ www.lynxmenu.com",
+  "lynxmenu.com",
+  "www.lynxmenu.com",
+  "You got raped by Lynx 8",
+  "^0Lynx 8 ~ www.lynxmenu.com",
+  "^0AlphaV ~ 5391",
+  "^0You got raped by AlphaV",
+  "^0TITO MODZ - Cheats and Anti-Cheat",
+  "^0https://discord.gg/AGxGDzg",
+  "^0https://discord.gg/hkZgrv3",
+  "You just got fucked mate",
+  "Add me Fallen#0811",
+  "Desudo; Plane#000",
+  "BAGGY; baggy#6875",
+  "SKAZAMENU",
+  "skaza",
+  "aries",
+  "youtube.com"
+}
+--Handler for above blocked chat messages
+AddEventHandler('chatMessage', function(source, name, message)
+  local _source = source
+  for k, messages in ipairs(_blockedMessages) do 
+    if string.match(message, messages) then
+      ValkyrieIdentifiers(_source)
+      ValkyrieLog('**Player:** ' ..GetPlayerName(_source).. '\n**' ..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**\n Was kicked from the server for sending a blocked message **' ..messages.. '**.')
+      Wait(1) --Mandatory wait to prevent a chat error being printed to the console.
+      ValkyrieKickPlayer(_source, 'Blocked chat message ' ..messages.. '')
     end
   end
 end)
