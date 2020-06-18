@@ -1,29 +1,9 @@
 --[[
     Valkyrie Anticheat
 ]]
-AddEventHandler('Valkyrie:ClientDetection', function(reason)
-    TriggerServerEvent('Valkyrie:ClientDetection', reason)
+AddEventHandler('Valkyrie:ClientDetection', function(user, log, reason)
+    TriggerServerEvent('Valkyrie:ClientDetection', user, log, reason)
 end)
-
---Name of resource to parse through
-local resourceList = {
-    'mapmanager',
-    'chat',
-    'spawnmanager',
-    'sessionmanager',
-    'fivem',
-    'hardcap',
-    'rconlog',
-    'vMenu'
-}
---Handler and iterator for the above 
-for k, listNames in ipairs(resourceList) do
-    AddEventHandler('onClientResourceStop', function(resourceName)
-        if resourceName == GetCurrentResourceName() or resourceName == resourceList then
-            --TriggerServerEvent('Valkyrie: Detection', 'Stopped Resource')
-        end
-    end)
-end
 --List of blocked client events.
 local _blockedClientEvents ={
     "ambulancier:selfRespawn",
@@ -45,7 +25,10 @@ for k, eventName in ipairs(_blockedClientEvents) do
             CancelEvent()
             return
         end
-        TriggerEvent('Valkyrie:ClientDetection')
+        TriggerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Was kicked for triggering a blocked client event ' ..eventName.. '', 'Blocked event: ' ..eventName.. '')
         Triggered = true
     end)
 end
+AddEventHandler('onClientResourceStop', function(resource)
+    TriggerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Was kicked for stopping a resource on their client ' ..resource.. '', 'Stopped resource: ' ..resource.. '')
+end)
