@@ -23,7 +23,7 @@ local BlacklistedModels = {
   [`s_m_y_swat_01`] = 's_m_m_security_01'
 }
 --Banned models vehicles, peds, and props can go here. This list WILL kick players if they spawm them.
-local BannedModels = { 
+local _bannedModels = { 
   [`Cargoplane`] = 'Cargoplane',
   [`Avenger`] = 'Avenger',
   [`Blimp2`] = 'Blimp2', 
@@ -77,14 +77,14 @@ AddEventHandler('entityCreating', function(entity)
   if BlacklistedModels[GetEntityModel(entity)] then
     CancelEvent()
   end
-  if BannedModels[GetEntityModel(entity)] then
+  if _bannedModels[GetEntityModel(entity)] then
     local entityOwner = NetworkGetEntityOwner(entity)
     if entityOwner == nil or entityOwner == '' then
-      return 
+      return 'Invalid entity'
     end
     ValkyrieIdentifiers(entityOwner)
-    ValkyrieLog('**Player:** ' ..GetPlayerName(entityOwner).. '\n**' ..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**\n Was kicked for spawning a blacklisted object.')
-    ValkyrieKickPlayer(entityOwner, 'Banned Model')
+    ValkyrieLog('Player Kicked', '**Player:** ' ..GetPlayerName(entityOwner).. '\n**Reason:** Spawned blacklisted object ' .._bannedModels[GetEntityModel(entity)].. '\n**'..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**')
+    ValkyrieKickPlayer(entityOwner, 'Blacklisted Object')
     CancelEvent()
   end
 end)
@@ -317,27 +317,26 @@ local _blockedServerEvents  = {
     "esx_society:putVehicleDFWMInGarage"
 }
 --Handler and iterator for the above blocked server events.
-for k, eventName in ipairs(_blockedServerEvents) do
+for k, eventName in pairs(_blockedServerEvents) do
   RegisterNetEvent(eventName)
   AddEventHandler(eventName, function()
     local _source = source
     ValkyrieIdentifiers(_source)
-    ValkyrieLog('**Player:** ' ..GetPlayerName(_source).. '\n**' ..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**\n Was kicked from the server for triggering a blocked server event ' ..eventName.. '')
-    Wait(1)
-    ValkyrieKickPlayer(_source, 'Blocked Event: ' ..eventName.. '')
+    ValkyrieLog('Player Kicked', '**Player:** ' ..GetPlayerName(_source).. '\n**Reason:** Blocked server event ' ..eventName.. '\n**' ..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**')
+    ValkyrieKickPlayer(_source, 'Blocked Event')
   end)
 end
 --List of blocked explosions
 local _blockedExplosion = { 1, 2, 4, 5, 25, 32, 33, 35, 36, 37, 38 }
 AddEventHandler('explosionEvent', function(sender, ev)
-  for _, v in ipairs(_blockedExplosion) do
-    if ev.damageScale <= 0 or ev.isInvisible == true or ev.isAudible == false then
+  for _, explosionType in ipairs(_blockedExplosion) do --Loop through _blockedExplosion
+    if ev.damageScale <= 0 or ev.isInvisible == true or ev.isAudible == false then --Check for random explosion not created by a player.
       return
     end
-    if ev.explosionType == v and ev.damageScale >= 1 then
+    if ev.explosionType == explosionType and ev.damageScale >= 1 then --Check _blockedExplosion and damage scale
       ValkyrieIdentifiers(sender)
-      ValkyrieLog('**Player:** ' ..GetPlayerName(sender).. '\n**' ..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**\n Created a blacklisted explosion and has been kicked.')
-      ValkyrieKickPlayer(sender, 'That\'s explosive 😮')
+      ValkyrieLog('Player Kicked', '**Player:** ' ..GetPlayerName(sender).. '\n**Reason:** Explosion created ' ..explosionType.. '\n**' ..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**\n')
+      ValkyrieKickPlayer(sender, 'Blocked Explosion')
     end
   end
 end)
@@ -432,11 +431,12 @@ local _blockedMessages = {
 --Handler for above blocked chat messages
 AddEventHandler('chatMessage', function(source, name, message)
   local _source = source
-  for k, messages in ipairs(_blockedMessages) do 
-    if string.match(message, messages) then
+  for k, messages in pairs(_blockedMessages) do --Loop through all _blockedMessages
+    if string.match(message, messages) then 
+      CancelEvent() --Prevent the blocked message from being sent
       ValkyrieIdentifiers(_source)
-      ValkyrieLog('**Player:** ' ..GetPlayerName(_source).. '\n**' ..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**\n Was kicked from the server for sending a blocked message **' ..messages.. '**.')
-      Wait(1) --Mandatory wait to prevent a chat error being printed to the console.
+      ValkyrieLog('Player Kicked', '**Player:** ' ..GetPlayerName(_source).. '\n**Reason:** Sent a blocked message** ' ..message.. '**\n**'..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**')
+      Wait(10) --Mandatory wait to prevent an error being printed in the console
       ValkyrieKickPlayer(_source, 'Blocked chat message ' ..messages.. '')
     end
   end
