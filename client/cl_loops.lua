@@ -37,8 +37,6 @@ CreateThread(function()
             local playerPed = PlayerPedId()
             local currentHealth = GetEntityHealth(playerPed)
             SetEntityHealth(playerPed, currentHealth - 2)
-            local something = math.random(10, 150)
-            Wait(something)
             if not IsPlayerDead(PlayerId()) then
                 if GetEntityHealth(playerPed) == currentHealth and GetEntityHealth(playerPed) ~= 0 then
                     TriggerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Was kicked for being invincible(Demi God Mode).', 'Demi God Mode')

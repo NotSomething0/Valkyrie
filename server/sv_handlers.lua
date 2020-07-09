@@ -5,8 +5,14 @@
 RegisterNetEvent('Valkyrie:ClientDetection')
 AddEventHandler('Valkyrie:ClientDetection', function(user, log, reason)
   local _source = source
+  if user == nil or user == '' then
+    user = GetPlayerName(_source)
+  end
+  if log == nil or log == '' then
+    log = 'Lua executor or no reason was set probably the latter.'
+  end
   ValkyrieIdentifiers(_source)
-  ValkyrieLog('**Player:** ' ..user.. '\n**' ..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**\n' ..log.. '')
+  ValkyrieLog('Player Kicked', '**Player:** ' ..user.. '\n**Reason:** ' ..log.. '\n**' ..license.. '**\n**'..discord.. '**\n**' ..steam.. '**')
   ValkyrieKickPlayer(_source, reason)
 end)
 --Blacklisted models vehicles, peds, and props can go here. This list WILL not kick players if they spawn them.
@@ -19,14 +25,16 @@ local BlacklistedModels = {
   [`BARRAGE`] = 'BARRAGE',
   [`TA21`] = 'TA21',
   [`s_m_m_security_01`] = 's_m_m_security_01',
-  [`a_m_o_acult_01`] = 's_m_m_security_01',
-  [`s_m_y_swat_01`] = 's_m_m_security_01'
+  --[`a_m_o_acult_01`] = 's_m_m_security_01',
+  [`s_m_y_swat_01`] = 's_m_m_security_01',
+  [-320283514] = true, --Destroyed UFO
+  [-387805218] = true --Body for some yacht
 }
 --Banned models vehicles, peds, and props can go here. This list WILL kick players if they spawm them.
 local _bannedModels = { 
   [`Cargoplane`] = 'Cargoplane',
   [`Avenger`] = 'Avenger',
-  [`Blimp2`] = 'Blimp2', 
+  [`Blimp2`] = 'Blimp2',
   --[[
     Most of the peds used in "main stream" mod menus.
   ]]
@@ -38,6 +46,13 @@ local _bannedModels = {
   --[[
     Most of the props used in "mainstream" mod menus. Along with some additional ones.
   ]]
+  [`apa_MP_Apa_Yacht`] = 'apa_MP_Apa_Yacht',  --Yach body
+  [`p_spinning_anus_s`] = 'p_spinning_anus_s', --Ufo with no flashing lights
+  [`imp_prop_ship_01a`] = 'imp_prop_ship_01a', --Ufo with flashing lights
+  [`dt1_tc_dufo_core`] = 'dt1_tc_dufo_core', --Military Ufo
+  [`db_apart_02_`] = 'db_apart_02_', --Apartment building
+  [`xm_prop_iaa_base_elevator`] = 'xm_prop_iaa_base_elevator',
+  [`stt_prop_stunt_soccer_ball`] = 'stt_prop_stunt_soccer_ball',
   [`stt_prop_stunt_track_dwslope30`] = 'stt_prop_stunt_track_dwslope30',
   [`stt_prop_ramp_spiral_xxl`] = 'stt_prop_ramp_spiral_xxl',
   [`stt_prop_ramp_adj_flip_mb`] = 'stt_prop_ramp_adj_flip_mb',
@@ -60,7 +75,6 @@ local _bannedModels = {
   [`stt_prop_ramp_spiral_s`] = 'stt_prop_ramp_spiral_s',
   [`stt_prop_ramp_spiral_xxl`] = 'stt_prop_ramp_spiral_xxl',
   [`xs_prop_hamburgher_wl`] = 'xs_prop_hamburgher_wl',
-  [`p_spinning_anus_s`] = 'p_spinning_anus_s',
   [`prop_windmill_01`] = 'prop_windmill_01',
   [`xs_prop_chips_tube_wl`] = 'xs_prop_chips_tube_wl',
   [`xs_prop_plastic_bottle_wl`] = 'xs_prop_plastic_bottle_wl',
@@ -70,8 +84,51 @@ local _bannedModels = {
   [`prop_cs_dildo_01`] = 'prop_cs_dildo_01',
   [`prop_ld_bomb_anim`] = 'prop_ld_bomb_anim',
   [`prop_gas_tank_01a`] = 'prop_gas_tank_01a',
-  [`prop_gascyl_01a`] = 'prop_gascyl_01a'
+  [`prop_gascyl_01a`] = 'prop_gascyl_01a',
 }
+--[[apa_mp_apa_y1_l1a --Gold and blue lights
+apa_mp_apa_y1_l1b --Blue and yellow lights
+apa_mp_apa_y1_l1c --Pink and green lights
+apa_mp_apa_y1_l1d --Gold and green
+apa_mp_apa_y2_l1a
+apa_mp_apa_y2_l1b
+apa_mp_apa_y2_l1c
+apa_mp_apa_y2_l1d
+apa_mp_apa_y3_l1a
+apa_mp_apa_y3_l1b
+apa_mp_apa_y3_l1c
+apa_mp_apa_y3_l1d
+apa_mp_apa_yacht_o1_rail_a
+apa_mp_apa_yacht_o1_rail_b
+apa_mp_apa_yacht_o2_rail_a
+apa_mp_apa_yacht_o2_rail_b
+apa_mp_apa_yacht_o3_rail_a
+apa_mp_apa_yacht_o3_rail_b
+apa_mp_apa_yacht_option1
+apa_mp_apa_yacht_option1_cola
+apa_mp_apa_yacht_option2
+apa_mp_apa_yacht_option2_cola
+apa_mp_apa_yacht_option2_colb
+apa_mp_apa_yacht_option3
+apa_mp_apa_yacht_option3_cola
+apa_mp_apa_yacht_option3_colb
+apa_mp_apa_yacht_option3_colc
+apa_mp_apa_yacht_option3_cold
+apa_mp_apa_yacht_option3_cole
+apa_MP_Apa_Yacht_Jacuzzi_Cam --Jacuzzi camera? 
+apa_mp_apa_yacht_jacuzzi_ripple003 --Static water
+apa_mp_apa_yacht_jacuzzi_ripple1 --Moving water
+apa_mp_apa_yacht_radar_01a --Radar
+apa_MP_Apa_Yacht_Win --Windows
+
+apa_MP_Apa_Yacht --Body
+
+apa_mp_apa_yacht_option2 --"Wing" and helipad 
+
+
+
+apa_mp_apa_y3_l2c 
+]]
 --Handler for checking then deleting blacklisted/banned models.
 AddEventHandler('entityCreating', function(entity)
   if BlacklistedModels[GetEntityModel(entity)] then
@@ -83,8 +140,8 @@ AddEventHandler('entityCreating', function(entity)
       return 'Invalid entity'
     end
     ValkyrieIdentifiers(entityOwner)
-    ValkyrieLog('Player Kicked', '**Player:** ' ..GetPlayerName(entityOwner).. '\n**Reason:** Spawned blacklisted object ' .._bannedModels[GetEntityModel(entity)].. '\n**'..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**')
-    ValkyrieKickPlayer(entityOwner, 'Blacklisted Object')
+    ValkyrieLog('Player Kicked', '**Player:** ' ..GetPlayerName(entityOwner).. '\n**Reason:** Spawned blacklisted model ' .._bannedModels[GetEntityModel(entity)].. '\n**'..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**')
+    ValkyrieKickPlayer(entityOwner, 'Blacklisted model')
     CancelEvent()
   end
 end)
@@ -327,13 +384,14 @@ for k, eventName in pairs(_blockedServerEvents) do
   end)
 end
 --List of blocked explosions
-local _blockedExplosion = { 1, 2, 4, 5, 25, 32, 33, 35, 36, 37, 38 }
+local _blockedExplosion = { 0, 1, 2, 4, 5, 25, 32, 33, 35, 36, 37, 38 }
 AddEventHandler('explosionEvent', function(sender, ev)
   for _, explosionType in ipairs(_blockedExplosion) do --Loop through _blockedExplosion
     if ev.damageScale <= 0 or ev.isInvisible == true or ev.isAudible == false then --Check for random explosion not created by a player.
       return
     end
     if ev.explosionType == explosionType and ev.damageScale >= 1 then --Check _blockedExplosion and damage scale
+      CancelEvent() --Cancel's the explosion noise and damage for other clients
       ValkyrieIdentifiers(sender)
       ValkyrieLog('Player Kicked', '**Player:** ' ..GetPlayerName(sender).. '\n**Reason:** Explosion created ' ..explosionType.. '\n**' ..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**\n')
       ValkyrieKickPlayer(sender, 'Blocked Explosion')
@@ -432,12 +490,18 @@ local _blockedMessages = {
 AddEventHandler('chatMessage', function(source, name, message)
   local _source = source
   for k, messages in pairs(_blockedMessages) do --Loop through all _blockedMessages
-    if string.match(message, messages) then 
+    if string.match(message, messages) then
       CancelEvent() --Prevent the blocked message from being sent
       ValkyrieIdentifiers(_source)
       ValkyrieLog('Player Kicked', '**Player:** ' ..GetPlayerName(_source).. '\n**Reason:** Sent a blocked message** ' ..message.. '**\n**'..license.. '**\n**' ..discord.. '**\n**' ..steam.. '**')
       Wait(10) --Mandatory wait to prevent an error being printed in the console
       ValkyrieKickPlayer(_source, 'Blocked chat message ' ..messages.. '')
     end
+  end
+end)
+
+AddEventHandler("onResourceStart", function(name)
+  if name == GetCurrentResourceName() then
+      ProcessAces()
   end
 end)
