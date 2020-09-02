@@ -1,49 +1,69 @@
---[[
-    Valkyrie Anticheat
-]]
-Config = {}
-Config.InvisibleCheck = true
-Config.SpectatorCheck = true
-Config.InvincibilityCheck = true
-Config.DemiGodModeCheck = true
---Handler for kicking players
-AddEventHandler('Valkyrie:ClientDetection', function(user, log, reason)
-    TriggerServerEvent('Valkyrie:ClientDetection', user, log, reason)
+RegisterNetEvent('checkAce')
+AddEventHandler('checkAce', function(state)
+    isAdmin = state
 end)
---Main thread
-CreateThread(function()
-    while true do
-        Wait(1000)
-        if Config.InvisibleCheck then
-            Wait(10000)
-            if IsEntityVisible(PlayerPedId()) == false then
-                TriggerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Was kicked for being invisible.', 'Invisible')
-            end
-        end
-        if Config.SpectatorCheck then
-            Wait(60)
-            if NetworkIsInSpectatorMode() then
-                TriggerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Was kicked for spectating a player without permission.', 'Spectating')
-            end
-        end
-        if Config.InvincibilityCheck then
-            Wait(5000)
-            if GetPlayerInvincible(PlayerId()) then
-                TriggerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Was kicked for being invincible(Gode Mode).', 'God Mode')
-            end
-        end
-        if Config.DemiGodModeCheck then
-            Wait(15000)
-            local playerPed = PlayerPedId()
-            local currentHealth = GetEntityHealth(playerPed)
-            SetEntityHealth(playerPed, currentHealth - 2)
-            if not IsPlayerDead(PlayerId()) then
-                if GetEntityHealth(playerPed) == currentHealth and GetEntityHealth(playerPed) ~= 0 then
-                    TriggerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Was kicked for being invincible(Demi God Mode).', 'Demi God Mode')
-                elseif GetEntityHealth(playerPed) == currentHealth - 2 then
-                    SetEntityHealth(playerPed, GetEntityHealth(playerPed) + 2)
+gmStrikes = 0
+AddEventHandler('playerSpawned', function()
+    CreateThread(function()
+        while true do
+            Wait(0)
+            if Config.GodModeCheck then
+                Wait(1000)
+                if GetPlayerInvincible(PlayerId()) then
+                    TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'GodMode: SetPlayerInvincible()', gmStrikes, 'Invincible')
+                end
+                local playerPed = PlayerPedId()
+                local currentHealth = GetEntityHealth(playerPed)
+                SetEntityHealth(playerPed, currentHealth - 2)
+                Wait(50)
+                if not IsPlayerDead(PlayerId()) then
+                    if GetEntityHealth(playerPed) == currentHealth and GetEntityHealth(playerPed) ~= 0 then
+                        TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'GodMode: SetEntityHealth()', gmStrikes, 'Invincible')
+                    elseif GetEntityHealth(playerPed) == currentHealth - 2 then
+                        SetEntityHealth(playerPed, GetEntityHealth(playerPed) + 2)
+                    end
                 end
             end
         end
+    end)
+end)
+
+spawned = false
+strikes = 0
+AddEventHandler('playerSpawned', function()
+    if spawned == false then
+        spawned = true
+        CreateThread(function()
+            while true do
+                Wait(1000)
+                if Config.SpectatorCheck then
+                    Wait(500)
+                    if isAdmin then
+                        if NetworkIsInSpectatorMode() then
+                            TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Spectating: NetworkSetInSpectatorMode()', 'Spectating')
+                        end
+                        local coords = #(GetEntityCoords(PlayerPedId()) - GetFinalRenderedCamCoord())
+                        if coords >= 30 and not IsPedInFlyingVehicle(PlayerPedId()) then
+                            TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Spectating: GetFinalRenderedCamCoord(): `' ..coords.. '` units.', specStrikes, 'Spectating')
+                        end
+                    end
+                end
+            end
+        end)
+
+        CreateThread(function()
+            while true do
+                Wait(0)
+                if Config.SpeedDetection then
+                    Wait(1000)
+                    if GetEntitySpeed(PlayerPedId()) >= Config.MaxSpeed then
+                        strikes = strikes + 1
+                    end
+                    if strikes >= 3 then 
+                        TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Speed: SetEntityMaxSpeed(): `' ..GetEntitySpeed(PlayerPedId()), 'Speed')
+                    end
+                end
+            end
+        end)
     end
 end)
