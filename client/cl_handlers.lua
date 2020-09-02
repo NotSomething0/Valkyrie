@@ -1,9 +1,3 @@
---[[
-    Valkyrie Anticheat
-]]
-AddEventHandler('Valkyrie:ClientDetection', function(user, log, reason)
-    TriggerServerEvent('Valkyrie:ClientDetection', user, log, reason)
-end)
 --List of blocked client events.
 local _blockedClientEvents ={
     "ambulancier:selfRespawn",
@@ -25,10 +19,20 @@ for k, eventName in ipairs(_blockedClientEvents) do
             CancelEvent()
             return
         end
-        TriggerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Was kicked for triggering a blocked client event ' ..eventName.. '', 'Blocked event: ' ..eventName.. '')
+        TriggerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Blocked event: ' ..eventName.. '', 'Blocked event')
         Triggered = true
     end)
 end
 AddEventHandler('onClientResourceStop', function(resource)
-    TriggerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Was kicked for stopping a resource on their client ' ..resource.. '', 'Stopped resource: ' ..resource.. '')
+    TriggerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Stopped resource: `' ..resource.. '`', 'Invalid resource list')
+end)
+
+AddEventHandler('onClientMapStart', function()
+TriggerEvent('chat:addSuggestion', '/kick', 'Kick specified player with optional reason', {
+    { name = 'Player ID', help = 'Player Server ID' },
+    { name = 'reason', help = 'Reason for kick'}
+})
+TriggerEvent('chat:addSuggestion', '/freeze', 'Freeze specified player', {
+    { name = 'Player ID', help = 'Player Server ID'}
+})
 end)
