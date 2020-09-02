@@ -1,22 +1,13 @@
---Discord webhook
-local webhook = GetConvar('webhooklink', '')
---Contact link
-local contactlink = GetConvar('contact', '')
---Identifiers
 function ValkyrieIdentifiers(player)
-  for k, v in ipairs(GetPlayerIdentifiers(player)) do
-    if string.sub(v, 1, string.len('license:')) == 'license:' then
-      license = v
-    elseif string.sub(v, 1, string.len('discord:')) == 'discord:' then
-      discord = v
-    elseif discord == nil or discord == '' then
-      discord = 'Discord identifier not found'
-    elseif string.sub(v, 1, string.len('steam:')) == 'steam:' then
-      steam = v
-    elseif steam == nil or steam == '' then
-      steam = 'Steam identifier not found'
-    end
+  local identifiers = {}
+  for i = 0, GetNumPlayerIdentifiers(player) - 1 do
+      local raw = GetPlayerIdentifier(player, i)
+      local source, value = raw:match("^([^:]+):(.+)$")
+      if source and value then
+          identifiers[source] = value
+      end
   end
+  return identifiers
 end
 --logging function
 function ValkyrieLog(title, message)
@@ -26,20 +17,38 @@ function ValkyrieLog(title, message)
       ['type'] = 'rich',
       ['description'] = message,
       ['color'] = 732633,
-      ['thumbnail'] = {['url'] = 'https://i.imgur.com/jmYn66H.png'},
-      ['author'] = {['name'] = 'Valkyrie Anticheat', ['icon_url'] = 'https://i.imgur.com/jmYn66H.png'},
-      ['footer'] = {['text'] = os.date("%x (%X %p)")},
+      ['author'] = {['name'] = 'Valkyrie Anticheat', ['url'] = 'https://github.com/Something-Debug', ['icon_url'] = 'https://i.imgur.com/jmYn66H.png'},
+      ['footer'] = {['text'] = 'Created by Something#6200 | ' ..os.date("%x (%X %p)"), ['icon_url'] = 'https://i.imgur.com/jmYn66H.png'},
     }
   }
-  PerformHttpRequest(webhook, function(err, text, headers) end, 'POST', json.encode({username = name, embeds = embed}), { ['Content-Type'] = 'application/json' })
+  PerformHttpRequest('', function(err, text, headers) end, 'POST', json.encode({username = name, embeds = embed}), { ['Content-Type'] = 'application/json' })
 end
 --Kicking function
 function ValkyrieKickPlayer(player, reason)
-  if player == nil then
-    return 'No source was set for kicking function this is a fatal error, players will not be kicked!'
+  if not player then
+    return print('No source was set for kicking function this is a fatal error, players will not be kicked!')
   end
   if reason == nil or reason == '' then
-    return 'No reason was set for kicking function this is a fatal error, players will not be kicked!'
+    reason = 'No reason specified'
   end
-  DropPlayer(player, 'Kicked \n You have been kicked for the following reason: ' ..reason..'. \n If you think this was a mistake contact us at ' ..contactlink.. '.')
+  DropPlayer(player, 'Kicked \n You have been kicked for the following reason: ' ..reason..'. \n If you think this was a mistake contact us at ' ..GetConvar('contact', '').. '.')
 end
+--Check Permissions
+function ProcessAces()
+  if GetNumPlayerIndices() > 0 then -- don't do it when there aren't any players
+      for i=0, GetNumPlayerIndices()-1 do -- loop through all players
+          player = tonumber(GetPlayerFromIndex(i))
+          Citizen.Wait(0)
+          if IsPlayerAceAllowed(player, 'command') then
+              TriggerClientEvent("checkAce", player, true)
+          end
+      end
+  end
+end
+--Check Permissions on resource (re)start
+AddEventHandler("onResourceStart", function(resource)
+  if resource == GetCurrentResourceName() then
+      ProcessAces()
+      print('Permissions checked')
+  end
+end)
