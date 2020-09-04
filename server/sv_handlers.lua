@@ -8,9 +8,19 @@ AddEventHandler('Valkyrie:ClientDetection', function(user, log, reason)
   ValkyrieKickPlayer(source, reason)
 end)
 
+local entityStrikes = 0
 AddEventHandler('entityCreating', function(entity)
+  local entityOwner = NetworkGetEntityOwner(entity)
+  if not entityOwner then return end
+  local license = ValkyrieIdentifiers(entityOwner).license
+  if not license then return end
   if Config.bannedModels[GetEntityModel(entity)] then
+    entityStrikes = entityStrikes + 1
     CancelEvent()
+  end
+  if entityStrikes >= Config.maxEntityStrikes then
+    ValkyrieLog('Player Kicked', '**Player:** ' ..GetPlayerName(entityOwner).. '\n**Reason:** Exceded strike limit for entity creation. Strikes: ' ..entityStrikes.. '\n**license:** ' ..license)
+    ValkyrieKickPlayer(entityOwner, 'Exceded strike limit for entity creation.')
   end
 end)
 
