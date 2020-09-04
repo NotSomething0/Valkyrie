@@ -1,19 +1,6 @@
---List of blocked client events.
-local _blockedClientEvents ={
-    "ambulancier:selfRespawn",
-    "bank:transfer",
-    "esx_ambulancejob:revive",
-    "esx-qalle-jail:openJailMenu",
-    "esx_jailer:wysylandoo",
-    "esx_society:openBossMenu",
-    "esx:spawnVehicle",
-    "esx_status:set",
-    "HCheat:TempDisableDetection",
-    "UnJP"
-}
---Handler and iterator for the above blocked client events. 
+
 local Triggered = false
-for k, eventName in ipairs(_blockedClientEvents) do
+for _, eventName in ipairs(Config.BlockedClientEvent) do
     AddEventHandler(eventName, function()
         if Triggered == true then
             CancelEvent()
