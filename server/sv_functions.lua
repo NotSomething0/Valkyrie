@@ -17,11 +17,11 @@ function ValkyrieLog(title, message)
       ['type'] = 'rich',
       ['description'] = message,
       ['color'] = 732633,
-      ['author'] = {['name'] = 'Valkyrie Anticheat', ['url'] = 'https://github.com/Something-Debug', ['icon_url'] = 'https://i.imgur.com/jmYn66H.png'},
+      ['author'] = {['name'] = 'Valkyrie Anticheat', ['url'] = 'https://github.com/NotSomething0', ['icon_url'] = 'https://i.imgur.com/jmYn66H.png'},
       ['footer'] = {['text'] = 'Created by Something#6200 | ' ..os.date("%x (%X %p)"), ['icon_url'] = 'https://i.imgur.com/jmYn66H.png'},
     }
   }
-  PerformHttpRequest('', function(err, text, headers) end, 'POST', json.encode({username = name, embeds = embed}), { ['Content-Type'] = 'application/json' })
+  PerformHttpRequest('YOURWEBHOOKHERE', function(err, text, headers) end, 'POST', json.encode({username = name, embeds = embed}), { ['Content-Type'] = 'application/json' })
 end
 --Kicking function
 function ValkyrieKickPlayer(player, reason)
