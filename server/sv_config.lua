@@ -1,7 +1,5 @@
 Config = {}
 
-Config.Webhook = ''
-
 Config.Whitelist = false
 Config.Whitelisted = {
 }
@@ -263,6 +261,9 @@ Config.blockedServerEvents = {
     "mellotrainer:adminKickDFWM",
     "esx_society:putVehicleDFWMInGarage"
 }
+
+Config.maxEntityStrikes = 10
+
 Config.bannedModels = {
     [`TUG`] = true,
     [`Deluxo`] = true,
