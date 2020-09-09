@@ -2,8 +2,8 @@ RegisterNetEvent('Valkyrie:ClientDetection')
 AddEventHandler('Valkyrie:ClientDetection', function(user, log, reason)
   local license = ValkyrieIdentifiers(source).license
   if not license then return end
-  if user == nil or user == '' then user = GetPlayerName(source) end
-  if log == nil or log == '' then log = 'Triggerd `Valkyrie:ClientDetection` with no parameters.' end
+  if not user or user == '' then user = GetPlayerName(source) end
+  if not log or log == '' then log = 'Triggerd Valkyrie:ClientDetection' end
   ValkyrieLog('Player Kicked', '**Player:** ' ..user.. '\n**Reason:** ' ..log.. '\n**license:** ' ..license)
   ValkyrieKickPlayer(source, reason)
 end)
@@ -42,7 +42,7 @@ AddEventHandler('chatMessage', function(source, author, text)
   local license = ValkyrieIdentifiers(source).license
   if not license then return end
   for _, messages in pairs(Config.blockedMessages) do
-    if string.match(string.lower(text), string.lower(messages)) then
+    if string.match(text:lower(), messages:lower()) then
       ValkyrieLog('Player kicked', '**Player:** ' ..sender.. '\n**Reason:** Blocked chat message `' ..text.. '`\n **license:** ' ..license)
       ValkyrieKickPlayer(source, 'Blocked chat message')
     end
