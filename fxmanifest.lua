@@ -1,10 +1,12 @@
-fx_version 'bodacious'
+fx_version 'cerulean'
 
-author 'Something#6200'
+author 'https://github.com/NotSomething0'
 
-description 'Anticheat'
+description 'A FiveM anticheat created for the community'
 
-game 'gta5'
+version '0.5.0 Beta'
+
+game {'gta5'}
 
 client_scripts {
     'client**/cl_*.lua'
