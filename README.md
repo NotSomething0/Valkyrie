@@ -31,8 +31,9 @@ TODO
 This resource does not as other services claim 'detect lua executors' as this is impossible to do server side. All these other services are doing is using the lua *environment* as it's called to detect global variables from cheat menus.
 
 ### TODO
-Banning functionality
-More server/client side detection
-More staff commands
+Banning functionality\
+More server/client side detection\
+Use of screenshot-basic to weed out people that claim they 'didn't cheat'\
+More staff commands\
 Better and more in depth documentation  
 
