@@ -1,15 +1,29 @@
+local _blockedClientEvents = {
+    "ambulancier:selfRespawn",
+    "bank:transfer",
+    "esx_ambulancejob:revive",
+    "esx-qalle-jail:openJailMenu",
+    "esx_jailer:wysylandoo",
+    "esx_society:openBossMenu",
+    "esx:spawnVehicle",
+    "esx_status:set",
+    "HCheat:TempDisableDetection",
+    "UnJP"
+}
 
 local Triggered = false
-for _, eventName in ipairs(Config.BlockedClientEvent) do
+
+for _, eventName in pairs(_blockedClientEvents) do
     AddEventHandler(eventName, function()
         if Triggered == true then
             CancelEvent()
             return
         end
-        TriggerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Blocked event: ' ..eventName.. '', 'Blocked event')
+        TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Blocked client event: `' ..eventName.. '`', 'Blocked event')
         Triggered = true
     end)
 end
+
 AddEventHandler('onClientResourceStop', function(resource)
     TriggerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Stopped resource: `' ..resource.. '`', 'Invalid resource list')
 end)
