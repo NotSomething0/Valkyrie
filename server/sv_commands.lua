@@ -66,28 +66,3 @@ RegisterCommand('freeze', function(source, args, rawCommand)
         TriggerClientEvent('notify', source, '~y~You can\'t freeze another user with elevated permissions!')
     end
 end, false)
-
-RegisterCommand('spectate', function(source, args, rawCommand)
-    local playerId = tonumber(args[1])
-    if playerId == nil or type(playerId) ~= 'number' then
-        return TriggerClientEvent('notify', source, '~y~Invalid ID')
-    end
-    local license = ValkyrieIdentifiers(playerId).license
-    if not license then
-        return TriggerClientEvent('notify', source, '~y~Invalid ID')
-    end
-    local currentCoords = GetEntityCoords(GetPlayerPed(source))
-    local newCoords = GetEntityCoords(GetPlayerPed(args[1]))
-    print(currentCoords)
-    print(newCoords)
-end, false)
-
-RegisterCommand('dv', function(source, args, rawCommand)
-    local playerPed = GetPlayerPed(source)
-    local vehicle = GetVehiclePedIsIn(playerPed, false)
-    DeleteEntity(vehicle)
-end, false)
-
-RegisterCommand('model', function(source, args, rawCommand)
-    SetPlayerModel(source, `a_m_y_skater_01`)
-end, false)
