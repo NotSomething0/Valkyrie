@@ -9,7 +9,7 @@ AddEventHandler('Valkyrie:ClientDetection', function(user, log, reason)
 end)
 
 AddEventHandler('entityCreating', function(entity)
-  if Config.bannedModels[GetEntityModel(entity)] then
+  if Config._blacklistedModels[GetEntityModel(entity)] then
     CancelEvent()
   end
 end)
@@ -269,7 +269,7 @@ AddEventHandler('chatMessage', function(source, author, text)
   local sender = GetPlayerName(source)
   local license = ValkyrieIdentifiers(source).license
   if not license then return end
-  for _, messages in pairs(Config.blockedMessages) do
+  for _, messages in pairs(Config._blacklistedMessages) do
     if string.match(text:lower(), messages:lower()) then
       ValkyrieLog('Player kicked', '**Player:** ' ..sender.. '\n**Reason:** Blocked chat message `' ..text.. '`\n **license:** ' ..license)
       ValkyrieKickPlayer(source, 'Blocked chat message')
