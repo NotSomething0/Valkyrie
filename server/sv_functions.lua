@@ -9,21 +9,21 @@ function ValkyrieIdentifiers(player)
   end
   return identifiers
 end
---logging function
+
 function ValkyrieLog(title, message)
   local embed = {
     {
-      ['title'] = 'Valkyrie: ' ..title.. '',
+      ['title'] = 'Valkyrie: ' ..title,
       ['type'] = 'rich',
       ['description'] = message,
       ['color'] = 732633,
       ['author'] = {['name'] = 'Valkyrie Anticheat', ['url'] = 'https://github.com/NotSomething0', ['icon_url'] = 'https://i.imgur.com/jmYn66H.png'},
-      ['footer'] = {['text'] = 'Created by Something#6200 | ' ..os.date("%x (%X %p)"), ['icon_url'] = 'https://i.imgur.com/jmYn66H.png'},
+      ['footer'] = {['text'] = 'Created by NotSomething#6200 | ' ..os.date("%x (%X %p)"), ['icon_url'] = 'https://i.imgur.com/jmYn66H.png'},
     }
   }
   PerformHttpRequest('YOURWEBHOOKHERE', function(err, text, headers) end, 'POST', json.encode({username = name, embeds = embed}), { ['Content-Type'] = 'application/json' })
 end
---Kicking function
+
 function ValkyrieKickPlayer(player, reason)
   if not player then
     return print('No source was set for kicking function this is a fatal error, players will not be kicked!')
@@ -33,10 +33,10 @@ function ValkyrieKickPlayer(player, reason)
   end
   DropPlayer(player, 'Kicked \n You have been kicked for the following reason: ' ..reason..'. \n If you think this was a mistake contact us at ' ..GetConvar('contact', '').. '.')
 end
---Check Permissions
+
 function ProcessAces()
-  if GetNumPlayerIndices() > 0 then -- don't do it when there aren't any players
-      for i=0, GetNumPlayerIndices()-1 do -- loop through all players
+  if GetNumPlayerIndices() > 0 then
+      for i=0, GetNumPlayerIndices()-1 do
           player = tonumber(GetPlayerFromIndex(i))
           Citizen.Wait(0)
           if IsPlayerAceAllowed(player, 'command') then
@@ -45,10 +45,9 @@ function ProcessAces()
       end
   end
 end
---Check Permissions on resource (re)start
+
 AddEventHandler("onResourceStart", function(resource)
   if resource == GetCurrentResourceName() then
       ProcessAces()
-      print('Permissions checked')
   end
 end)
