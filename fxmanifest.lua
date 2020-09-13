@@ -4,7 +4,7 @@ author 'https://github.com/NotSomething0'
 
 description 'A FiveM anticheat created for the community'
 
-version '0.5.0 Beta'
+version '0.5.5 Beta'
 
 game {'gta5'}
 
