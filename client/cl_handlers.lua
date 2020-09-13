@@ -24,6 +24,29 @@ for _, eventName in pairs(_blockedClientEvents) do
     end)
 end
 
+RegisterNetEvent('setPed')
+AddEventHandler('setPed', function()
+    local defaultPed = 'a_m_y_skater_01'
+    RequestModel(defaultPed)
+    while not HasModelLoaded(defaultPed) do
+        Wait(500)
+    end
+    SetPlayerModel(PlayerId(), defaultPed)
+    SetModelAsNoLongerNeeded(defaultPed)
+    notification('Blacklisted Player Model')
+end)
+
+function notification(message)
+	BeginTextCommandThefeedPost("STRING")
+	AddTextComponentSubstringPlayerName(message)
+	EndTextCommandThefeedPostTicker(true, false)
+end
+
+RegisterNetEvent('notify')
+AddEventHandler('notify', function(message)
+    notification(message)
+end)
+
 AddEventHandler('onClientResourceStop', function(resource)
     TriggerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Stopped resource: `' ..resource.. '`', 'Invalid resource list')
 end)
