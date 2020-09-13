@@ -2,7 +2,7 @@ Config = {}
 
 Config.blockedExplosion = {}
 
-Config.blockedMessages = {
+Config._blacklistedMessages = {
     "Bombay Menu",
     "Brutan Premium",
     "d0pamine | Nertigel#5391",
@@ -33,7 +33,7 @@ Config.blockedMessages = {
     "SKAZAMENU",
 }
 
-Config.bannedModels = {
+Config._blacklistedModels = {
     [`TUG`] = true,
     [`Deluxo`] = true,
     [`ZR380`] = true,
@@ -529,4 +529,19 @@ Config.bannedModels = {
     [`apa_mp_apa_yacht_radar_01a`] = 'apa_mp_apa_yacht_radar_01a',
     [`apa_MP_Apa_Yacht_Win`] = 'apa_MP_Apa_Yacht_Win'
     --[End of yacht props]
+}
+
+Config._blacklistedPeds = {
+    [`a_m_m_acult_01`] = 'a_m_m_acult_01',
+    [`a_m_y_acult_01`] = 'a_m_y_acult_01'
+}
+
+Config._blacklistedWeapons = {
+    [`weapon_rpg`] = 'weapon_rpg',
+    [`weapon_smg`] = 'weapon_smg'
+}
+
+Config._blacklistedVehicles = {
+    [`adder`] = 'adder',
+    [`cargoplane`] = 'cargoplane'
 }
