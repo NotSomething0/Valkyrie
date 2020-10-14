@@ -4,9 +4,9 @@ author 'https://github.com/NotSomething0'
 
 description 'A FiveM anticheat created for the community'
 
-version '0.5.5 Beta'
+version '0.5.6 Beta'
 
-game {'gta5'}
+game 'gta5'
 
 client_scripts {
     'client**/cl_*.lua'
