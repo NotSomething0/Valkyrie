@@ -21,7 +21,7 @@ function ValkyrieLog(title, message)
       ['footer'] = {['text'] = 'Created by NotSomething#6200 | ' ..os.date("%x (%X %p)"), ['icon_url'] = 'https://i.imgur.com/jmYn66H.png'},
     }
   }
-  PerformHttpRequest('YOURWEBHOOKHERE', function(err, text, headers) end, 'POST', json.encode({username = name, embeds = embed}), { ['Content-Type'] = 'application/json' })
+  PerformHttpRequest(Config.DiscWebhook, function(err, text, headers) end, 'POST', json.encode({username = name, embeds = embed}), { ['Content-Type'] = 'application/json' })
 end
 
 function ValkyrieKickPlayer(player, reason)
