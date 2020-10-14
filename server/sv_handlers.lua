@@ -14,7 +14,6 @@ AddEventHandler('entityCreating', function(entity)
   end
 end)
 
-
 local _blockedServerEvents = {
   "8321hiue89js",
   "adminmenu:allowall",
@@ -267,7 +266,6 @@ AddEventHandler('explosionEvent', function(sender, ev)
 end)
 
 AddEventHandler('chatMessage', function(source, author, text)
-  ValkyrieLog('Server Info', text)
   local sender = GetPlayerName(source)
   local license = ValkyrieIdentifiers(source).license
   if not license then return end
