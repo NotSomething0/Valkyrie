@@ -1,5 +1,9 @@
 Config = {}
 
+Config.Contactlink = 'example.com/forums'
+
+Config.DiscWebhook = ''
+
 Config.blockedExplosion = {}
 
 Config._blacklistedMessages = {
