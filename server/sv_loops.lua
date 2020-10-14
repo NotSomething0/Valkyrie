@@ -22,6 +22,7 @@ CreateThread(function()
                 end
                 local wepHash = GetSelectedPedWeapon(playerPed) 
                 if Config._blacklistedWeapons[wepHash] then
+                    Wait(500)
                     RemoveWeaponFromPed(playerPed, wepHash)
                     ValkyrieLog('Player Info', '**Player:** `' ..name..'`\n **Reason:** Tried to use a blacklisted weapon `' ..Config._blacklistedWeapons[wepHash]..'`\n**license:** ' ..license)
                     TriggerClientEvent('notify', player, 'Blacklisted Weapon')
@@ -37,6 +38,10 @@ CreateThread(function()
             if entityHealth >= 201 then
                 ValkyrieLog('Player Kicked', '**Player:** ' ..name.. '\n**Reason:** Set maximum health to `' ..entityHealth.. '`\n**license:** ' ..license)
                 ValkyrieKickPlayer(player, 'Max health: ' ..entityHealth)
+            end
+            if IsPlayerUsingSuperJump(player) then
+                ValkyrieKickPlayer(player, 'Super Jump')
+                ValkyrieLog('Player Kicked', '**Player:** ' ..name.. '\n**Reason:** Super Jump \n**license:** ' ..license)
             end
         end
     end
