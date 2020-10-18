@@ -49,8 +49,8 @@ function ValkyrieBanPlayer(player, reason)
     reason = 'No reason specified'
   end
 
-  SetResourceKvp(license, 'Banned \n You have been banned for the following reason: ' ..reason.. '. \n If you think this was a mistake contact us at ' ..Config.Contactlink)
-  DropPlayer(player, 'Banned \n You have been banned for the following reason: ' ..reason.. '. \n If you think this was a mistake contact us at ' ..Config.Contactlink)
+  SetResourceKvp(license, 'Banned \n You have been banned for the following reason: ' ..reason.. '. \n If you think this was a mistake contact us at ' ..Config.Contactlink.. '\n License: ' ..license)
+  DropPlayer(player, 'Banned \n You have been banned for the following reason: ' ..reason.. '. \n If you think this was a mistake contact us at ' ..Config.Contactlink.. '\n License: ' ..license)
 end
 
 function ProcessAces()
