@@ -28,10 +28,29 @@ function ValkyrieKickPlayer(player, reason)
   if not player then
     return print('No source was set for kicking function this is a fatal error, players will not be kicked!')
   end
-  if reason == nil or reason == '' then
+
+  if not reason or reason == '' then
     reason = 'No reason specified'
   end
-  DropPlayer(player, 'Kicked \n You have been kicked for the following reason: ' ..reason..'. \n If you think this was a mistake contact us at ' ..GetConvar('contact', '').. '.')
+  
+  DropPlayer(player, 'Kicked \n You have been kicked for the following reason: ' ..reason..'. \n If you think this was a mistake contact us at ' ..Config.Contactlink)
+end
+
+function ValkyrieBanPlayer(player, reason)
+  if not player then
+    return print('No source was set for banning function this is a fatal error, players will not be banned.')
+  end
+
+  local license = ValkyrieIdentifiers(player).license
+
+  if not license then return end
+
+  if not reason or reason == '' then
+    reason = 'No reason specified'
+  end
+
+  SetResourceKvp(license, 'Banned \n You have been banned for the following reason: ' ..reason.. '. \n If you think this was a mistake contact us at ' ..Config.Contactlink)
+  DropPlayer(player, 'Banned \n You have been banned for the following reason: ' ..reason.. '. \n If you think this was a mistake contact us at ' ..Config.Contactlink)
 end
 
 function ProcessAces()
