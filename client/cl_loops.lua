@@ -29,7 +29,7 @@ AddEventHandler('playerSpawned', function()
                             print('[Valkyrie] ' ..specStrikes.. ' vector math GetEntityCoords() - GetFinalRenderedCamCoord()')
                         end
                         if specStrikes >= Config.MaxSpectatorStrikes then
-                            TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Spectating without permission', 'Spectating')
+                            TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Spectating without permission', 'Spectating', false)
                         end
                     end
                 end
@@ -37,11 +37,11 @@ AddEventHandler('playerSpawned', function()
         end)
 
         CreateThread(function()
-            while true do
+            while spawned do
                 Wait(1000)
                 if Config.GodModeCheck then
                     if GetPlayerInvincible(PlayerId()) then
-                        TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'GodMode: SetPlayerInvincible()', 'Invincible')
+                        TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'GodMode: SetPlayerInvincible()', 'Invincible', true)
                     end
 
                     local currentHealth = GetEntityHealth(playerPed)
@@ -53,7 +53,7 @@ AddEventHandler('playerSpawned', function()
                             godModeStrikes = godModeStrikes + 1
                         end
                         if godModeStrikes >= Config.MaxGodModeStrikes then
-                            TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'GodMode: SetEntityHealth()', 'Invincible')
+                            TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'GodMode: SetEntityHealth()', 'Invincible', true)
                         elseif GetEntityHealth(playerPed) == currentHealth - 2 then
                             SetEntityHealth(playerPed, GetEntityHealth(playerPed) + 2)
                         end
@@ -65,16 +65,20 @@ AddEventHandler('playerSpawned', function()
         CreateThread(function()
             while spawned do
                 Wait(1000)
-                local wep = GetSelectedPedWeapon(playerPed)
-                for _, dmgType in pairs(Config.BlockedDamageType) do
-                    if GetWeaponDamageType(wep) == dmgType then
-                        RemoveWeaponFromPed(playerPed, wep)
-                        print('[Valkyrie] Weapon removed from player ' ..GetEntityModel(wep).. ' blocked damage type.')
+                if Config.DamageTypeCheck then
+                    local wep = GetSelectedPedWeapon(playerPed)
+                    for _, dmgType in pairs(Config.BlockedDamageTypes) do
+                        if GetWeaponDamageType(wep) == dmgType then
+                            RemoveWeaponFromPed(playerPed, wep)
+                            print('[Valkyrie] Weapon removed from player ' ..GetEntityModel(wep).. ' blocked damage type.')
+                        end
                     end
                 end
-                if GetWeaponDamageModifier(wep) >= 10 then
-                    RemoveWeaponFromPed(playerPed, wep)
-                    print('[Valkyrie] Weapon removed from player ' ..GetEntityModel(wep).. ' exceeded maximum damage modifier.')
+                if Config.DamageModifierCheck then
+                    if GetWeaponDamageModifier(wep) >= 10 then
+                        RemoveWeaponFromPed(playerPed, wep)
+                        print('[Valkyrie] Weapon removed from player ' ..GetEntityModel(wep).. ' exceeded maximum damage modifier.')
+                    end
                 end
             end
         end)
