@@ -14,7 +14,7 @@ CreateThread(function()
             local playerPed = GetPlayerPed(player)
             local name = GetPlayerName(player)
             if not license then return end
-            if not IsPlayerAceAllowed(player, 'yourmomlol') then
+            if not IsPlayerAceAllowed(player, 'command') then
                 local pedHash = GetEntityModel(playerPed)
                 if Config._blacklistedPeds[pedHash] then
                     TriggerClientEvent('setPed', player)
@@ -35,12 +35,12 @@ CreateThread(function()
                 end
             end
             local entityHealth = GetEntityMaxHealth(playerPed) 
-            if entityHealth >= 201 then
+            if entityHealth > 201 then
                 ValkyrieLog('Player Kicked', '**Player:** ' ..name.. '\n**Reason:** Set maximum health to `' ..entityHealth.. '`\n**license:** ' ..license)
-                ValkyrieKickPlayer(player, 'Max health: ' ..entityHealth)
+                ValkyrieBanPlayer(player, 'Max health: ' ..entityHealth)
             end
             if IsPlayerUsingSuperJump(player) then
-                ValkyrieKickPlayer(player, 'Super Jump')
+                ValkyrieBanPlayer(player, 'Super Jump')
                 ValkyrieLog('Player Kicked', '**Player:** ' ..name.. '\n**Reason:** Super Jump \n**license:** ' ..license)
             end
         end
