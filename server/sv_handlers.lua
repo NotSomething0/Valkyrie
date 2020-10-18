@@ -1,11 +1,15 @@
 RegisterNetEvent('Valkyrie:ClientDetection')
-AddEventHandler('Valkyrie:ClientDetection', function(user, log, reason)
+AddEventHandler('Valkyrie:ClientDetection', function(user, log, reason, bool)
   local license = ValkyrieIdentifiers(source).license
   if not license then return end
   if not user or user == '' then user = GetPlayerName(source) end
-  if not log or log == '' then log = 'Triggerd Valkyrie:ClientDetection' end
+  if not log or log == '' then log = 'Triggerd `Valkyrie:ClientDetection`' end
   ValkyrieLog('Player Kicked', '**Player:** ' ..user.. '\n**Reason:** ' ..log.. '\n**license:** ' ..license)
-  ValkyrieKickPlayer(source, reason)
+  if bool == false then
+    ValkyrieKickPlayer(source, reason)
+  else
+    ValkyrieBanPlayer(source, reason)
+  end
 end)
 
 AddEventHandler('entityCreating', function(entity)
@@ -248,7 +252,7 @@ for _, eventName in pairs(_blockedServerEvents) do
     local license = ValkyrieIdentifiers(source).license
     if not license then return end
     ValkyrieLog('Player Kicked', '**Player:** ' ..GetPlayerName(source).. '\n**Reason:** Blocked server event `' ..eventName.. '`\n**license:** ' ..license)
-    ValkyrieKickPlayer(source, 'Blocked Event')
+    ValkyrieBanPlayer(source, 'Blocked Event')
   end)
 end
 
@@ -272,13 +276,13 @@ AddEventHandler('chatMessage', function(source, author, text)
   for _, messages in pairs(Config._blacklistedMessages) do
     if string.find(text:lower(), messages:lower()) then
       ValkyrieLog('Player kicked', '**Player:** ' ..sender.. '\n**Reason:** Blocked chat message `' ..text.. '`\n **license:** ' ..license)
-      ValkyrieKickPlayer(source, 'Blocked chat message')
+      ValkyrieBanPlayer(source, 'Blocked chat message')
       CancelEvent()
     end
   end
   if sender ~= author then
     CancelEvent()
     ValkyrieLog('Player kicked', '**Player:** ' ..sender.. '\n**Reason:** Tried to say: `' ..text.. '` as `' ..author..'`\n**license:** ' ..license)
-    ValkyrieKickPlayer(source, 'Fake chat message')
+    ValkyrieBanPlayer(source, 'Fake chat message')
   end
 end)
