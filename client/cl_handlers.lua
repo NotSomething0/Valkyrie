@@ -19,7 +19,7 @@ for _, eventName in pairs(_blockedClientEvents) do
             CancelEvent()
             return
         end
-        TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Blocked client event: `' ..eventName.. '`', 'Blocked event')
+        TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Blocked client event: `' ..eventName.. '`', 'Blocked event', true)
         Triggered = true
     end)
 end
@@ -48,7 +48,7 @@ AddEventHandler('notify', function(message)
 end)
 
 AddEventHandler('onClientResourceStop', function(resource)
-    TriggerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Stopped resource: `' ..resource.. '`', 'Invalid resource list')
+    TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Stopped resource: `' ..resource.. '`', 'Invalid resource list', false)
 end)
 
 AddEventHandler('onClientMapStart', function()
