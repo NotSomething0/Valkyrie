@@ -36,12 +36,12 @@ CreateThread(function()
             end
             local entityHealth = GetEntityMaxHealth(playerPed) 
             if entityHealth > 201 then
-                ValkyrieLog('Player Kicked', '**Player:** ' ..name.. '\n**Reason:** Set maximum health to `' ..entityHealth.. '`\n**license:** ' ..license)
+                ValkyrieLog('Player Banned', '**Player:** ' ..name.. '\n**Reason:** Set maximum health to `' ..entityHealth.. '`\n**license:** ' ..license)
                 ValkyrieBanPlayer(player, 'Max health: ' ..entityHealth)
             end
             if IsPlayerUsingSuperJump(player) then
                 ValkyrieBanPlayer(player, 'Super Jump')
-                ValkyrieLog('Player Kicked', '**Player:** ' ..name.. '\n**Reason:** Super Jump \n**license:** ' ..license)
+                ValkyrieLog('Player Banned', '**Player:** ' ..name.. '\n**Reason:** Super Jump \n**license:** ' ..license)
             end
         end
     end
