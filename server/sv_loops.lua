@@ -46,3 +46,33 @@ CreateThread(function()
         end
     end
 end)
+
+--[[
+    The code below except for a few bits and bops isn't mine. The code was taken from https://github.com/JaredScar/Badger-Anticheat/blob/master/server.lua
+    Thanks JamesUK-Developer/JaredScar(Badger) <3
+]]
+
+CreateThread(function()
+    Wait(1000)
+    local added = false
+    local numResourceModified = 0
+    for i = 1, GetNumResources() do
+        local resource_id = i - 1
+        local resource_name = GetResourceByFindIndex(resource_id)
+        if resource_name ~= GetCurrentResourceName() then
+            for k, v in pairs({'fxmanifest.lua', '__resource.lua'}) do
+                local data = LoadResourceFile(resource_name, v)
+                if data and type(data) == 'string' and string.find(data, 'client/cl_hook.lua') == nil then
+                    numResourceModified = numResourceModified + 1
+                    data = data .. '\n\nclient_script "@' .. GetCurrentResourceName() .. '/client/cl_hook.lua"'
+                    SaveResourceFile(resource_name, v, data, -1)
+                    print('Added to resource: ' .. resource_name)
+                    added = true
+                end
+            end
+        end
+    end
+    if added then
+        print('Modified ' ..numResourceModified.. ' resource(s) a server restart is required for these changes to take affect.')
+    end
+end)
