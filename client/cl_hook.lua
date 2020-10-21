@@ -89,7 +89,6 @@ local ProhibitedVariables = {
     'IlIlIlIlIlI',
     'SidMenu',
     'GheMenu',
-    'UIMenu',
     'INFINITY',
     'klVZJu56hiZnIjg88ekXcEgegjfDvuMv83grKxQiUJJFvN8SHENeK2WaRgTTuafpGe',
     'jailServerLoop',
