@@ -531,8 +531,141 @@ Config._blacklistedModels = {
     [`apa_mp_apa_yacht_jacuzzi_ripple003`] = 'apa_mp_apa_yacht_jacuzzi_ripple003',
     [`apa_mp_apa_yacht_jacuzzi_ripple1`] = 'apa_mp_apa_yacht_jacuzzi_ripple1',
     [`apa_mp_apa_yacht_radar_01a`] = 'apa_mp_apa_yacht_radar_01a',
-    [`apa_MP_Apa_Yacht_Win`] = 'apa_MP_Apa_Yacht_Win'
+    [`apa_MP_Apa_Yacht_Win`] = 'apa_MP_Apa_Yacht_Win',
     --[End of yacht props]
+
+    --[[
+
+    Some more props. Mostly a mixture of building components and other heavy immobile objects that people may spawn just to be annoying with
+
+    ]]
+
+    -- Building Parts
+
+["des_fib_ceil2_root"] = des_fib_ceil2_root,
+["des_fib_ceil_rootb"] = des_fib_ceil_rootb,
+["des_fib_frame"] = des_fib_frame,
+["des_fibstair_root"] = des_fibstair_root,
+["des_floor_root"] = des_floor_root,
+["des_server_root"] = des_server_root,
+["fib_3_qte_lightrig"] = fib_3_qte_lightrig,
+["fib_5_mcs_10_lightrig"] = fib_5_mcs_10_lightrig,
+["frag_plank_a"] = frag_plank_a,
+["frag_plank_b"] = frag_plank_b,
+["frag_plank_c"] = frag_plank_c,
+["frag_plank_d"] = frag_plank_d,
+["frag_plank_e"] = frag_plank_e,
+["hei_prop_bh1_08_mp_gar2"] = hei_prop_bh1_08_mp_gar2,
+["hei_prop_carrier_bombs_1"] = hei_prop_carrier_bombs_1,
+["hei_prop_carrier_radar_1"] = 	hei_prop_carrier_radar_1,
+["hei_prop_carrier_radar_2"] = 	hei_prop_carrier_radar_2,
+["hei_prop_com_mp_gar2"] = hei_prop_com_mp_gar2,
+["hei_prop_gold_trolly_empty"] = hei_prop_gold_trolly_empty,
+["hei_prop_heist_magnet"] = hei_prop_heist_magnet,
+["hei_prop_heist_tug"] = hei_prop_heist_tug,
+["hei_prop_ss1_mpint_door_l"] =	hei_prop_ss1_mpint_door_l,
+["hei_prop_ss1_mpint_door_2"] = hei_prop_ss1_mpint_door_2,
+["p_cs_mp_jet_01_s"] = p_cs_mp_jet_01_s,
+["prop_air_sechut_01"] = prop_air_sechut_01,
+["prop_barier_conc_01a"] = prop_barier_conc_01a,
+["prop_barier_conc_02a"] = prop_barier_conc_02a,
+["prop_barier_conc_01b"] = prop_barier_conc_01b,
+["prop_barier_conc_01c"] = prop_barier_conc_01c,
+["prop_bench_1a"] = prop_bench_1a,
+["prop_bench_1b"] = prop_bench_1b,
+["prop_bench_1c"] = prop_bench_1c,
+["prop_bench_2"] = prop_bench_2,
+["prop_bench_3"] = prop_bench_3,
+["prop_bench_4"] = prop_bench_4,
+["prop_bench_5"] = prop_bench_5,
+["prop_bench_6"] = prop_bench_6,
+["prop_bench_7"] = prop_bench_7,
+["prop_bench_8"] = prop_bench_8,
+["prop_bench_9"] = prop_bench_9,
+["prop_bench_10"] = prop_bench_10,
+
+-- Containers
+
+["prop_container_01mb"] = prop_container_01mb,
+["prop_container_03_ld"] = prop_container_03_ld,
+["prop_container_03b"] = prop_container_03b,
+["prop_container_03mb"] = prop_container_03mb, 
+["prop_container_05a"] = prop_container_05a, 
+["prop_container_hole"] = prop_container_hole,
+["prop_container_ld"] = prop_container_ld,
+["prop_container_ld_pu"] = prop_container_ld_pu,
+["prop_container_old1"] = prop_container_old1,
+["prop_ld_container"] = prop_ld_container,
+
+-- Walls
+
+["prop_fib_wallfrag01"] = prop_fib_wallfrag01,
+["prop_ld_fragwall_01b"] = prop_ld_fragwall_01b,
+["prop_tyre_wall_01"] = prop_tyre_wall_01,
+["prop_tyre_wall_01b"] = prop_tyre_wall_01b,
+["prop_tyre_wall_02"] = prop_tyre_wall_02,
+["prop_tyre_wall_02b"] = prop_tyre_wall_02b,
+["prop_tyre_wall_02c"] = prop_tyre_wall_02c,
+["prop_tyre_wall_03"] = prop_tyre_wall_03,
+["prop_tyre_wall_03b"] = prop_tyre_wall_03b,
+["prop_tyre_wall_03c"] = prop_tyre_wall_03c,
+["prop_tyre_wall_04"] = prop_tyre_wall_04,
+["prop_tyre_wall_05"] = prop_tyre_wall_05,
+
+-- Fences
+
+["prop_const_fence02a"] = prop_const_fence02a,
+["prop_const_fence02b"] = prop_const_fence02b,
+["prop_const_fence03a_cr"] = prop_const_fence03a_cr,
+["prop_elecbox_24"] = prop_elecbox_24,
+["prop_elecbox_24b"] = prop_elecbox_24b,
+["prop_facgate_01"] = prop_facgate_01,
+["prop_facgate_01b"] = prop_facgate_01b,
+["prop_facgate_02_l"] = prop_facgate_02_l,
+["prop_facgate_03_l"] = prop_facgate_03_l,
+["prop_facgate_03_ld_l"] = prop_facgate_03_ld_l,
+["prop_facgate_03_ld_r"] = prop_facgate_03_ld_r,
+["prop_facgate_03_r"] = prop_facgate_03_r,
+["prop_facgate_03b_l"] = prop_facgate_03b_l,
+["prop_facgate_03b_r"] = prop_facgate_03b_r,
+["prop_facgate_04_l"] = prop_facgate_04_l,
+["prop_facgate_04_r"] = prop_facgate_04_r,
+["prop_facgate_05_r"] = prop_facgate_05_r,
+["prop_facgate_06_l"] = prop_facgate_06_l,
+["prop_facgate_06_r"] = prop_facgate_06_r,
+["prop_facgate_07"] = prop_facgate_07,
+["prop_facgate_07b"] = prop_facgate_07b,
+["prop_facgate_08"] = prop_facgate_08,
+["prop_facgate_08_ld"] = prop_facgate_08_ld,
+["prop_facgate_id1_27"] = prop_facgate_id1_27,
+["prop_fncconstruc_01d"] = prop_fncconstruc_01d,
+["prop_fncconstruc_ld"] = prop_fncconstruc_ld, 
+["prop_inflatearch_01"] = prop_inflatearch_01,
+["prop_inflategate_01"] = prop_inflategate_01,
+["prop_ld_ferris_wheel"] = prop_ld_ferris_wheel,
+["prop_mb_hesco_06"] = prop_mb_hesco_06, 
+["prop_mb_sandblock_04"] = prop_mb_sandblock_04,
+["prop_med_jet_01"] = prop_med_jet_01, 
+["prop_rail_boxcar"] = prop_rail_boxcar,
+["prop_rail_boxcar2"] = prop_rail_boxca2,
+["prop_rail_boxcar3"] = prop_rail_boxcar3,
+["prop_rail_boxcar4"] = prop_rail_boxcar4,
+["prop_rub_cont_01b"] = prop_rub_cont_01b,
+["prop_rub_railwreck_2"] = prop_rub_railwreck_2,
+["prop_shamal_crash"] = prop_shamal_crash,
+["prop_skate_flatramp_cr"] = prop_skate_flatramp_cr,
+["prop_skate_funbox_cr"] = prop_skate_funbox_cr,
+["prop_skate_halfpipe_cr"] = prop_skate_halfpipe_cr,
+["prop_skate_kickers_cr"] = prop_skate_kickers_cr,
+["prop_skate_quartpipe_cr"] = prop_skate_quartpipe_cr,
+["prop_skate_spiner_cr"] = prop_skate_spiner_cr,
+["prop_skate_spiner_cr"] = prop_skate_spiner_cr,
+["prop_skid_box_01"] = prop_skid_box_01,
+["prop_start_gate_01b"] = prop_start_gate_01b,
+["prop_start_gate_01"] = prop_start_gate_01,
+
+
+
 }
 
 Config._blacklistedPeds = {
@@ -542,7 +675,7 @@ Config._blacklistedPeds = {
 
 Config._blacklistedWeapons = {
     [`weapon_rpg`] = 'weapon_rpg',
-    [`weapon_smg`] = 'weapon_smg'
+  
 }
 
 Config._blacklistedVehicles = {
