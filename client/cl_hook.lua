@@ -10,7 +10,6 @@ local ProhibitedVariables = {
     'Plane',
     'LynxEvo',
     'FendinX',
-    'Menu',
     'LR',
     'Lynx8',
     'MIOddhwuie',
