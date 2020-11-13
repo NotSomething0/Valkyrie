@@ -15,7 +15,7 @@ CreateThread(function()
         playerPed = PlayerPedId()
         playerId = PlayerId()
         playerName = GetPlayerName(playerId)
-        Wait(15000)
+        Wait(5000)
     end
 end)
 
@@ -26,7 +26,7 @@ CreateThread(function()
             Wait(1500)
             if GetPlayerInvincible_2(playerId) then
                 if not isAdmin then
-                    TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(playerId), 'GodMode: SetPlayerInvincible, SetEntityInvincible, or SetPlayerInvincibleKeepRagdollEnabled', 'Invincible', true)
+                    TriggerServerEvent('Valkyrie:ClientDetection', playerName), 'GodMode: SetPlayerInvincible, SetEntityInvincible, or SetPlayerInvincibleKeepRagdollEnabled', 'Invincible', true)
                 else
                     print('^5[Valkyrie] Info: ^3Skipped banning of ' ..playerName.. ' this user is an Admin!^7')
                 end
@@ -40,7 +40,7 @@ CreateThread(function()
                     godModeStrikes = godModeStrikes + 1
                 end
                 if godModeStrikes >= Config.MaxGodModeStrikes then
-                    TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(playerId), 'GodMode: SetEntityHealth()', 'Invincible', true)
+                    TriggerServerEvent('Valkyrie:ClientDetection', playerName, 'GodMode: SetEntityHealth()', 'Invincible', true)
                 elseif GetEntityHealth(playerPed) == currentHealth - 2 then
                     SetEntityHealth(playerPed, GetEntityHealth(playerPed) + 2)
                 end
@@ -64,7 +64,7 @@ CreateThread(function()
                 specStrikes = specStrikes + 1
             end
             if specStrikes >= Config.MaxSpectatorStrikes then
-                TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(playerId), 'Spectating without permission', 'Spectating', false)
+                TriggerServerEvent('Valkyrie:ClientDetection', playerName, 'Spectating without permission', 'Spectating', false)
             end
         end
     end
