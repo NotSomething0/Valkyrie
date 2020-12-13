@@ -19,14 +19,34 @@ for _, eventName in pairs(_blockedClientEvents) do
             CancelEvent()
             return
         end
-        TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Blocked client event: `' ..eventName.. '`', 'Blocked event', true)
+        TriggerServerEvent('Valkyrie:ClientDetection', 'Blocked client event: `' ..eventName.. '`', 'Blocked event', true)
         Triggered = true
     end)
 end
 
-RegisterNetEvent('setPed')
-AddEventHandler('setPed', function()
-    local defaultPed = 'a_m_y_skater_01'
+RegisterNetEvent('Valkyrie:ClearObjects')
+AddEventHandler('Valkyrie:ClearObjects', function()
+    local cObject = GetGamePool('CObject')
+    for _, obj in pairs(cObject) do
+        NetworkRequestControlOfEntity(obj)
+
+        while not NetworkHasControlOfEntity(obj) do
+            Wait(500)
+        end
+        DetachEntity(obj, 0, false)
+
+        SetEntityCollision(object, false, false)
+        SetEntityAlpha(obj, 0.0, true)
+        SetEntityAsMissionEntity(obj, true, true)
+        SetEntityAsNoLongerNeeded(obj)
+        DeleteEntity(obj)
+    end
+end)
+
+
+RegisterNetEvent('Valkyrie:Blacklist:SetPlayerModel')
+AddEventHandler('Valkyrie:Blacklist:SetPlayerModel', function()
+    local defaultPed = `a_m_y_skater_01`
     RequestModel(defaultPed)
     while not HasModelLoaded(defaultPed) do
         Wait(500)
@@ -48,7 +68,7 @@ AddEventHandler('notify', function(message)
 end)
 
 AddEventHandler('onClientResourceStop', function(resource)
-    TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Stopped resource: `' ..resource.. '`', 'Invalid resource list', false)
+    TriggerServerEvent('Valkyrie:ClientDetection', 'Stopped resource: `' ..resource.. '`', 'Invalid resource list', false)
 end)
 
 AddEventHandler('onClientMapStart', function()
