@@ -1,22 +1,50 @@
 AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
-    -- Id of the player connecting
-    local player = source
-    -- License of the player connecting
-    local license = ValkyrieIdentifiers(player).license
-    -- defer connection right away.
+    -- PlayerId of the user connecting to the server.
+    local playerId = source
+    -- Prevent and defer connection right away.
     deferrals.defer()
     -- Mandatory wait
     Wait(0)
-    -- Let the player know what is going on.
-    deferrals.update(string.format("Hello %s. Your license ID is being checked.", name))
-    -- If no license is found prevent them from connecting.
-    if not license then
-        return deferrals.done('No license id found is sv_lan set?')
+    --Info the user why their connection is being prevented.
+    deferrals.update(string.format('Hello %s. Please wait while your identifiers are being checked.', name))
+    -- Prefix of every ban placed by Valkyrie
+    local banPrefix = 'valkyrie_ban_'
+    local handle = StartFindKvp(banPrefix)
+    local bans = {}
+    -- Create infinite loop to get all banId's
+    while true do
+        -- Mandatory Wait
+        Wait(0)
+        -- BanId
+        local key = FindKvp(handle)
+        -- Check to see if there are more banId's to get.
+        if key == nil then
+            -- Break the loop because there are no more banId's.
+            break
+        else
+            -- If there are still some then add them to the bans table.
+            table.insert(bans, key)
+        end
     end
-    -- If a banned license is found prevent the player from connecting and let them know what's happening
-    if GetResourceKvpString(license) then
-        deferrals.done(GetResourceKvpString(license))
+    -- Stop looking for banId's
+    EndFindKvp(handle)
+    -- Check if the table is empty (will only happen if no one has ever been banned.)
+    if next(bans) == nil then
+        -- If the table is empty then let the user in because there are no bans
+        deferrals.done()
     else
-        deferrals.done() -- If there license isn't banned let them in.
+        -- Otherwise loop through all the banId's in the table
+        for _, banId in ipairs(bans) do
+            -- Check if the user connecting has any identifiers that match
+            if GetResourceKvpString(banId):find(json.encode(GetPlayerIdentifiers(playerId))) then
+                -- If they do then get their reason
+                local reason = string.gsub(banId, 'ban', "reason")
+                -- Don't let the user in with and provide the reason for blocking their connection.
+                deferrals.done(GetResourceKvpString(reason))
+            else
+                -- Otherwise let the user in because they aren't banned.
+                deferrals.done()
+            end
+        end
     end
 end)
