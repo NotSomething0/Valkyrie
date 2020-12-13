@@ -1,24 +1,42 @@
-RegisterNetEvent('Valkyrie:ClientDetection')
-AddEventHandler('Valkyrie:ClientDetection', function(user, log, reason, bool)
-  local license = ValkyrieIdentifiers(source).license
-  if not license then return end
-  if not user or user == '' then user = GetPlayerName(source) end
-  if not log or log == '' then log = 'Triggerd `Valkyrie:ClientDetection`' end
-  if bool == false then
-    ValkyrieKickPlayer(source, reason)
-    ValkyrieLog('Player Kicked', '**Player:** ' ..user.. '\n**Reason:** ' ..log.. '\n**license:** ' ..license)
+local IsPlayerAceAllowed = IsPlayerAceAllowed
+local ValkyrieKickPlayer = ValkyrieKickPlayer
+local ValkyrieBanPlayer = ValkyrieBanPlayer
+local CancelEvent = CancelEvent
+local GetPlayerName = GetPlayerName
+-- Permission handler event.
+RegisterNetEvent('Valkyrie:GetPlayerAcePermission')
+AddEventHandler('Valkyrie:GetPlayerAcePermission', function()
+  -- Check if the user has permission.
+  if IsPlayerAceAllowed(source, 'command') then
+    -- Send permssion to the client
+    TriggerClientEvent('Valkyrie:RecieveClientPermission', source, true)
   else
-    ValkyrieBanPlayer(source, reason)
-    ValkyrieLog('Player Banned', '**Player:** ' ..user.. '\n**Reason:** ' ..log.. '\n**license:** ' ..license)
+    -- Send permssion to the client
+    TriggerClientEvent('Valkyrie:RecieveClientPermission', source, false)
   end
 end)
-
+-- Client detection event.
+RegisterNetEvent('Valkyrie:ClientDetection')
+AddEventHandler('Valkyrie:ClientDetection', function(log, reason, bool)
+  -- If no log reason is provided or the log reason provided is an empty string then set the log reason.
+  if not log or log == '' then log = 'Triggerd `Valkyrie:ClientDetection`' end
+  -- Check if were going to ban or kick the user.
+  if bool == false then
+    ValkyrieKickPlayer(source, reason, log)
+  else
+    ValkyrieBanPlayer(source, reason, log)
+  end
+end)
+-- Event for whitelisted entity checking.
 AddEventHandler('entityCreating', function(entity)
-  if Config._blacklistedModels[GetEntityModel(entity)] then
+  -- Check if the entity is allowed to spawn
+  if not Config._whitelistedEntitys[GetEntityModel(entity)] then
+    -- If it's not then prevent it from spawning.
     CancelEvent()
   end
 end)
 
+-- A table of exploitable server events (If one of these events are in your server fix the exploit instead of removing it!)
 local _blockedServerEvents = {
   "8321hiue89js",
   "adminmenu:allowall",
@@ -246,44 +264,62 @@ local _blockedServerEvents = {
   "mellotrainer:adminKickDFWM",
   "esx_society:putVehicleDFWMInGarage"
 }
-
+-- Loop through all events and add a handler for them.
 for _, eventName in pairs(_blockedServerEvents) do
   RegisterNetEvent(eventName)
   AddEventHandler(eventName, function()
-    local license = ValkyrieIdentifiers(source).license
-    if not license then return end
-    ValkyrieLog('Player Banned', '**Player:** ' ..GetPlayerName(source).. '\n**Reason:** Blocked server event `' ..eventName.. '`\n**license:** ' ..license)
-    ValkyrieBanPlayer(source, 'Blocked Event')
+    -- Name of the user
+    local playerName = GetPlayerName(source)
+    -- Check to make sure the user is still in the server to prevent unnecessary calling of the ban fucntion.
+    if playerName == nil then return end
+    -- If the event was triggered ban the user.
+    ValkyrieBanPlayer(source, 'Blocked Event', 'Blocked server event `' ..eventName.. '`')
   end)
 end
-
+-- Number of explosions created
+local numberExplosions = 0
+-- Table of blocked explosions
+local blacklistedExplosions = Config._blockedExplosion
+-- Event checking for blocked explosions.
 AddEventHandler('explosionEvent', function(sender, ev)
-  local license = ValkyrieIdentifiers(sender).license
-  if not license then return end
-  for _, expNum in pairs(Config.blockedExplosion) do
-    if ev.damageScale <= 0 or ev.isInvisible == true or ev.isAudible == false then return end
-    if ev.explosionType == expNum and ev.damageScale >= 1 then
+  -- Name of the user
+  local playerName = GetPlayerName(sender)
+  -- Check to make sure the user is still in the server.
+  if playerName == nil then return end
+  -- Loop through all blocked explosions
+  for _, explosionNumber in ipairs(blacklistedExplosions) do
+    -- Check if the explosion is blocked and the damage scale is equal to or greater then one.
+    if ev.explosionType == explosionNumber and ev.damageScale >= 1 then
+      -- Cancel the explosion.
       CancelEvent()
-      ValkyrieLog('Player Kicked', '**Player:** ' ..GetPlayerName(sender).. '\n**Reason:** Explosion created `' ..expNum.. '`\n**license:**' ..license)
-      ValkyrieKickPlayer(sender, 'Blocked Explosion')
     end
   end
 end)
-
+-- Event checking for blocked messages. 
 AddEventHandler('chatMessage', function(source, author, text)
+  -- Name of the user.
   local sender = GetPlayerName(source)
-  local license = ValkyrieIdentifiers(source).license
-  if not license then return end
+  -- Check to make sure the user is still in the server.
+  if not sender then return end
+  -- Loop through all blocked messages.
   for _, messages in pairs(Config._blacklistedMessages) do
+    -- Check if a blocked message was sent.
     if string.find(text:lower(), messages:lower()) then
-      ValkyrieLog('Player Banned', '**Player:** ' ..sender.. '\n**Reason:** Blocked chat message `' ..text.. '`\n **license:** ' ..license)
-      ValkyrieBanPlayer(source, 'Blocked chat message')
+      -- If it is preven the message from being sent.
       CancelEvent()
+      -- Wait one second to try and prevent erros from being printed to the console.
+      Wait(1000)
+      -- Ban the user for sending the blocked message.
+      ValkyrieBanPlayer(source, 'Blocked chat message', 'Blocked chat message `' ..text.. '`')
     end
   end
+  -- Check if the name of the user is eual to the author.
   if sender ~= author then
+    -- If it's not then cancel the event.
     CancelEvent()
-    ValkyrieLog('Player Banned', '**Player:** ' ..sender.. '\n**Reason:** Tried to say: `' ..text.. '` as `' ..author..'`\n**license:** ' ..license)
-    ValkyrieBanPlayer(source, 'Fake chat message')
+    -- Wait one second to try and prevent erros from being printed to the console.
+    Wait(1000)
+    -- Ban the user for sending a fake message.
+    ValkyrieBanPlayer(source, 'Fake chat message', 'Tried to say: `' ..text.. '` as `' ..author.. '`')
   end
 end)
