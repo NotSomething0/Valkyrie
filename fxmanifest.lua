@@ -2,9 +2,9 @@ fx_version 'cerulean'
 
 author 'https://github.com/NotSomething0'
 
-description 'A FiveM anticheat created for the community'
+description 'An open source FiveM anticheat'
 
-version '0.7.1 Beta'
+version '0.8.5 Beta'
 
 game 'gta5'
 
