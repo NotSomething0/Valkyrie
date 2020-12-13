@@ -92,28 +92,22 @@ local ProhibitedVariables = {
     'klVZJu56hiZnIjg88ekXcEgegjfDvuMv83grKxQiUJJFvN8SHENeK2WaRgTTuafpGe',
     'jailServerLoop',
     'carSpamServer',
+    'Dopamine',
     'nofuckinglol'
 }
 
 function CheckVariables()
     for _, varNames in pairs(ProhibitedVariables) do
         if _G[varNames] ~= nil then
-            TriggerServerEvent('Valkyrie:ClientDetection', GetPlayerName(PlayerId()), 'Blacklisted Variable found in: ' ..GetCurrentResourceName().. '\n **Variable Name:** ' ..varNames, 'Running Malicious Code', true)
+            TriggerServerEvent('Valkyrie:ClientDetection', 'Blacklisted Variable found in: ' ..GetCurrentResourceName().. '\n **Variable Name:** ' ..varNames, 'Running Malicious Code', true)
         end
     end
 end
 
-local spawned = false
-AddEventHandler('playerSpawned', function()
-    if not spawned then 
-        spawned = true
-    end
-    if spawned then
-        Citizen.CreateThread(function()
-            while true do
-                Citizen.Wait(15000)
-                CheckVariables()
-            end
-        end)
+
+Citizen.CreateThread(function()
+    while true do
+        CheckVariables()
+        Citizen.Wait(15000)
     end
 end)
