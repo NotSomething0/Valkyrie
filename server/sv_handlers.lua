@@ -7,7 +7,7 @@ local GetPlayerName = GetPlayerName
 RegisterNetEvent('Valkyrie:GetPlayerAcePermission')
 AddEventHandler('Valkyrie:GetPlayerAcePermission', function()
   -- Check if the user has permission.
-  if IsPlayerAceAllowed(source, 'command') then
+  if IsPlayerAceAllowed(source, 'valkyrie') then
     -- Send permssion to the client
     TriggerClientEvent('Valkyrie:RecieveClientPermission', source, true)
   else

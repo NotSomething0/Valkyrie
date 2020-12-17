@@ -29,14 +29,14 @@ CreateThread(function()
                     ValkyrieBanPlayer(player, 'Max health', 'Set maximum health to ' ..GetEntityMaxHealth(playerPed))
                 end
                 -- Check if the user is allowed to use super jump.
-                if not IsPlayerAceAllowed(players, 'command') then
+                if not IsPlayerAceAllowed(players, 'valkyrie') then
                     -- Check if the user is using Super Jump.
                     if IsPlayerUsingSuperJump(players) then
                         ValkyrieBanPlayer(players, 'Super Jump', 'Super Jump')
                     end
                 end
                 -- Check if the user is allowed to bypass invincible check.
-                if not IsPlayerAceAllowed(players, 'command') then
+                if not IsPlayerAceAllowed(players, 'valkyrie') then
                     -- Check if the user is invincible. 
                     if GetPlayerInvincible(players) then
                         ValkyrieBanPlayer(players, 'Invincible', 'GodMode: SetEntity/PlayerInvinciple native')
