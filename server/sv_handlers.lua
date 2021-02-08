@@ -27,11 +27,12 @@ AddEventHandler('Valkyrie:ClientDetection', function(log, reason, bool)
     ValkyrieBanPlayer(source, reason, log)
   end
 end)
+
+local whitelistedModels = {}
 -- Event for whitelisted entity checking.
 AddEventHandler('entityCreating', function(entity)
-  -- Check if the entity is allowed to spawn
-  if not Config._whitelistedEntitys[GetEntityModel(entity)] then
-    -- If it's not then prevent it from spawning.
+  local entityModel = GetEntityModel(entity)
+  if not whitelistedModels[tonumber(entityModel)] then
     CancelEvent()
   end
 end)
@@ -295,31 +296,34 @@ AddEventHandler('explosionEvent', function(sender, ev)
     end
   end
 end)
--- Event checking for blocked messages. 
-AddEventHandler('chatMessage', function(source, author, text)
-  -- Name of the user.
-  local sender = GetPlayerName(source)
-  -- Check to make sure the user is still in the server.
-  if not sender then return end
-  -- Loop through all blocked messages.
-  for _, messages in pairs(Config._blacklistedMessages) do
-    -- Check if a blocked message was sent.
-    if string.find(text:lower(), messages:lower()) then
-      -- If it is preven the message from being sent.
-      CancelEvent()
-      -- Wait one second to try and prevent erros from being printed to the console.
-      Wait(1000)
-      -- Ban the user for sending the blocked message.
-      ValkyrieBanPlayer(source, 'Blocked chat message', 'Blocked chat message `' ..text.. '`')
+
+local censoredPharases = Config._blacklistedMessages
+
+local intMessage
+
+exports.chat:registerMessageHook(function(source, outMessage, hookRef)
+  intMessage = outMessage.args[2]:lower()
+  for _, phrases in ipairs(censoredPharases) do
+    if stirng.find(intMessage, phrases:lower()) do
+      hookRef.cancel()
     end
   end
-  -- Check if the name of the user is eual to the author.
-  if sender ~= author then
-    -- If it's not then cancel the event.
-    CancelEvent()
-    -- Wait one second to try and prevent erros from being printed to the console.
-    Wait(1000)
-    -- Ban the user for sending a fake message.
-    ValkyrieBanPlayer(source, 'Fake chat message', 'Tried to say: `' ..text.. '` as `' ..author.. '`')
+  -- Soemthing for a later, a message filtering system will replace all phrases with an empty string or whatever you'd like.
+  --[[
+  intMessage = outMessage.args[2]:lower()
+  for _, phrases in ipairs(censoredPharases) do
+    repeat
+      if string.find(intMessage, phrases:lower()) do
+        intMessage = string.gsub(intMessage, phrases, '')
+      end
+    until(string.find(intMessage, phrases) == nil)
   end
+
+  hookRef.updateMessage({
+    args = {
+      outMessage.args[1],
+      intMessage -- updates the message with our version
+    }
+  })
+  --]]
 end)
