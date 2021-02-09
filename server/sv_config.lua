@@ -1,21 +1,21 @@
 Config = {}
 -- Where users can contact you after they have been banned/kicked.;
-Config.Contactlink = 'example.com/forums'
+Config.contactLink = ''
 -- Discord Webhook
-Config.DiscWebhook = ''
+Config.discordWebhook = ''
 --[[
     Blacklisted variable detection, setting this option to ture will add @resourceName/client/cl_hook.lua to every manifest file (fxmanifest.lua/__resource.lua)
     Setting this option to false will remove @resourceName/client/cl_hook.lua from every manifest file if it was ever added.
     This can lead to false positives if you have the same variable in one of your resources I reommend doing some testing to ensure this isn't the case.
 ]]
-Config.BlacklistedVarDetection = false
---[[ 
-    A list of explosions that aren't allowed to happen. 
+Config.variableDetection = false
+--[[
+    A list of explosions that aren't allowed to happen.
     See https://github.com/citizenfx/fivem/blob/20a8220de93af1becb8d2cccaad65c880cd6b9c8/code/client/clrcore/External/World.cs#L240 for a list of all explosion types.
 --]]
-Config._blockedExplosion = {1, 2, 4, 5, 25, 32, 33, 35, 36, 37, 38}
+Config.blockedExplosions = {1, 2, 4, 5, 25, 32, 33, 35, 36, 37, 38}
 -- Messages that aren't allowed to sent in the server.
-Config._blacklistedMessages = {
+Config.blockedPhrases = {
     "Bombay Menu",
     "Brutan Premium",
     "d0pamine",
@@ -34,8 +34,8 @@ Config._blacklistedMessages = {
     "hammafia",
     "ham mafia",
     "renalua",
-    "Fallen#0811", 
-    ">:D Player Crash",  
+    "Fallen#0811",
+    ">:D Player Crash",
     "34ByTe Community",
     "MARVIN menu",
     "BAGGY menu <3 https://discord.gg/AGxGDzg",
@@ -49,24 +49,24 @@ Config._blacklistedMessages = {
 -- Filter messages instead of preventing them from being sent. Blacklist phrases will be replaced by a #.
 Config.filterMessages = false
 -- Use the built in mostly server side blacklist system.
-Config.UseBlacklist = false
+Config.useBlacklist = false
 -- Blacklisted Peds follow the provided format
-Config._blacklistedPeds = {
+Config.blacklistedPeds = {
     [`a_m_m_acult_01`] = true,
     [`a_m_y_acult_01`] = true
 }
 -- Blacklisted Weapons follow the provided format
-Config._blacklistedWeapons = {
+Config.blacklistedWeapons = {
     [`weapon_rpg`] = true,
     [`weapon_smg`] = true
 }
 -- Blacklisted Vehicles follow the provided format
-Config._blacklistedVehicles = {
+Config.blacklistedVehicles = {
     [`adder`] = true,
     [`cargoplane`] = true
 }
 -- A list of entitys that are allowed to spawn on the server.
-Config._whitelistedEntitys = {
+Config.whitelistedEntities = {
     -- Compacts
     [`asbo`] = true,
     [`blista`] = true,
