@@ -44,7 +44,10 @@ Config._blacklistedMessages = {
     "You got raped by AlphaV",
     "TITO MODZ",
     "SKAZAMENU",
+    --"discord.gg/"
 }
+-- Filter messages instead of preventing them from being sent. Blacklist phrases will be replaced by a #.
+Config.filterMessages = false
 -- Use the built in mostly server side blacklist system.
 Config.UseBlacklist = false
 -- Blacklisted Peds follow the provided format
