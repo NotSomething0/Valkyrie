@@ -28,7 +28,7 @@ AddEventHandler('Valkyrie:ClientDetection', function(log, reason, bool)
   end
 end)
 
-local whitelistedModels = Config._whitelistedEntitys
+local whitelistedModels = Config.whitelistedEntities
 -- Event for whitelisted entity checking.
 AddEventHandler('entityCreating', function(entity)
   local entityModel = GetEntityModel(entity)
@@ -280,7 +280,7 @@ end
 -- Number of explosions created
 local numberExplosions = 0
 -- Table of blocked explosions
-local blacklistedExplosions = Config._blockedExplosion
+local blacklistedExplosions = Config.blockedExplosions
 -- Event checking for blocked explosions.
 AddEventHandler('explosionEvent', function(sender, ev)
   -- Name of the user
@@ -297,7 +297,7 @@ AddEventHandler('explosionEvent', function(sender, ev)
   end
 end)
 
-local censoredPharases = Config._blacklistedMessages
+local censoredPharases = Config.blockedPhrases
 local filterMessages = Config.filterMessages
 local intMessage
 exports.chat:registerMessageHook(
