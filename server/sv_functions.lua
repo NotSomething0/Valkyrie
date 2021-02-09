@@ -37,7 +37,7 @@ function ValkyrieLog(title, message)
       ['footer'] = {['text'] = 'Created by NotSomething#6200 | ' ..os.date("%x (%X %p)"), ['icon_url'] = 'https://i.imgur.com/jmYn66H.png'},
     }
   }
-  PerformHttpRequest(Config.discordWebhook, function(err, text, headers) end, 'POST', json.encode({username = name, embeds = embed}), { ['Content-Type'] = 'application/json' })
+  PerformHttpRequest(Config.DiscWebhook, function(err, text, headers) end, 'POST', json.encode({username = name, embeds = embed}), { ['Content-Type'] = 'application/json' })
 end
 -- Function for kicking users from the server.
 function ValkyrieKickPlayer(player, dropReason, discordReason)
@@ -55,7 +55,7 @@ function ValkyrieKickPlayer(player, dropReason, discordReason)
   -- If no reason was given then set the reason to unspecified.
   if dropReason == nil then dropReason = 'No reason provided' end
   -- Disconnect the user with their kick reason.
-  DropPlayer(player, 'Kicked \n You have been kicked for the following reason: ' ..dropReason..'. \n If you think this was a mistake contact us at ' ..Config.contactLink)
+  DropPlayer(player, 'Kicked \n You have been kicked for the following reason: ' ..dropReason..'. \n If you think this was a mistake contact us at ' ..Config.Contactlink)
   ValkyrieLog('Kicked', '**Player:** ' ..playerName.. '\n**Reason:** ' ..discordReason.. '\n**license:** ' ..license)
 end
 -- Function for banning users from the server.
@@ -80,7 +80,7 @@ function ValkyrieBanPlayer(playerId, dropReason, discordReason)
   -- Prefix of every ban reason
   local reasonPrefix = 'valkyrie_reason_'
   -- The reason for the ban
-  local banReason = 'Banned \n You have been banned for the following reason: ' ..dropReason.. ' \n If you think this was a mistake contact us at ' ..Config.contactLink.. ' \n Ban Id ' ..banId
+  local banReason = 'Banned \n You have been banned for the following reason: ' ..dropReason.. ' \n If you think this was a mistake contact us at ' ..Config.Contactlink.. ' \n Ban Id ' ..banId
   -- Store indetifiers in the database
   SetResourceKvp(banPrefix..banId, json.encode(GetPlayerIdentifiers(playerId)))
   -- Store the reason in the database
@@ -88,22 +88,4 @@ function ValkyrieBanPlayer(playerId, dropReason, discordReason)
   -- Disconnect the user with thier ban reason.
   DropPlayer(playerId, banReason)
   ValkyrieLog('Banned', '**Player:** ' ..playerName.. '\n**Reason:** ' ..discordReason.. '\n**BanId:** ' ..banId)
-end
-
-
-
-
-local ban_prefix = 'vac_ban_'
-local reason_prefix = 'vac_reason_'
-local contactlink = GetConvar('ContactLink', '')
-
-function vacBan(playerId, reason)
-  local banId = uuid()
-  if playerId ~= nil then
-    SetResourceKvp(string.format('%s%s', ban_prefix, banId), json.encode(GetPlayerIdentifiers(playerId)))
-    SetResourceKvp(string.format('%s%s', reason_prefix, banId), reason)
-    DropPlayer(playerId, reason)
-  else
-    return print('^1[WARN] [VALKYRIE]^7 No PlayerId passed for banning function.')
-  end
 end
