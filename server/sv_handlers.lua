@@ -28,7 +28,7 @@ AddEventHandler('Valkyrie:ClientDetection', function(log, reason, bool)
   end
 end)
 
-local whitelistedModels = {}
+local whitelistedModels = Config._whitelistedEntitys
 -- Event for whitelisted entity checking.
 AddEventHandler('entityCreating', function(entity)
   local entityModel = GetEntityModel(entity)
@@ -298,32 +298,29 @@ AddEventHandler('explosionEvent', function(sender, ev)
 end)
 
 local censoredPharases = Config._blacklistedMessages
-
+local filterMessages = Config.filterMessages
 local intMessage
-
 exports.chat:registerMessageHook(function(source, outMessage, hookRef)
-  intMessage = outMessage.args[2]:lower()
-  for _, phrases in ipairs(censoredPharases) do
-    if stirng.find(intMessage, phrases:lower()) do
-      hookRef.cancel()
+  intMessage = outMessage.args[2]
+  if filterMessages then
+    for _, phrases in ipairs(censoredPharases) do
+      repeat
+        if intMessage:find(phrases) then
+          intMessage = intMessage:gsub(phrases, ('#'):rep(phrases:len()))
+        end
+      until(intMessage:find(phrases) == nil)
+    end
+    hookRef.updateMessage({
+      args = {
+        outMessage.args[1],
+        intMessage
+      }
+    })
+  else
+    for _, phrases in ipairs(censoredPharases) do
+      if intMessage:find(phrases) then
+        hookRef.cancel()
+      end
     end
   end
-  -- Soemthing for a later, a message filtering system will replace all phrases with an empty string or whatever you'd like.
-  --[[
-  intMessage = outMessage.args[2]:lower()
-  for _, phrases in ipairs(censoredPharases) do
-    repeat
-      if string.find(intMessage, phrases:lower()) do
-        intMessage = string.gsub(intMessage, phrases, '')
-      end
-    until(string.find(intMessage, phrases) == nil)
-  end
-
-  hookRef.updateMessage({
-    args = {
-      outMessage.args[1],
-      intMessage -- updates the message with our version
-    }
-  })
-  --]]
 end)
