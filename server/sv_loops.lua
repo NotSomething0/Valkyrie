@@ -24,7 +24,7 @@ CreateThread(function()
             for _, players in pairs(GetPlayers()) do
                 -- Users ped
                 local playerPed = GetPlayerPed(players)
-                -- Check if the user set their max health to greater then or equal to 201. 
+                -- Check if the user set their max health to greater then or equal to 201.
                 if GetEntityMaxHealth(playerPed) >= 201 then
                     ValkyrieBanPlayer(player, 'Max health', 'Set maximum health to ' ..GetEntityMaxHealth(playerPed))
                 end
@@ -37,7 +37,7 @@ CreateThread(function()
                 end
                 -- Check if the user is allowed to bypass invincible check.
                 if not IsPlayerAceAllowed(players, 'valkyrie') then
-                    -- Check if the user is invincible. 
+                    -- Check if the user is invincible.
                     if GetPlayerInvincible(players) then
                         ValkyrieBanPlayer(players, 'Invincible', 'GodMode: SetEntity/PlayerInvinciple native')
                     end
@@ -48,7 +48,7 @@ CreateThread(function()
 end)
 -- Blacklist thread
 CreateThread(function()
-    if Config.UseBlacklist then
+    if Config.useBlacklist then
         while true do
             Wait(2000)
             -- Loop through all players on the server.
@@ -56,22 +56,22 @@ CreateThread(function()
                 -- Users ped
                 local playerPed = GetPlayerPed(players)
                 -- Check if the users player model is blacklisted.
-                if Config._blacklistedPeds[pedHash(playerPed)] then
+                if Config.blacklistedPeds[pedHash(playerPed)] then
                     -- If it is then change the ped and notify them.
                     TriggerClientEvent('Valkyrie:Blacklist:SetPlayerModel', players)
                 end
                 -- Check if the user is holding a blacklisted weapon.
-                if Config._blacklistedWeapons[weaponHash(playerPed)] then
+                if Config.blacklistedWeapons[weaponHash(playerPed)] then
                     Wait(500)
                     -- If they are remove it and send a notification.
                     RemoveWeaponFromPed(playerPed, weaponHash(playerPed))
                     TriggerClientEvent('notify', players, 'Blacklisted Weapon')
                 end
                 -- Check if the users vehicle is blacklisted.
-                if Config._blacklistedVehicles[GetEntityModel(vehicleHash(playerPed))] then
+                if Config.blacklistedVehicles[GetEntityModel(vehicleHash(playerPed))] then
                     -- If it is then delete the vehicle and notifiy them.
                     DeleteEntity(vehicleHash(playerPed))
-                    TriggerClientEvent('notify', players, 'Blacklisted Vehicle')    
+                    TriggerClientEvent('notify', players, 'Blacklisted Vehicle')
                 end
             end
         end
@@ -87,7 +87,7 @@ end)
 local numResourcesModified = 0
 local acName = GetCurrentResourceName()
 CreateThread(function()
-    if Config.BlacklistedVarDetection then
+    if Config.variableDetection then
         -- Check to make sure - isn't in the resource name.
         if not acName:find('-') then
             Wait(1000)
@@ -101,7 +101,7 @@ CreateThread(function()
                 local resource_name = GetResourceByFindIndex(resource_id)
                 -- Check to make sure the resource name is not equal to the anticheat name.
                 if resource_name ~= acName then
-                    -- Loop through each manifest. 
+                    -- Loop through each manifest.
                     for _, manifest in pairs({'fxmanifest.lua', '__resource.lua'}) do
                         -- Load manifest file for each resource.
                         local data = LoadResourceFile(resource_name, manifest)
@@ -141,7 +141,7 @@ CreateThread(function()
             local resource_name = GetResourceByFindIndex(resource_id)
             -- Check to make sure the resource name is not equal to the anticheat name.
             if resource_name ~= acName then
-                -- Loop through each manifest. 
+                -- Loop through each manifest.
                 for _, manifest in pairs({'fxmanifest.lua', '__resource.lua'}) do
                     -- Load manifest file for each resource.
                     local data = LoadResourceFile(resource_name, manifest)
