@@ -300,27 +300,31 @@ end)
 local censoredPharases = Config._blacklistedMessages
 local filterMessages = Config.filterMessages
 local intMessage
-exports.chat:registerMessageHook(function(source, outMessage, hookRef)
-  intMessage = outMessage.args[2]
-  if filterMessages then
-    for _, phrases in ipairs(censoredPharases) do
-      repeat
-        if intMessage:find(phrases) then
-          intMessage = intMessage:gsub(phrases, ('#'):rep(phrases:len()))
-        end
-      until(intMessage:find(phrases) == nil)
-    end
-    hookRef.updateMessage({
-      args = {
-        outMessage.args[1],
-        intMessage
-      }
-    })
-  else
-    for _, phrases in ipairs(censoredPharases) do
-      if intMessage:find(phrases) then
-        hookRef.cancel()
+exports.chat:registerMessageHook(
+  function(source, outMessage, hookRef)
+      intMessage = outMessage.args[2]
+      if filterMessages then
+          for _, phrases in ipairs(censoredPharases) do
+              repeat
+                  if intMessage:find(phrases) then
+                      intMessage = intMessage:gsub(phrases, ("#"):rep(phrases:len()))
+                  end
+              until (intMessage:find(phrases) == nil)
+          end
+          hookRef.updateMessage(
+              {
+                  args = {
+                      outMessage.args[1],
+                      intMessage
+                  }
+              }
+          )
+      else
+          for _, phrases in ipairs(censoredPharases) do
+              if intMessage:find(phrases) then
+                  hookRef.cancel()
+              end
+          end
       end
-    end
   end
-end)
+)
