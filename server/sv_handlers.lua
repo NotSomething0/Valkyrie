@@ -277,28 +277,26 @@ for _, eventName in pairs(_blockedServerEvents) do
     ValkyrieBanPlayer(source, 'Blocked Event', 'Blocked server event `' ..eventName.. '`')
   end)
 end
--- Number of explosions created
-local numberExplosions = 0
--- Table of blocked explosions
-local blacklistedExplosions = Config.blockedExplosions
--- Event checking for blocked explosions.
+
+
+local blockedExplosions = {}
+local explosionTracker = {}
+local allowedExplosions = GetConvarInt('maximumExplosions', 5)
 AddEventHandler('explosionEvent', function(sender, ev)
-  -- Name of the user
-  local playerName = GetPlayerName(sender)
-  -- Check to make sure the user is still in the server.
-  if playerName == nil then return end
-  -- Loop through all blocked explosions
-  for _, explosionNumber in ipairs(blacklistedExplosions) do
-    -- Check if the explosion is blocked and the damage scale is equal to or greater then one.
-    if ev.explosionType == explosionNumber and ev.damageScale >= 1 then
-      -- Cancel the explosion.
-      CancelEvent()
+  if blockedExplosions[ev.explosionType] and ev.damageScale ~= 0.0 then
+    if explosionTracker[sender] == nil then
+      explosionTracker[sender] = 1
+    else
+      explosionTracker[sender] = explosionTracker[sender] + 1
+    end
+    if explosionTracker[sender] >= allowedExplosions then
+      ValkyrieKickPlayer(sender, 'Blocked Explosions', 'Created the maximum allowed explosions ' ..explosionTracker[sender])
     end
   end
 end)
 
-local censoredPharases = Config.blockedPhrases
-local filterMessages = Config.filterMessages
+local censoredPharases = json.decode(GetConvar('blockedPhrases', '[]'))
+local filterMessages = GetConvar('filterMessages', false)
 local intMessage
 exports.chat:registerMessageHook(
   function(source, outMessage, hookRef)
@@ -328,3 +326,12 @@ exports.chat:registerMessageHook(
       end
   end
 )
+
+RegisterCommand('conTest', function(source, args)
+  for _, index in ipairs(json.decode(GetConvar('blockedExplosions', '[]'))) do
+    blockedExplosions[index] = true
+  end
+end, false)
+
+AddEventHandler('', function()
+end)
