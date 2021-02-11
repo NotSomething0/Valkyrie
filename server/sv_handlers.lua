@@ -292,6 +292,7 @@ AddEventHandler('explosionEvent', function(sender, ev)
     if explosionTracker[sender] >= allowedExplosions then
       ValkyrieKickPlayer(sender, 'Blocked Explosions', 'Created the maximum allowed explosions ' ..explosionTracker[sender])
     end
+    CancelEvent()
   end
 end)
 
