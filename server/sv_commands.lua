@@ -2,7 +2,7 @@ RegisterCommand('vkick', function(source, args)
     -- PlayerId of the user being kicked.
     local playerId = tonumber(args[1])
     -- Check to make sure the given argument exists and is a number.
-    if playerId == nil or type(playerId) ~= 'number' then
+    if not playerId then
         -- Check to see if the command was executed in the console or not.
         if source ~= 0 then
             -- Let the staff member (if in the server) know, no playerId was specified.
@@ -49,7 +49,7 @@ RegisterCommand('vkick', function(source, args)
         kickedBy = GetPlayerName(source)
     end
     -- Check to make sure the user being kicked isn't a staff memeber.
-    if not IsPlayerAceAllowed(playerId, 'command') then
+    if not IsPlayerAceAllowed(playerId, 'staff') then
         ValkyrieKickPlayer(playerId, reason)
         -- Check to see if the command was executed in the console or not.
         if source ~= 0 then
@@ -124,7 +124,7 @@ RegisterCommand('vban', function(source, args)
         bannedBy = GetPlayerName(source)
     end
     -- Check to make sure the user being banned isn't a staff memeber.
-    if not IsPlayerAceAllowed(playerId, 'command') then
+    if not IsPlayerAceAllowed(playerId, 'staff') then
         ValkyrieBanPlayer(playerId, reason)
         if source ~= 0 then
             -- Let the staff member (if in the server) know the user was successfully kicked.
@@ -253,7 +253,7 @@ RegisterCommand('vfreeze', function(source, args)
         return
     end
     -- Check to make sure the user being frozen isn't a staff member
-    if not IsPlayerAceAllowed(playerId, 'command') then
+    if not IsPlayerAceAllowed(playerId, 'staff') then
         -- Get the ped of the user being frozen.
         local playerPed = GetPlayerPed(playerId)
         -- Set the frozen variable to the opposite of its current state.
@@ -296,4 +296,24 @@ RegisterCommand('vclearpeds', function()
         -- Delete all peds.
         DeleteEntity(peds)
     end
+end, true)
+
+RegisterCommand('vacReload', function(source, args)
+    local reloadingModulecl = 'Reloading module %s.'
+    local reloadingModulesv = '^6[INFO] [VALKYRIE]^7 Reloading module %s.'
+    local module = tostring(args[1]) or 'default'
+    if source ~= 0 then
+        if #args < 1 then
+            TriggerClientEvent('chat:addMessage', source, { color = { 255, 0, 0}, multiline = false, args = {'Valkyrie', 'No arguments provided reloading all modules.'}})
+        else
+            TriggerClientEvent('chat:addMessage', source, { color = { 255, 0, 0}, multiline = false, args = {'Valkyrie', reloadingModulecl:format(module)}})
+        end
+    else
+        if #args < 1 then
+            print('^6[INFO] [VALKYRIE]^7 No arguments provided reloading all modules.')
+        else
+            print(reloadingModulesv:format(module))
+        end
+    end
+    TriggerEvent('__valkyrie__internal', module)
 end, true)
