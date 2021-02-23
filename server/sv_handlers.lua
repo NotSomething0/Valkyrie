@@ -28,11 +28,11 @@ AddEventHandler('Valkyrie:ClientDetection', function(log, reason, bool)
   end
 end)
 
-local whitelistedModels = Config.whitelistedEntities
+local whitelistedEntities = {}
 -- Event for whitelisted entity checking.
 AddEventHandler('entityCreating', function(entity)
   local entityModel = GetEntityModel(entity)
-  if not whitelistedModels[tonumber(entityModel)] then
+  if not whitelistedEntities[tonumber(entityModel)] then
     CancelEvent()
   end
 end)
@@ -278,7 +278,6 @@ for _, eventName in pairs(_blockedServerEvents) do
   end)
 end
 
-
 local blockedExplosions = {}
 local explosionTracker = {}
 local allowedExplosions = GetConvarInt('maximumExplosions', 5)
@@ -297,7 +296,7 @@ AddEventHandler('explosionEvent', function(sender, ev)
 end)
 
 local censoredPharases = json.decode(GetConvar('blockedPhrases', '[]'))
-local filterMessages = GetConvar('filterMessages', false)
+local filterMessages = GetConvar('filterMessages', 'no')
 local intMessage
 exports.chat:registerMessageHook(
   function(source, outMessage, hookRef)
@@ -328,11 +327,55 @@ exports.chat:registerMessageHook(
   end
 )
 
-RegisterCommand('conTest', function(source, args)
-  for _, index in ipairs(json.decode(GetConvar('blockedExplosions', '[]'))) do
-    blockedExplosions[index] = true
-  end
-end, false)
+local switch = function(choice)
+  choice = tostring(choice)
+  
+  case = {
+    ['models'] = function()
+      whitelistedEntities = {}
+      for _, modelString in ipairs(json.decode(GetConvar('whitelistedEntities', '[]'))) do
+        whitelistedEntities[GetHashKey(modelString)] = true
+      end
+    end,
 
-AddEventHandler('', function()
+    ['explosions'] = function()
+      blockedExplosions = {}
+      for _, explosionIndex in ipairs(json.decode(GetConvar('blockedExplosions', '[]'))) do
+        blockedExplosions[explosionIndex] = true
+      end
+    end,
+
+    ['phrases'] = function()
+      filterMessages = GetConvar('filterMessages', 'no')
+      censoredPharases = json.decode(GetConvar('blockedPhrases', '[]'))
+    end,
+
+    ['default'] = function()
+      whitelistedEntities = {}
+      for _, modelString in ipairs(json.decode(GetConvar('whitelistedEntities', '[]'))) do
+        whitelistedEntities[GetHashKey(modelString)] = true
+      end
+
+      blockedExplosions = {}
+      for _, explosionIndex in ipairs(json.decode(GetConvar('blockedExplosions', '[]'))) do
+        blockedExplosions[explosionIndex] = true
+      end
+
+      censoredPharases = json.decode(GetConvar('blockedPhrases', '[]'))
+    end
+  }
+
+  if case[choice] then
+    case[choice]()
+  else
+    case['default']()
+  end
+end
+
+local configPath = GetConvar('pathToConfig', nil)
+AddEventHandler('__valkyrie__internal', function(module)
+  if type(configPath) == 'string' and configPath ~= '' then
+    ExecuteCommand('exec ' ..configPath)
+  end
+  switch(module)
 end)
