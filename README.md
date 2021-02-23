@@ -56,6 +56,6 @@ Valkyrie has built-in logging functionally to discord using webhooks, in additio
 
 ### TODO
 
-Add banning of player tokens.
-Add filtering ip address from banned identifiers as they're not reliable.
+Add banning of player tokens.\
+Add filtering ip address from banned identifiers as they're not reliable.\
 Add screenshot-basic functionality 
