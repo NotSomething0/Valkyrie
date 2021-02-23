@@ -299,20 +299,20 @@ RegisterCommand('vclearpeds', function()
 end, true)
 
 RegisterCommand('vacReload', function(source, args)
-    local reloadingModulecl = 'Reloading module %s.'
-    local reloadingModulesv = '^6[INFO] [VALKYRIE]^7 Reloading module %s.'
+    local cl_reloading = 'Reloading module %s.'
+    local sv_reloading = '^6[INFO] [VALKYRIE]^7 Reloading module %s.'
     local module = tostring(args[1]) or 'default'
     if source ~= 0 then
         if #args < 1 then
             TriggerClientEvent('chat:addMessage', source, { color = { 255, 0, 0}, multiline = false, args = {'Valkyrie', 'No arguments provided reloading all modules.'}})
         else
-            TriggerClientEvent('chat:addMessage', source, { color = { 255, 0, 0}, multiline = false, args = {'Valkyrie', reloadingModulecl:format(module)}})
+            TriggerClientEvent('chat:addMessage', source, { color = { 255, 0, 0}, multiline = false, args = {'Valkyrie', cl_reloading:format(module)}})
         end
     else
         if #args < 1 then
             print('^6[INFO] [VALKYRIE]^7 No arguments provided reloading all modules.')
         else
-            print(reloadingModulesv:format(module))
+            print(sv_reloading:format(module))
         end
     end
     TriggerEvent('__valkyrie__internal', module)
