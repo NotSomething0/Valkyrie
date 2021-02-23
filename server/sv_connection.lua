@@ -1,3 +1,7 @@
+CreateThread(function()
+    TriggerEvent('__valkyrie__interna', 'default')
+end)
+
 AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
     -- PlayerId of the user connecting to the server.
     local playerId = source
