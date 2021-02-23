@@ -179,9 +179,7 @@ CreateThread(function()
 end)
 
 local switch = function(choice)
-    print('started switch function')
     choice = tostring(choice)
-
     case = {
         ['blacklist'] = function()
             useBlacklist = GetConvar('useBlacklist', 'no')
@@ -237,5 +235,5 @@ AddEventHandler('__valkyrie__internal', function(module)
     if type(configPath) == 'string' and configPath ~= '' then
         ExecuteCommand('exec ' ..configPath)
     end
-    print(switch(module))
+    switch(module)
 end)
