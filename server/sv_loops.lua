@@ -14,6 +14,8 @@ local GetNumResources = GetNumResources
 local GetResourceByFindIndex = GetResourceByFindIndex
 local LoadResourceFile = LoadResourceFile
 local SaveResourceFile = SaveResourceFile
+local useBlacklist = GetConvar('useBlacklist', 'no')
+local useVariableDetection = GetConvar('variableDetection', 'no')
 -- Super Jump, Max Health, Invinciple thread.
 CreateThread(function()
     while true do
@@ -28,13 +30,17 @@ CreateThread(function()
                 if GetEntityMaxHealth(playerPed) >= 201 then
                     ValkyrieBanPlayer(player, 'Max health', 'Set maximum health to ' ..GetEntityMaxHealth(playerPed))
                 end
-                -- Check if the user is allowed to use super jump.
+                --[[ 
+                    Check if the user is allowed to use super jump.
                 if not IsPlayerAceAllowed(players, 'valkyrie') then
                     -- Check if the user is using Super Jump.
                     if IsPlayerUsingSuperJump(players) then
                         ValkyrieBanPlayer(players, 'Super Jump', 'Super Jump')
                     end
                 end
+                --
+                    Needs further testing.
+                ]]
                 -- Check if the user is allowed to bypass invincible check.
                 if not IsPlayerAceAllowed(players, 'valkyrie') then
                     -- Check if the user is invincible.
@@ -47,38 +53,41 @@ CreateThread(function()
     end
 end)
 -- Blacklist thread
+local blacklistedPeds = {}
+local blacklistedWeapons = {}
+local blacklistedVehicles = {}
+
 CreateThread(function()
-    if Config.useBlacklist then
-        while true do
-            Wait(2000)
+    while true do
+        if useBlacklist == 'yes' then
             -- Loop through all players on the server.
             for _, players in pairs(GetPlayers()) do
                 -- Users ped
                 local playerPed = GetPlayerPed(players)
                 -- Check if the users player model is blacklisted.
-                if Config.blacklistedPeds[pedHash(playerPed)] then
+                if blacklistedPeds[pedHash(playerPed)] then
                     -- If it is then change the ped and notify them.
                     TriggerClientEvent('Valkyrie:Blacklist:SetPlayerModel', players)
                 end
                 -- Check if the user is holding a blacklisted weapon.
-                if Config.blacklistedWeapons[weaponHash(playerPed)] then
+                if blacklistedWeapons[weaponHash(playerPed)] then
                     Wait(500)
                     -- If they are remove it and send a notification.
                     RemoveWeaponFromPed(playerPed, weaponHash(playerPed))
                     TriggerClientEvent('notify', players, 'Blacklisted Weapon')
                 end
                 -- Check if the users vehicle is blacklisted.
-                if Config.blacklistedVehicles[GetEntityModel(vehicleHash(playerPed))] then
+                if blacklistedVehicles[GetEntityModel(vehicleHash(playerPed))] then
                     -- If it is then delete the vehicle and notifiy them.
                     DeleteEntity(vehicleHash(playerPed))
                     TriggerClientEvent('notify', players, 'Blacklisted Vehicle')
                 end
             end
+        else
+            Wait(5000)
         end
-    else
-        print('^6[INFO] [VALKYRIE]^7 Terminated Blacklist thread Config.UseBlacklist set to false.')
+        Wait(2000)
     end
-    return
 end)
 --[[
     Slightly modified version of the code in https://github.com/JaredScar/Badger-Anticheat/blob/master/server.lua
@@ -87,7 +96,7 @@ end)
 local numResourcesModified = 0
 local acName = GetCurrentResourceName()
 CreateThread(function()
-    if Config.variableDetection then
+    if useVariableDetection == 'yes' then
         -- Check to make sure - isn't in the resource name.
         if not acName:find('-') then
             Wait(1000)
@@ -167,4 +176,66 @@ CreateThread(function()
             print('^6[INFO] [Valkyrie]^7 Blacklisted variable detection removed from ' ..numResourcesModified.. ' resource(s) restart your server.')
         end
     end
+end)
+
+local switch = function(choice)
+    print('started switch function')
+    choice = tostring(choice)
+
+    case = {
+        ['blacklist'] = function()
+            useBlacklist = GetConvar('useBlacklist', 'no')
+            if useBlacklist then
+                blacklistedPeds = {}
+                for _, pedModel in ipairs(json.decode(GetConvar('blacklistedPeds', '[]'))) do
+                    blacklistedPeds[GetHashKey(pedModel)] = true
+                end
+                blacklistedVehicles = {}
+                for _, vehicleModel in ipairs(json.decode(GetConvar('blacklistedVehicles', '[]'))) do
+                    blacklistedVehicles[GetHashKey(vehicleModel)] = true
+                end
+                blacklistedWeapons = {}
+                for _, weaponModel in ipairs(json.decode(GetConvar('blacklistedWeapons', '[]'))) do
+                    blacklistedWeapons[GetHashKey(weaponModel)] = true
+                end
+            end
+        end,
+
+        ['variableDetection'] = function()
+            useVariableDetection = GetConvar('variableDetection', 'no')
+        end,
+
+        ['default'] = function()
+        useBlacklist = GetConvar('useBlacklist', 'no')
+        if useBlacklist then
+            blacklistedPeds = {}
+            for _, pedModel in ipairs(json.decode(GetConvar('blacklistedPeds', '[]'))) do
+                blacklistedPeds[GetHashKey(pedModel)] = true
+            end
+            blacklistedVehicles = {}
+            for _, vehicleModel in ipairs(json.decode(GetConvar('blacklistedVehicles', '[]'))) do
+                blacklistedVehicles[GetHashKey(vehicleModel)] = true
+            end
+            blacklistedWeapons = {}
+            for _, weaponModel in ipairs(json.decode(GetConvar('blacklistedWeapons', '[]'))) do
+                blacklistedWeapons[GetHashKey(weaponModel)] = true
+            end
+        end
+        useVariableDetection = GetConvar('variableDetection', 'no')
+        end
+    }
+
+    if case[choice] then
+        case[choice]()
+    else
+        case['default']()
+    end
+end
+
+local configPath = GetConvar('pathToConfig', nil)
+AddEventHandler('__valkyrie__internal', function(module)
+    if type(configPath) == 'string' and configPath ~= '' then
+        ExecuteCommand('exec ' ..configPath)
+    end
+    print(switch(module))
 end)
