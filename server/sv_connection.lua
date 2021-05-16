@@ -1,54 +1,48 @@
+local format = string.format
+local insert = table.insert
+local gsub = string.gsub
 CreateThread(function()
-    TriggerEvent('__valkyrie__internal', 'default')
+  TriggerEvent('initializeValkyrie')
 end)
 
-AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
-    -- PlayerId of the user connecting to the server.
-    local playerId = source
-    -- Prevent and defer connection right away.
-    deferrals.defer()
-    -- Mandatory wait
+local function fetchBans()
+  local bans = {}
+  local handle = StartFindKvp('vac_ban_')
+  local key = FindKvp(handle)
+  -- inplement a caching feature?
+  while true do
     Wait(0)
-    --Info the user why their connection is being prevented.
-    deferrals.update(string.format('Hello %s. Please wait while your identifiers are being checked.', name))
-    -- Prefix of every ban placed by Valkyrie
-    local banPrefix = 'valkyrie_ban_'
-    local handle = StartFindKvp(banPrefix)
-    local bans = {}
-    -- Create infinite loop to get all banId's
-    while true do
-        -- Mandatory Wait
-        Wait(0)
-        -- BanId
-        local key = FindKvp(handle)
-        -- Check to see if there are more banId's to get.
-        if key == nil then
-            -- Break the loop because there are no more banId's.
-            break
-        else
-            -- If there are still some then add them to the bans table.
-            table.insert(bans, key)
-        end
-    end
-    -- Stop looking for banId's
-    EndFindKvp(handle)
-    -- Check if the table is empty (will only happen if no one has ever been banned.)
-    if next(bans) == nil then
-        -- If the table is empty then let the user in because there are no bans
-        deferrals.done()
+    if key ~= nil then
+      insert(bans, key)
     else
-        -- Otherwise loop through all the banId's in the table
-        for _, banId in ipairs(bans) do
-            -- Check if the user connecting has any identifiers that match
-            if GetResourceKvpString(banId):find(json.encode(GetPlayerIdentifiers(playerId))) then
-                -- If they do then get their reason
-                local reason = string.gsub(banId, 'ban', "reason")
-                -- Don't let the user in with and provide the reason for blocking their connection.
-                deferrals.done(GetResourceKvpString(reason))
-            else
-                -- Otherwise let the user in because they aren't banned.
-                deferrals.done()
-            end
-        end
+      break
     end
+  end
+  EndFindKvp(handle)
+  return bans
+end
+
+AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
+
+  deferrals.defer()
+
+  Wait(0)
+
+  deferrals.update(format('Hello %s. Please wait while your identifiers are being checked.', name))
+
+  local bans = fetchBans()
+
+  if next(bans) == nil then
+    deferrals.done()
+  else
+    local identifiers = exports.Valkyrie:getAllPlayerIdentifiers(true, _source)
+    for _, banId in pairs(bans) do
+      if GetResourceKvpString(bandId):find(identifiers) then
+        local reason = gsub(banId, 'ban', 'reason')
+        deferrals.done(GetResourceKvpString(reason))
+      else
+        deferrals.done()
+      end
+    end
+  end
 end)
