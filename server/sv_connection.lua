@@ -1,5 +1,5 @@
 CreateThread(function()
-    TriggerEvent('__valkyrie__interna', 'default')
+    TriggerEvent('__valkyrie__internal', 'default')
 end)
 
 AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
