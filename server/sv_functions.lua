@@ -13,11 +13,6 @@ local webhook = GetConvar("valkyrie_discord_webhook", "")
 local banTemplate = GetConvar("valkyrie_ban_message", "Automatically banned")
 local kickTemplate = GetConvar("valkyrie_kick_message", "Automatically kicked")
 
-
-RegisterCommand('aaah', function()
-  print(tostring(kickTemplate))
-end)
-
 -- https://gist.github.com/skeeto/c61167ff0ee1d0581ad60d75076de62f
 local function uuid()
   seed(os.time())
