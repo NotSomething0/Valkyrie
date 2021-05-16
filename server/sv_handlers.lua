@@ -1,43 +1,30 @@
-local IsPlayerAceAllowed = IsPlayerAceAllowed
-local ValkyrieKickPlayer = ValkyrieKickPlayer
-local ValkyrieBanPlayer = ValkyrieBanPlayer
-local CancelEvent = CancelEvent
-local GetPlayerName = GetPlayerName
--- Permission handler event.
-RegisterNetEvent('Valkyrie:GetPlayerAcePermission')
-AddEventHandler('Valkyrie:GetPlayerAcePermission', function()
-  -- Check if the user has permission.
-  if IsPlayerAceAllowed(source, 'valkyrie') then
-    -- Send permssion to the client
-    TriggerClientEvent('Valkyrie:RecieveClientPermission', source, true)
+local format = string.format
+local decode = json.decode
+local handlePlayer = exports.Valkyrie:handlePlayer
+RegisterNetEvent('vac_request_permission', function()
+  if IsPlayerAceAllowed(source, 'group.valkyrie') then
+    TriggerClientEvent('vac_receive_permission', source, true)
   else
-    -- Send permssion to the client
-    TriggerClientEvent('Valkyrie:RecieveClientPermission', source, false)
-  end
-end)
--- Client detection event.
-RegisterNetEvent('Valkyrie:ClientDetection')
-AddEventHandler('Valkyrie:ClientDetection', function(log, reason, bool)
-  -- If no log reason is provided or the log reason provided is an empty string then set the log reason.
-  if not log or log == '' then log = 'Triggerd `Valkyrie:ClientDetection`' end
-  -- Check if were going to ban or kick the user.
-  if bool == false then
-    ValkyrieKickPlayer(source, reason, log)
-  else
-    ValkyrieBanPlayer(source, reason, log)
+    TriggerClientEvent('vac_receive_permission', source, false)
   end
 end)
 
-local whitelistedEntities = {}
--- Event for whitelisted entity checking.
-AddEventHandler('entityCreating', function(entity)
-  local entityModel = GetEntityModel(entity)
-  if not whitelistedEntities[tonumber(entityModel)] then
-    CancelEvent()
+RegisterNetEvent('vac_detection', function(log, reason, bool)
+  if log and log ~= '' then
+    if bool then
+      handlePlayer(source, reason, log, true)
+    elseif not bool then
+      handlePlayer(source, reason, log, false)
+    end
   end
 end)
 
--- A table of exploitable server events (If one of these events are in your server fix the exploit instead of removing it!)
+--[[
+  Do not remove events from this table!
+  If you have an exploitable event on your server fix it!
+  Need help? Open an issue on Github
+]]
+
 local _blockedServerEvents = {
   "8321hiue89js",
   "adminmenu:allowall",
@@ -265,117 +252,82 @@ local _blockedServerEvents = {
   "mellotrainer:adminKickDFWM",
   "esx_society:putVehicleDFWMInGarage"
 }
--- Loop through all events and add a handler for them.
-for _, eventName in pairs(_blockedServerEvents) do
-  RegisterNetEvent(eventName)
-  AddEventHandler(eventName, function()
-    -- Name of the user
-    local playerName = GetPlayerName(source)
-    -- Check to make sure the user is still in the server to prevent unnecessary calling of the ban fucntion.
-    if playerName == nil then return end
-    -- If the event was triggered ban the user.
-    ValkyrieBanPlayer(source, 'Blocked Event', 'Blocked server event `' ..eventName.. '`')
+
+for _, eventName in ipairs(_blockedServerEvents) do
+  RegisterNetEvent(eventName, function()
+    if GetPlayerPing(source) ~= nil then
+      handlePlayer(source, 'Blocked Event', format('Blocked Event | `%s`', eventName), true)
+    end
   end)
 end
 
-local blockedExplosions = {}
-local explosionTracker = {}
-local allowedExplosions = GetConvarInt('maximumExplosions', 5)
-AddEventHandler('explosionEvent', function(sender, ev)
-  if blockedExplosions[ev.explosionType] and ev.damageScale ~= 0.0 then
-    if explosionTracker[sender] == nil then
-      explosionTracker[sender] = 1
-    else
-      explosionTracker[sender] = explosionTracker[sender] + 1
-    end
-    if explosionTracker[sender] >= allowedExplosions then
-      ValkyrieKickPlayer(sender, 'Blocked Explosions', 'Created the maximum allowed explosions ' ..explosionTracker[sender])
-    end
+AddEventHandler('entityCreating', function(entity)
+  if not allowedEntities[tonumber(GetEntityModel(entity))] then
     CancelEvent()
   end
 end)
 
-local censoredPharases = json.decode(GetConvar('blockedPhrases', '[]'))
-local filterMessages = GetConvar('filterMessages', 'no')
-local intMessage
-exports.chat:registerMessageHook(
-  function(source, outMessage, hookRef)
-      intMessage = outMessage.args[2]
-      if filterMessages then
-          for _, phrases in ipairs(censoredPharases) do
-              repeat
-                  if intMessage:find(phrases) then
-                      intMessage = intMessage:gsub(phrases, ("#"):rep(phrases:len()))
-                  end
-              until (intMessage:find(phrases) == nil)
-          end
-          hookRef.updateMessage(
-              {
-                  args = {
-                      outMessage.args[1],
-                      intMessage
-                  }
-              }
-          )
-      else
-          for _, phrases in ipairs(censoredPharases) do
-              if intMessage:find(phrases) then
-                  hookRef.cancel()
-              end
-          end
-      end
-  end
-)
-
-local switch = function(choice)
-  choice = tostring(choice)
-  
-  case = {
-    ['models'] = function()
-      whitelistedEntities = {}
-      for _, modelString in ipairs(json.decode(GetConvar('whitelistedEntities', '[]'))) do
-        whitelistedEntities[GetHashKey(modelString)] = true
-      end
-    end,
-
-    ['explosions'] = function()
-      blockedExplosions = {}
-      for _, explosionIndex in ipairs(json.decode(GetConvar('blockedExplosions', '[]'))) do
-        blockedExplosions[explosionIndex] = true
-      end
-    end,
-
-    ['phrases'] = function()
-      filterMessages = GetConvar('filterMessages', 'no')
-      censoredPharases = json.decode(GetConvar('blockedPhrases', '[]'))
-    end,
-
-    ['default'] = function()
-      whitelistedEntities = {}
-      for _, modelString in ipairs(json.decode(GetConvar('whitelistedEntities', '[]'))) do
-        whitelistedEntities[GetHashKey(modelString)] = true
-      end
-
-      blockedExplosions = {}
-      for _, explosionIndex in ipairs(json.decode(GetConvar('blockedExplosions', '[]'))) do
-        blockedExplosions[explosionIndex] = true
-      end
-
-      censoredPharases = json.decode(GetConvar('blockedPhrases', '[]'))
+AddEventHandler('vac_initalize_server', function(module)
+  if module == 'entities' or module == 'all' then
+    allowedEntities = {}
+    local entities = decode(GetConvar('whitelistedEntities', '[]'))
+    for _, modelString in pairs(entities) do
+      local modelHash = tonumber(GetHashKey(modelString))
+      whitelistedEntities[modelHash] = true
     end
-  }
+  end
+end)
 
-  if case[choice] then
-    case[choice]()
+local explosionTracker = {}
+AddEventHandler('explosionEvent', function(sender, ev)
+  if blockedExplosions[ev.explosionType] and ev.damageScale ~= 0.0 then
+    CancelEvent()
+    if explosionTracker[sender] then
+      explosionTracker[sender]= explosionTracker[sender] + 1
+    else
+      explosionTracker[sender] = 1
+    end
+
+    if explosionTracker[sender] >= allowedExplosions then
+      handlePlayer(tonumber(sender), 'Blocked Explosion', format('Blocked Explosion | Count: `%s`', explosionTracker[sender]), true)
+    end
+  end
+end)
+
+AddEventHandler('vac_initalize_server', function(module)
+  if module == 'explosion' or module == 'all' then
+    blockedExplosions = {}
+    allowedExplosions = GetConvarInt('maximumExplosions', 5)
+    local explosions = decode(GetConvar('blockedExplosions', '[]'))
+    for _, expNum in ipairs(explosions) do
+      blockedExplosions[explosion] = true
+    end
+  end
+end)
+
+exports.chat:registerMessageHook(function(source, outMessage, hookRef)
+  local intMessage = outMessage.args[2]
+  if filterMessages then
+    for _, text in ipairs(censoredText) do
+        repeat
+            if intMessage:find(text) then
+                intMessage = intMessage:gsub(text, ("#"):rep(text:len()))
+            end
+        until (not intMessage:find(text))
+    end
+      hookRef.updateMessage({args = {outMessage.args[1],intMessage}})
   else
-    case['default']()
+      for _, text in ipairs(censoredText) do
+          if intMessage:find(text) then
+              hookRef.cancel()
+          end
+      end
   end
-end
+end)
 
-local configPath = GetConvar('pathToConfig', nil)
-AddEventHandler('__valkyrie__internal', function(module)
-  if type(configPath) == 'string' and configPath ~= '' then
-    ExecuteCommand('exec ' ..configPath)
+AddEventHandler('vac_initalize_server', function(module)
+  if module == 'filter' or 'all' then
+    censoredText = decode(GetConvar('blockedPhrases', '[]'))
+    filterMessages = GetConvar('filterMessages', 'no')
   end
-  switch(module)
 end)
