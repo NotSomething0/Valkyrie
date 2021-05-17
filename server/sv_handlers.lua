@@ -1,6 +1,6 @@
 local format = string.format
 local decode = json.decode
-local handlePlayer = exports.Valkyrie:handlePlayer
+
 RegisterNetEvent('vac_request_permission', function()
   if IsPlayerAceAllowed(source, 'group.valkyrie') then
     TriggerClientEvent('vac_receive_permission', source, true)
@@ -12,9 +12,9 @@ end)
 RegisterNetEvent('vac_detection', function(log, reason, bool)
   if log and log ~= '' then
     if bool then
-      handlePlayer(source, reason, log, true)
+      exports.Valkyrie:handlePlayer(source, reason, log, true)
     elseif not bool then
-      handlePlayer(source, reason, log, false)
+      exports.Valkyrie:handlePlayer(source, reason, log, false)
     end
   end
 end)
@@ -256,11 +256,12 @@ local _blockedServerEvents = {
 for _, eventName in ipairs(_blockedServerEvents) do
   RegisterNetEvent(eventName, function()
     if GetPlayerPing(source) ~= nil then
-      handlePlayer(source, 'Blocked Event', format('Blocked Event | `%s`', eventName), true)
+      exports.Valkyrie:handlePlayer(source, 'Blocked Event', format('Blocked Event | `%s`', eventName), true)
     end
   end)
 end
 
+local allowedEntities = {}
 AddEventHandler('entityCreating', function(entity)
   if not allowedEntities[tonumber(GetEntityModel(entity))] then
     CancelEvent()
@@ -289,7 +290,7 @@ AddEventHandler('explosionEvent', function(sender, ev)
     end
 
     if explosionTracker[sender] >= allowedExplosions then
-      handlePlayer(tonumber(sender), 'Blocked Explosion', format('Blocked Explosion | Count: `%s`', explosionTracker[sender]), true)
+      exports.Valkyrie:handlePlayer(tonumber(sender), 'Blocked Explosion', format('Blocked Explosion | Count: `%s`', explosionTracker[sender]), true)
     end
   end
 end)
@@ -305,23 +306,24 @@ AddEventHandler('vac_initalize_server', function(module)
   end
 end)
 
+local censoredText, filterMessages
 exports.chat:registerMessageHook(function(source, outMessage, hookRef)
-  local intMessage = outMessage.args[2]
+  local initMessage = outMessage.args[2]
   if filterMessages then
     for _, text in ipairs(censoredText) do
-        repeat
-            if intMessage:find(text) then
-                intMessage = intMessage:gsub(text, ("#"):rep(text:len()))
-            end
-        until (not intMessage:find(text))
+      repeat
+        if initMessage:find(text) then
+          initMessage = initMessage:gsub(text, ("#"):rep(text:len()))
+        end
+      until (not initMessage:find(text))
     end
-      hookRef.updateMessage({args = {outMessage.args[1],intMessage}})
+    hookRef.updateMessage({args = {outMessage.args[1], initMessage}})
   else
-      for _, text in ipairs(censoredText) do
-          if intMessage:find(text) then
-              hookRef.cancel()
-          end
+    for _, text in ipairs(censoredText) do
+      if initMessage:find(text) then
+        hookRef.cancel()
       end
+    end
   end
 end)
 
