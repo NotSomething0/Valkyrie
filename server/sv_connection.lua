@@ -2,7 +2,7 @@ local format = string.format
 local insert = table.insert
 local gsub = string.gsub
 CreateThread(function()
-  TriggerEvent('initializeValkyrie')
+  TriggerEvent('vac_initalize_server', 'all')
 end)
 
 local function fetchBans()
