@@ -23,6 +23,7 @@ local function fetchBans()
 end
 
 AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
+  local _source = source
 
   deferrals.defer()
 
