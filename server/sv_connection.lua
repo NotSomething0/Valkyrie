@@ -1,6 +1,7 @@
 local format = string.format
 local insert = table.insert
 local gsub = string.gsub
+local decode = json.decode
 CreateThread(function()
   TriggerEvent('vac_initalize_server', 'all')
 end)
@@ -37,13 +38,15 @@ AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
     deferrals.done()
   else
     local identifiers = exports.Valkyrie:getAllPlayerIdentifiers(true, _source)
+
     for _, banId in pairs(bans) do
-      if GetResourceKvpString(banId):find(identifiers) then
-        local reason = gsub(banId, 'ban', 'reason')
-        deferrals.done(GetResourceKvpString(reason))
-      else
-        deferrals.done()
+      for _, v in pairs(decode(GetResourceKvpString(banId))) do
+        if identifiers:find(v) then
+          local reason = gsub(banId, 'ban', 'reason')
+          return deferrals.done(GetResourceKvpString(reason))
+        end
       end
+      deferrals.done()
     end
   end
 end)
