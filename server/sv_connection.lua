@@ -8,9 +8,9 @@ end)
 local function fetchBans()
   local bans = {}
   local handle = StartFindKvp('vac_ban_')
-  local key = FindKvp(handle)
   -- inplement a caching feature?
   while true do
+    local key = FindKvp(handle)
     Wait(0)
     if key ~= nil then
       insert(bans, key)
@@ -38,7 +38,7 @@ AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
   else
     local identifiers = exports.Valkyrie:getAllPlayerIdentifiers(true, _source)
     for _, banId in pairs(bans) do
-      if GetResourceKvpString(bandId):find(identifiers) then
+      if GetResourceKvpString(banId):find(identifiers) then
         local reason = gsub(banId, 'ban', 'reason')
         deferrals.done(GetResourceKvpString(reason))
       else
