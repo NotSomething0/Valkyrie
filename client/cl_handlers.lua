@@ -1,3 +1,5 @@
+local format = string.format
+
 local _blockedClientEvents = {
     "ambulancier:selfRespawn",
     "bank:transfer",
@@ -19,13 +21,13 @@ for _, eventName in pairs(_blockedClientEvents) do
             CancelEvent()
             return
         end
-        TriggerServerEvent('Valkyrie:ClientDetection', 'Blocked client event: `' ..eventName.. '`', 'Blocked event', true)
+        TriggerServerEvent('vac_detection', 'Blocked Event', format('Blocked Event `%s`', eventName), true)
         Triggered = true
     end)
 end
 
-RegisterNetEvent('Valkyrie:ClearObjects')
-AddEventHandler('Valkyrie:ClearObjects', function()
+RegisterNetEvent('vac_clear_objects')
+AddEventHandler('vac_clear_objects', function()
     local cObject = GetGamePool('CObject')
     for _, obj in pairs(cObject) do
         NetworkRequestControlOfEntity(obj)
@@ -43,40 +45,13 @@ AddEventHandler('Valkyrie:ClearObjects', function()
     end
 end)
 
-
-RegisterNetEvent('Valkyrie:Blacklist:SetPlayerModel')
-AddEventHandler('Valkyrie:Blacklist:SetPlayerModel', function()
-    local defaultPed = `a_m_y_skater_01`
-    RequestModel(defaultPed)
-    while not HasModelLoaded(defaultPed) do
-        Wait(500)
-    end
-    SetPlayerModel(PlayerId(), defaultPed)
-    SetModelAsNoLongerNeeded(defaultPed)
-    notification('Blacklisted Player Model')
-end)
-
 function notification(message)
 	BeginTextCommandThefeedPost("STRING")
 	AddTextComponentSubstringPlayerName(message)
 	EndTextCommandThefeedPostTicker(true, false)
 end
 
-RegisterNetEvent('notify')
-AddEventHandler('notify', function(message)
+RegisterNetEvent('vac_notify_client')
+AddEventHandler('vac_notify_client', function(message)
     notification(message)
-end)
-
-AddEventHandler('onClientResourceStop', function(resource)
-    TriggerServerEvent('Valkyrie:ClientDetection', 'Stopped resource: `' ..resource.. '`', 'Invalid resource list', false)
-end)
-
-AddEventHandler('onClientMapStart', function()
-TriggerEvent('chat:addSuggestion', '/kick', 'Kick specified player with optional reason', {
-    { name = 'Player ID', help = 'Player Server ID' },
-    { name = 'reason', help = 'Reason for kick'}
-})
-TriggerEvent('chat:addSuggestion', '/freeze', 'Freeze specified player', {
-    { name = 'Player ID', help = 'Player Server ID'}
-})
 end)

@@ -1,91 +1,80 @@
--- Function for getting a users identifier.
-function ValkyrieIdentifiers(player)
-  local identifiers = {}
-  for i = 0, GetNumPlayerIdentifiers(player) - 1 do
-      local raw = GetPlayerIdentifier(player, i)
-      local source, value = raw:match("^([^:]+):(.+)$")
-      if source and value then
-          identifiers[source] = value
-      end
-  end
-  return identifiers
-end
--- Function for generating a banid (taken from https://gist.github.com/skeeto/c61167ff0ee1d0581ad60d75076de62f)
+--Optimization--
+local seed = math.randomseed
+local gsub = string.gsub
 local random = math.random
+local format = string.format
+local GetNumPlayerIdentifiers = GetNumPlayerIdentifiers
+local GetPlayerIdentifier = GetPlayerIdentifier
+local GetNumPlayerTokens = GetNumPlayerTokens
+local GetPlayerToken = GetPlayerToken
+local encode = json.encode
+
+local webhook = GetConvar("valkyrie_discord_webhook", "")
+local banTemplate = 'Banned\nYou have been automatically banned from this server for %s.\nIf you think this was a mistake contact us here: example.com/forums\nBanId: %s'
+local kickTemplate = 'Kicked\nYou have been automatically kicked from this server for %s.\nIf you think this was a mistake contact us here: example.com/forums'
+
+-- https://gist.github.com/skeeto/c61167ff0ee1d0581ad60d75076de62f
 local function uuid()
-  -- Template for the banId
+  seed(os.time())
   local template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
-  -- Replace template only x and y with random letters/numbers from the function.
-  return string.gsub(template, '[xy]', function (c)
-    -- Generate random letters/numbers
+  return gsub(template, '[xy]', function (c)
     local v = (c == 'x') and random(0, 0xf) or random(8, 0xb)
-    -- Return the banId as a formated string.
-    return string.format('%x', v)
+    return format('%x', v)
   end)
 end
--- Function for logging actions to discord.
-function ValkyrieLog(title, message)
+
+local _identifierCache = {}
+local function getAllPlayerIdentifiers(isTemporary, player)
+  local identifiers = {}
+  if _identifierCache[player] == nil then
+    for i = 0, GetNumPlayerIdentifiers(player) - 1 do
+        local raw = GetPlayerIdentifier(player, i)
+        local idx, value = raw:match("^([^:]+):(.+)$")
+        if idx ~= 'ip' then
+          identifiers[idx] = value
+        end
+    end
+    for i = 0, GetNumPlayerTokens(player) do
+      local token = GetPlayerToken(player, i)
+      if token ~= nil then
+        local idx, value = token:match("^([^:]+):(.+)$")
+        -- Token zero and one aren't reliable
+        if idx ~= '0' and idx ~= '1' then
+          identifiers[#identifiers + 1] = value
+        end
+      end
+    end
+    if not isTemporary then
+      _identifierCache[player] = encode(identifiers)
+    else
+      return encode(identifiers)
+    end
+  end
+  return _identifierCache[player]
+end
+exports('getAllPlayerIdentifiers', getAllPlayerIdentifiers)
+
+local logTemplate = '**Valkyrie: %s**\nPlayer: %s\nReason: %s'
+local handlePlayer = function(netId, dropReason, logReason, shouldBan)
   local banId = uuid()
-  if title == 'Player Banned' then message = message..'\n**BanId:** ' ..banId end
-  local embed = {
-    {
-      ['title'] = 'Valkyrie: ' ..title,
-      ['type'] = 'rich',
-      ['description'] = message,
-      ['color'] = 732633,
-      ['author'] = {['name'] = 'Valkyrie Anticheat', ['url'] = 'https://github.com/NotSomething0', ['icon_url'] = 'https://i.imgur.com/jmYn66H.png'},
-      ['footer'] = {['text'] = 'Created by NotSomething#6200 | ' ..os.date("%x (%X %p)"), ['icon_url'] = 'https://i.imgur.com/jmYn66H.png'},
-    }
-  }
-  PerformHttpRequest(Config.DiscWebhook, function(err, text, headers) end, 'POST', json.encode({username = name, embeds = embed}), { ['Content-Type'] = 'application/json' })
-end
--- Function for kicking users from the server.
-function ValkyrieKickPlayer(player, dropReason, discordReason)
-  -- Check if a playerId was given
-  if player == nil then
-    -- If none was given then exit with a fatal error because we can't kick without a playerId.
-    return print('^8[Valkyrie] Fatal Error: ^3No PlayerId (source) passed for kicking function.^7')
+  if not netId or netId == 0 or type(netId) ~= 'number' then
+    return print('^1[ERROR] [Valkyrie]^7 Invalid NetId passed in function \'handlePlayer\'')
+  else
+    local playerName = GetPlayerName(netId)
+    if playerName and shouldBan then
+      log = format('**Valkyrie: %s**\nPlayer: %s\nReason: %s', 'Banned', playerName, logReason)
+      dropMessage = format(banTemplate, dropReason, banId)
+
+      SetResourceKvp(format('vac_ban_%s', banId), getAllPlayerIdentifiers(false, netId))
+      SetResourceKvp(format('vac_reason_%s', banId), dropMessage)
+      DropPlayer(netId, dropMessage)
+    else
+      if playerName and not shouldBan then
+        log = format('**Valkyrie: %s**\nPlayer: %s\nReason: %s', 'Kicked', playerName, logReason)
+        DropPlayer(netId, format(kickTemplate, dropReason))
+      end
+    end
   end
-  -- Name of the user being kicked.
-  local playerName = GetPlayerName(player)
-  -- License of the player being kicked.
-  local license = ValkyrieIdentifiers(player).license
-  -- If no license is found then exit.
-  if license == nil then return end
-  -- If no reason was given then set the reason to unspecified.
-  if dropReason == nil then dropReason = 'No reason provided' end
-  -- Disconnect the user with their kick reason.
-  DropPlayer(player, 'Kicked \n You have been kicked for the following reason: ' ..dropReason..'. \n If you think this was a mistake contact us at ' ..Config.Contactlink)
-  ValkyrieLog('Kicked', '**Player:** ' ..playerName.. '\n**Reason:** ' ..discordReason.. '\n**license:** ' ..license)
+  PerformHttpRequest(webhook, function(err, text, headers) end, 'POST', json.encode({username = name, content = log}), { ['Content-Type'] = 'application/json' })
 end
--- Function for banning users from the server.
-function ValkyrieBanPlayer(playerId, dropReason, discordReason)
-  -- Check if a playerId was given
-  if playerId == nil then
-    -- If none was given then exit with a fatal error because we can't ban without a playerId.
-    return print('^8[FATAL] [Valkyrie]^7 No PlayerId passed for banning function.')
-  end
-  -- Name of the user being banned.
-  local playerName = GetPlayerName(playerId)
-  -- Check if the player name exists
-  if playerName == nil then
-    -- Exit because the name doesn't exist (the player was dropped from the server already.)
-    return
-  end
-  local banId = uuid()
-  -- If no reason was given then set the reason to unspecified.
-  if dropReason == nil then dropReason = 'No Reason specified' end
-  -- Prefix of every ban placed by Valkyrie
-  local banPrefix = 'valkyrie_ban_'
-  -- Prefix of every ban reason
-  local reasonPrefix = 'valkyrie_reason_'
-  -- The reason for the ban
-  local banReason = 'Banned \n You have been banned for the following reason: ' ..dropReason.. ' \n If you think this was a mistake contact us at ' ..Config.Contactlink.. ' \n Ban Id ' ..banId
-  -- Store indetifiers in the database
-  SetResourceKvp(banPrefix..banId, json.encode(GetPlayerIdentifiers(playerId)))
-  -- Store the reason in the database
-  SetResourceKvp(reasonPrefix..banId, banReason)
-  -- Disconnect the user with thier ban reason.
-  DropPlayer(playerId, banReason)
-  ValkyrieLog('Banned', '**Player:** ' ..playerName.. '\n**Reason:** ' ..discordReason.. '\n**BanId:** ' ..banId)
-end
+exports('handlePlayer', handlePlayer)
