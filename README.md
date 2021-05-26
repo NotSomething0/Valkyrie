@@ -11,7 +11,7 @@ Before we start installing Valkyrie, there are a few prerequisites first. Make s
 If you've checked the prerequisite above and are sure everything is up to date, we can finally start-installing Valkyrie! Since Valkyrie is written in Lua and doesn't need to be, compiled there are two ways to install it. The first and recommended way to install Valkyrie is by using git. To install Valkyrie using git, navigate to "resources/[local]" in your server-data folder and run the following command `git clone https://github.com/NotSomething0/Valkyrie.git`.
 The second way to install Valkyrie is by downloading the zip file from the release section on GitHub; once you've downloaded the zip archive, extract the folder into "resources/[local]."
 
-Now that you've downloaded the resource go, to your server.cfg and add the following to it: 
+Now that you've downloaded the resource go, to your server.cfg and add the following to it:
 ```
 add_ace resource.Valkyrie command.exec allow
 exec resources/[local]/Valkyrie/valkyrie.cfg
@@ -56,6 +56,5 @@ Valkyrie has built-in logging functionally to discord using webhooks, in additio
 
 ### TODO
 
-Add banning of player tokens.\
-Add filtering ip address from banned identifiers as they're not reliable.\
-Add screenshot-basic functionality 
+Add client side reload functionally\
+Add screenshot-basic functionality
