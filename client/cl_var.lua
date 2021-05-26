@@ -1,8 +1,4 @@
---[[
-    The code below except for a few bits and bops isn't mine. The code was taken from https://github.com/JaredScar/Badger-Anticheat/blob/master/acloader.lua
-    Thanks to JamesUK-Developer/JaredScar(Badger) <3
-]]
-
+--https://github.com/JaredScar/Badger-Anticheat/blob/master/acloader.lua
 local ProhibitedVariables = {
     'WarMenu',
     'AlikhanCheats',
