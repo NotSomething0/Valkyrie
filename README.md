@@ -27,16 +27,11 @@ There are quite a few settings in the [configuration](valkyrie.cfg) file, which 
 | ConVar | Default | Description | Parameters |
 |--------|---------|-------------|------------|
 | _discord_webhook | none | Discord [webhook](https://bit.ly/2QN4q1N) | string |
-| _variable_detection | 0 | Enables blocked [variable](https://bit.ly/3vkXojJ) detection. | int |
 | _blocked_expressions | none | List of blocked text | array |
 | _filter_messages | 0 | Enable messaging filtering | array |
 | _blocked_explosions | none | List of [blocked explosions](https://bit.ly/3fiJdpX) | array |
 | _maximum_allowed_explosions | 5 | Max blocked explosions clients are allowed to create. | int |
-| _use_blacklist | 0 | Enable server side blacklist | int |
-| _blocked_peds | none | List of ped models clients can't use. | array |
-| _blocked_weapons | none | List of weapon models clients can't use. | array |
-| _blocked_vehicles | none | List of vehicle models clients can't use. | array |
-| _allowed_entities | none | List of entities clients are allowed to spawn. | array |
+| _allowed_entities | none | List of entities that are allowed to be spawned | array |
 
 ## Client ConVars
 
