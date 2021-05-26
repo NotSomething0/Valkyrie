@@ -20,18 +20,21 @@ ensure Valkyrie
 
 Note: `ensure Valkyrie` should be added below the nested config.
 
-## Server ConVars
+# Configuration
 
-There are quite a few settings in the [configuration](valkyrie.cfg) file, which are defined below. These settings can be updated during runtime or when the server restarts.
+There are quite a few settings in the [configuration](valkyrie.cfg) file, which are defined below. These settings can be updated during runtime using the 'reload' command or when the server restarts.
+
+
+## Server ConVars
 
 | ConVar | Default | Description | Parameters |
 |--------|---------|-------------|------------|
 | _discord_webhook | none | Discord [webhook](https://bit.ly/2QN4q1N) | string |
-| _blocked_expressions | none | List of blocked text | array |
-| _filter_messages | 0 | Enable messaging filtering | array |
-| _blocked_explosions | none | List of [blocked explosions](https://bit.ly/3fiJdpX) | array |
-| _maximum_allowed_explosions | 5 | Max blocked explosions clients are allowed to create. | int |
-| _allowed_entities | none | List of entities that are allowed to be spawned | array |
+| _blocked_expressions | none | Sets text you don't want clients to send in chat | array |
+| _filter_messages | 0 | Enables message filtering, with this option enabled blocked expressions will be replaced by '#' | array |
+| _blocked_explosions | none | Sets [explosion(s)](https://bit.ly/3fiJdpX) that shouldn't be networked | array |
+| _maximum_allowed_explosions | 5 | Sets the maximum blocked explosion(s) a client can create before being dropped | int |
+| _allowed_entities | none | Entities that can be spawned in your server | array |
 
 ## Client ConVars
 
@@ -46,8 +49,8 @@ There are quite a few settings in the [configuration](valkyrie.cfg) file, which 
 
 | Export | Description | Parameters |
 |--------|-------------|------------|
-| getAllPlayerIdentifiers | json string containing a players identifiers and tokens | bool, int |
-| handlePlayer | Ban/kicking function | int, string, string, bool|
+| getAllPlayerIdentifiers | Returns a json string with a clients identifier(s) and token(s) | bool, int |
+| handlePlayer | Punishment function can be used to ban and kick someone based on last parameter | int, string, string, bool|
 
 ## Logging
 
