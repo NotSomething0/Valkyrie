@@ -8,11 +8,8 @@ local IsPlayerAceAllowed = IsPlayerAceAllowed
 
 local tracker = {}
 
-AddEventHandler('playerJoining', function()
-  tracker[source] = {strikes = 0, allowed = false, activated = false}
-end)
-
 RegisterNetEvent('vac_player_activated', function()
+  tracker[source] = {strikes = 0, allowed = false, activated = false}
   if IsPlayerAceAllowed(source, 'vac.bypass') then
     tracker[source].allowed = true
     TriggerClientEvent('vac_receive_permission', source, true)
