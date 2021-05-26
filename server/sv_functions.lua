@@ -10,8 +10,8 @@ local GetPlayerToken = GetPlayerToken
 local encode = json.encode
 
 local webhook = GetConvar("valkyrie_discord_webhook", "")
-local banTemplate = GetConvar("valkyrie_ban_message", "Automatically banned")
-local kickTemplate = GetConvar("valkyrie_kick_message", "Automatically kicked")
+local banTemplate = 'You have been automatically banned from this server for %s.\nIf you think this was a mistake contact us here: example.com/forums\nBanId: %s'
+local kickTemplate = 'You have been automatically kicked from this server for %s.\nIf you think this was a mistake contact us here: example.com/forums'
 
 -- https://gist.github.com/skeeto/c61167ff0ee1d0581ad60d75076de62f
 local function uuid()
