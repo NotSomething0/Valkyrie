@@ -2,15 +2,7 @@ local format = string.format
 local decode = json.decode
 local lower = string.lower
 
-RegisterNetEvent('vac_request_permission', function()
-  if IsPlayerAceAllowed(source, 'group.valkyrie') then
-    TriggerClientEvent('vac_receive_permission', source, true)
-  else
-    TriggerClientEvent('vac_receive_permission', source, false)
-  end
-end)
-
-RegisterNetEvent('vac_detection', function(log, reason, bool)
+RegisterNetEvent('vac_detection', function(reason, log, bool)
   if log and log ~= '' then
     if bool then
       exports.Valkyrie:handlePlayer(source, reason, log, true)
