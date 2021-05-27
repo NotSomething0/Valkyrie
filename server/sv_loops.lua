@@ -9,14 +9,13 @@ local IsPlayerAceAllowed = IsPlayerAceAllowed
 local tracker = {}
 
 RegisterNetEvent('vac_player_activated', function()
-  tracker[source] = {strikes = 0, allowed = false, activated = false}
+  tracker[source] = {strikes = 0, allowed = false}
   if IsPlayerAceAllowed(source, 'vac.bypass') then
     tracker[source].allowed = true
     TriggerClientEvent('vac_receive_permission', source, true)
   else
     TriggerClientEvent('vac_receive_permission', source, false)
   end
-  tracker[source].activated = true
 end)
 
 CreateThread(function()
@@ -27,17 +26,16 @@ CreateThread(function()
         if tracker[netId] then
           local playerPed = GetPlayerPed(netId)
           local allowed = tracker[netId].allowed
-          local activated = tracker[netId].activated
 
-          if GetPlayerInvincible(netId) and not allowed and activated then
+          if GetPlayerInvincible(netId) and not allowed then
             tracker[netId].strikes = tracker[netId].strikes + 1
           end
 
-          if GetEntityMaxHealth(playerPed) >= 201 and not allowed and activated then
+          if GetEntityMaxHealth(playerPed) >= 201 and not allowed then
             tracker[netId].strikes = tracker[netId].strikes + 1
           end
 
-          if tracker[netId] and tracker[netId].strikes >= 5 then
+          if tracker[netId].strikes >= 5 then
             exports.Valkyrie:handlePlayer(netId, 'Maxium strikes', 'Exceeded maximum tracker strikes', true)
           end
         end
