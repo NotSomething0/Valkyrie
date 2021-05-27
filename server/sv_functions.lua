@@ -8,10 +8,13 @@ local GetPlayerIdentifier = GetPlayerIdentifier
 local GetNumPlayerTokens = GetNumPlayerTokens
 local GetPlayerToken = GetPlayerToken
 local encode = json.encode
-
 local webhook = GetConvar("valkyrie_discord_webhook", "")
-local banTemplate = 'Banned\nYou have been automatically banned from this server for %s.\nIf you think this was a mistake contact us here: example.com/forums\nBanId: %s'
-local kickTemplate = 'Kicked\nYou have been automatically kicked from this server for %s.\nIf you think this was a mistake contact us here: example.com/forums'
+local templates = {
+  ban = 'Banned\nYou have been banned from this server for %s.\nIf you think this was a mistake contact us here: example.com/forums\nBanId: %s',
+  kick = 'Kicked\nYou have been kicked from this server for %s.\nIf you think this was a mistake contact us here: example.com/forums.',
+  log = '**Valkyrie: %s**\nPlayer: %s\nReason: %s'
+}
+
 
 -- https://gist.github.com/skeeto/c61167ff0ee1d0581ad60d75076de62f
 local function uuid()
@@ -54,26 +57,27 @@ local function getAllPlayerIdentifiers(isTemporary, player)
 end
 exports('getAllPlayerIdentifiers', getAllPlayerIdentifiers)
 
-local logTemplate = '**Valkyrie: %s**\nPlayer: %s\nReason: %s'
-local handlePlayer = function(netId, dropReason, logReason, shouldBan)
-  local banId = uuid()
-  if not netId or netId == 0 or type(netId) ~= 'number' then
-    return print('^1[ERROR] [Valkyrie]^7 Invalid NetId passed in function \'handlePlayer\'')
-  else
+local handlePlayer = function(netId, reason1, reason2, shouldBan)
+  local drop
+  if type(netId) == 'number' and netId ~= 0 then
     local playerName = GetPlayerName(netId)
-    if playerName and shouldBan then
-      log = format('**Valkyrie: %s**\nPlayer: %s\nReason: %s', 'Banned', playerName, logReason)
-      dropMessage = format(banTemplate, dropReason, banId)
+
+    if shouldBan and playerName then
+      drop = format(template.ban, reason1, banId)
+      local banId = uuid()
+      local log = format(templates.log, 'Banned', playerName, reason2)
 
       SetResourceKvp(format('vac_ban_%s', banId), getAllPlayerIdentifiers(false, netId))
-      SetResourceKvp(format('vac_reason_%s', banId), dropMessage)
-      DropPlayer(netId, dropMessage)
+      SetResourceKvp(format('vac_reason_%s', banId), drop)
+      DropPlayer(netId, drop)
     else
-      if playerName and not shouldBan then
-        log = format('**Valkyrie: %s**\nPlayer: %s\nReason: %s', 'Kicked', playerName, logReason)
-        DropPlayer(netId, format(kickTemplate, dropReason))
-      end
+      drop = format(templates.kick, reason1)
+      local log = format(templates.log, 'Kicked', playerName, reason2)
+
+      DropPlayer(netId, drop)
     end
+  else
+    return print('^1[ERROR] [Valkyrie]^7 Invalid NetId passed in function \'handlePlayer\'')
   end
   PerformHttpRequest(webhook, function(err, text, headers) end, 'POST', json.encode({username = name, content = log}), { ['Content-Type'] = 'application/json' })
 end
