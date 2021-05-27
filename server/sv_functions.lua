@@ -58,21 +58,21 @@ end
 exports('getAllPlayerIdentifiers', getAllPlayerIdentifiers)
 
 local handlePlayer = function(netId, reason1, reason2, shouldBan)
-  local drop
+  local log
   if type(netId) == 'number' and netId ~= 0 then
     local playerName = GetPlayerName(netId)
 
     if shouldBan and playerName then
-      drop = format(template.ban, reason1, banId)
+      log = format(templates.log, 'Banned', playerName, reason2)
+      local drop = format(template.ban, reason1, banId)
       local banId = uuid()
-      local log = format(templates.log, 'Banned', playerName, reason2)
 
       SetResourceKvp(format('vac_ban_%s', banId), getAllPlayerIdentifiers(false, netId))
       SetResourceKvp(format('vac_reason_%s', banId), drop)
       DropPlayer(netId, drop)
     else
-      drop = format(templates.kick, reason1)
-      local log = format(templates.log, 'Kicked', playerName, reason2)
+      log = format(templates.log, 'Kicked', playerName, reason2)
+      local drop = format(templates.kick, reason1)
 
       DropPlayer(netId, drop)
     end
