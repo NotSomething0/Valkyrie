@@ -15,7 +15,6 @@ local templates = {
   log = '**Valkyrie: %s**\nPlayer: %s\nReason: %s'
 }
 
-
 -- https://gist.github.com/skeeto/c61167ff0ee1d0581ad60d75076de62f
 local function uuid()
   seed(os.time())
