@@ -301,7 +301,7 @@ end)
 
 exports.chat:registerMessageHook(function(source, outMessage, hookRef)
   local message = outMessage.args[2]
-  if filterMessages == 'yes' then
+  if filterMessages == 1 then
     for _, text in pairs(censoredText) do
       if message:find(text) then
         message = message:gsub(text, ("#"):rep(text:len()))
@@ -320,6 +320,6 @@ end)
 AddEventHandler('vac_initalize_server', function(module)
   if module == 'filter' or 'all' then
     censoredText = decode(GetConvar('valkyrie_blocked_expressions', '[]'))
-    filterMessages = GetConvar('valkyrie_filter_messages', 'no')
+    filterMessages = GetConvarInt('valkyrie_filter_messages', 0)
   end
 end)
