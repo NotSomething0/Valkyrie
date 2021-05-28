@@ -9,7 +9,7 @@ Valkyrie is another FiveM Anti-cheat but, unlike other projects you see online, 
 Before we start installing Valkyrie, there are a few prerequisites first. Make sure your [server-data](https://github.com/citizenfx/cfx-server-data) folder is up to date with the latest resources as of 14/1/2021 or later. Second, update your server [artifacts](https://runtime.fivem.net/artifacts/fivem/) to the latest recommended version to ensure compatibility.
 
 If you've checked the prerequisite above and are sure everything is up to date, we can finally start-installing Valkyrie! Since Valkyrie is written in Lua and doesn't need to be, compiled there are two ways to install it. The first and recommended way to install Valkyrie is by using git. To install Valkyrie using git, navigate to "resources/[local]" in your server-data folder and run the following command `git clone https://github.com/NotSomething0/Valkyrie.git`.
-The second way to install Valkyrie is by downloading the zip file from the release section on GitHub; once you've downloaded the zip archive, extract the folder into "resources/[local]."
+The second way to install Valkyrie is by downloading the zip file from the release section on GitHub; once you've downloaded the zip archive, extract the folder into "resources/[local]"
 
 Now that you've downloaded Valkyrie open your server.cfg and add the following:
 ```
@@ -18,7 +18,7 @@ exec resources/[local]/Valkyrie/valkyrie.cfg
 ensure Valkyrie
 ```
 
-Note: `ensure Valkyrie` should be added below the nested config.
+Note: `ensure Valkyrie` should be added below the nested config
 
 # Configuration
 
@@ -30,11 +30,11 @@ There are quite a few settings in the [configuration](valkyrie.cfg) file, which 
 | ConVar | Default | Description | Parameters |
 |--------|---------|-------------|------------|
 | _discord_webhook | none | Discord [webhook](https://bit.ly/2QN4q1N) | string |
-| _blocked_expressions | none | Sets text you don't want clients to send in chat | array |
-| _filter_messages | 0 | Enables message filtering, with this option enabled blocked expressions will be replaced by '#' | array |
-| _blocked_explosions | none | Sets [explosion(s)](https://bit.ly/3fiJdpX) that shouldn't be networked | array |
-| _maximum_allowed_explosions | 5 | Sets the maximum blocked explosion(s) a client can create before being dropped | int |
-| _allowed_entities | none | Entities that can be spawned in your server | array |
+| _blocked_expressions | none | Sets text to be filtered out of chat messages if _filter_messages is set to one. If _filter_messages is set to zero, chat message(s) containing any blocked text will be prevented from populating. | array |
+| _filter_messages | 0 | Enable message [filtering](https://imgur.com/a/20B68iS) | array |
+| _blocked_explosions | none | Sets [explosion(s)](https://bit.ly/3fiJdpX) to cancel. Note: Canceling an explosion only prevents it from being routed the owner; of the explosion(s) will still see it but, other clients won't. | array |
+| _maximum_allowed_explosions | 5 | Sets the maximum amount of blocked explosion(s) a client can create before being dropped | int |
+| _allowed_entities | none | Set entities that can be spawned in the server. Note: entity lockdown is a much better solution to prevent modders from spawning props. | array |
 
 ## Client ConVars
 
@@ -50,7 +50,7 @@ There are quite a few settings in the [configuration](valkyrie.cfg) file, which 
 | Export | Description | Parameters |
 |--------|-------------|------------|
 | getAllPlayerIdentifiers | Returns a json string with a clients identifier(s) and token(s) | bool, int |
-| handlePlayer | Punishment function can be used to ban and kick someone based on last parameter | int, string, string, bool|
+| handlePlayer | Punishment function can be used to ban and kick someone based on the last parameter | int, string, string, bool|
 
 ## Logging
 
