@@ -20,18 +20,19 @@ end)
 
 CreateThread(function()
   while true do
-    if GetNumPlayerIndices() > 0 then
-      for _, player in pairs(GetPlayers()) do
-        local netId = tonumber(player)
-        if tracker[netId] then
-          local playerPed = GetPlayerPed(netId)
-          local allowed = tracker[netId].allowed
+    local players = GetPlayers()
+    if next(players) ~= nil then
+      for _, netId in pairs(players) do
+        local source = tonumber(netId)
+        if tracker[source] then
+          local playerPed = GetPlayerPed(source)
+          local allowed = tracker[source].allowed
 
           if GetPlayerInvincible(netId) and not allowed then
             tracker[netId].strikes = tracker[netId].strikes + 1
           end
 
-          if GetEntityMaxHealth(playerPed) >= 201 and not allowed then
+          if GetEntityMaxHealth(playerPed) >= 201 then
             tracker[netId].strikes = tracker[netId].strikes + 1
           end
 
