@@ -9,20 +9,21 @@ end)
 local function fetchBans()
   local bans = {}
   local handle = StartFindKvp('vac_ban_')
-  -- inplement a caching feature?
-  while true do
-    local key = FindKvp(handle)
-    Wait(0)
-    if key ~= nil then
+  local key
+
+  repeat
+    key = FindKvp(handle)
+    if key then
       insert(bans, key)
-    else
-      break
     end
-  end
+  until not key
+
   EndFindKvp(handle)
+
   return bans
 end
 
+local blockedNames = decode(GetConvar('valkyrie_blocked_names', '[]'))
 AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
   local _source = source
 
@@ -31,6 +32,12 @@ AddEventHandler('playerConnecting', function(name, setKickReason, deferrals)
   Wait(0)
 
   deferrals.update(format('Hello %s. Please wait while your identifiers are being checked.', name))
+
+  for _, v in pairs(blockedNames) do
+    if name:lower():find(v) then
+      deferrals.done(format('Abuse Prevention\nYour username contains prohibited items(s)\nItem: %s\n Please remove the prohibited item then rejoin', v))
+    end
+  end
 
   local bans = fetchBans()
 
