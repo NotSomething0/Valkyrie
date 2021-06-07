@@ -1,19 +1,18 @@
---Optimization--
-local seed = math.randomseed
-local gsub = string.gsub
-local random = math.random
-local format = string.format
-local GetNumPlayerIdentifiers = GetNumPlayerIdentifiers
-local GetPlayerIdentifier = GetPlayerIdentifier
-local GetNumPlayerTokens = GetNumPlayerTokens
-local GetPlayerToken = GetPlayerToken
-local encode = json.encode
+--Micro optimization
+--http://lua-users.org/wiki/OptimisingUsingLocalVariables
+local seed, gsub, random, format = math.randomseed, string.gsub, math.random, string.format
+local GetNumPlayerIdentifiers, GetPlayerIdentifier, GetNumPlayerTokens, GetPlayerToken = GetNumPlayerIdentifiers, GetPlayerIdentifier, GetNumPlayerTokens, GetPlayerToken
+local encode, decode = json.encode, json.decode
 local webhook = GetConvar("valkyrie_discord_webhook", "")
 local templates = {
-  ban = 'Banned\nYou have been banned from this server for %s.\nIf you think this was a mistake contact us here: example.com/forums\nBanId: %s',
-  kick = 'Kicked\nYou have been kicked from this server for %s.\nIf you think this was a mistake contact us here: example.com/forums.',
+  ban = 'Banned\nYou have been banned from this server for %s.\nYour ban will expire on %s\nBanId %s',
+  kick = 'Kicked\nYou have been kicked from this server for %s.',
   log = '**Valkyrie: %s**\nPlayer: %s\nReason: %s'
 }
+
+CreateThread(function()
+  TriggerEvent('vac_initalize_server', 'all')
+end)
 
 -- https://gist.github.com/skeeto/c61167ff0ee1d0581ad60d75076de62f
 local function uuid()
@@ -56,28 +55,123 @@ local function getAllPlayerIdentifiers(isTemporary, player)
 end
 exports('getAllPlayerIdentifiers', getAllPlayerIdentifiers)
 
-local handlePlayer = function(netId, reason1, reason2, shouldBan)
-  local log
-  if type(netId) == 'number' and netId ~= 0 then
-    local playerName = GetPlayerName(netId)
+local bansHaveChanged = true
+local cachedBans = {}
 
-    if shouldBan and playerName then
-      log = format(templates.log, 'Banned', playerName, reason2)
-      local banId = uuid()
-      local drop = format(templates.ban, reason1, banId)
+-- @return table of all current bans
+local function fetchBans()
+  if bansHaveChanged then
+    local handle = StartFindKvp('vac_ban_')
+    local banIds = {}
+    local key
+    repeat
+      key = FindKvp(handle)
 
-      SetResourceKvp(format('vac_ban_%s', banId), getAllPlayerIdentifiers(false, netId))
-      SetResourceKvp(format('vac_reason_%s', banId), drop)
-      DropPlayer(netId, drop)
-    else
-      log = format(templates.log, 'Kicked', playerName, reason2)
-      local drop = format(templates.kick, reason1)
+      if key then
+        banIds[key] = decode(GetResourceKvpString(key))
+      end
+    until not key
+    EndFindKvp(handle)
 
-      DropPlayer(netId, drop)
-    end
+    cachedBans = banIds
+    return banIds
   else
-    return print('^1[ERROR] [Valkyrie]^7 Invalid NetId passed in function \'handlePlayer\'')
+    return cachedBans
   end
-  PerformHttpRequest(webhook, function(err, text, headers) end, 'POST', json.encode({username = name, content = log}), { ['Content-Type'] = 'application/json' })
+  bansHaveChanged = false
 end
-exports('handlePlayer', handlePlayer)
+
+--@param netId number the player to ban
+--@param reason string the reason for the players ban
+--@param duration number the amount of time in epoch to be added to os.time()
+local function ban(netId, reason, duration)
+    local log
+    if type(netId) == 'number' and netId ~= 0 then
+        local playerName = GetPlayerName(netId)
+        if playerName then
+            local uuid = uuid()
+            -- 12/31/3000 23:59:59 PM
+            local expires = 32535237599
+
+            if type(duration) == 'number' then
+                expires = os.time() + duration
+            end
+
+            local ban = {
+                id = uuid,
+                expires = expires,
+                identifiers = getAllPlayerIdentifiers(false, netId),
+                reason = reason
+            }
+
+            SetResourceKvp(format('vac_ban_%s', uuid), encode(ban))
+            DropPlayer(netId, format(templates.ban, reason, os.date('%c %p', expires), uuid))
+        else
+            return
+        end
+        log = format(templates.log, 'Banned', playerName, reason)
+    else
+      return print('^1[ERROR] [Valkyrie]^7 Invalid netId passed in function \'ban\'')
+    end
+    bansHaveChanged = true
+    PerformHttpRequest(webhook, function(err, text, headers) end, 'POST', encode({username = name, content = log}), { ['Content-Type'] = 'application/json' })
+end
+exports('banPlayer', ban)
+
+--@param netId number the player to ban
+--@param reason string the reason kicking the player
+local function kick(netId, reason)
+    local log
+    if type(netId) == 'number' and netId ~= 0 then
+        local playerName = GetPlayerName(netId)
+        if playerName then
+            log = format(templates.log, 'Kicked', playerName, reason)
+            DropPlayer(netId, format(templates.kick, reason))
+        else
+            return
+        end
+      else
+        return print('^1[ERROR] [Valkyrie]^7 Invalid netId passed in function \'kick\'')
+    end
+    PerformHttpRequest(webhook, function(err, text, headers) end, 'POST', encode({username = name, content = log}), { ['Content-Type'] = 'application/json' })
+end
+exports('kickPlayer', kick)
+
+AddEventHandler('playerConnecting', function(name, _, deferrals)
+  local blockedNames = decode((GetConvar('valkyrie_blocked_names', '[]')))
+  local _source = source
+
+  deferrals.defer()
+
+  Wait(0)
+
+  deferrals.update(format('Hello %s, please wait while we check some information', name))
+
+  for _, v in pairs(blockedNames) do
+    if name:lower():find(v) then
+      deferrals.done(format('Abuse Prevention\nYour username contains prohibited items(s)\nItem: %s\n Please remove the prohibited item then rejoin', v))
+    end
+  end
+
+  local banList = fetchBans()
+
+  local playerIdentifiers = getAllPlayerIdentifiers(true, _source)
+
+  for banId, record in pairs(banList) do
+
+    if record.expires - os.time() <= 0 then
+      goto unban
+    end
+
+    for _, identifier in pairs(decode(record.identifiers)) do
+      if playerIdentifiers:find(identifier) then
+        local reason = record.reason
+        return deferrals.done(format(templates.ban, reason, os.date('%c %p', record.expires), record.id))
+      end
+    end
+
+    ::unban::
+    DeleteResourceKvp(banId)
+  end
+  deferrals.done()
+end)
