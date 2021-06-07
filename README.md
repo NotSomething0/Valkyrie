@@ -14,16 +14,17 @@ The second way to install Valkyrie is by downloading the zip file from the relea
 Now that you've downloaded Valkyrie open your server.cfg and add the following:
 ```
 add_ace resource.Valkyrie command.exec allow
+add_ace resource.Valkyrie command.set allow
+add_ace resource.Valkyrie command.setr allow
 exec resources/[local]/Valkyrie/valkyrie.cfg
 ensure Valkyrie
 ```
 
-Note: `ensure Valkyrie` should be added below the nested config
+Note: `ensure Valkyrie` should be added below the nested config and ace permissions
 
 # Configuration
 
 There are quite a few settings in the [configuration](valkyrie.cfg) file, which are defined below. These settings can be updated during runtime using the 'reload' command or when the server restarts.
-
 
 ## Server ConVars
 
@@ -50,7 +51,8 @@ There are quite a few settings in the [configuration](valkyrie.cfg) file, which 
 | Export | Description | Parameters |
 |--------|-------------|------------|
 | getAllPlayerIdentifiers | Returns a json string with a clients identifier(s) and token(s) | bool, int |
-| handlePlayer | Punishment function can be used to ban and kick someone based on the last parameter | int, string, string, bool|
+| banPlayer | Used to ban clients, parameter usage can be found [here](https://bit.ly/2TQvVc1)  | int, string, int, string |
+| kickPlayer | Used to kick clients, parameter usage can be found [here](https://bit.ly/3gcNEle) | int, string |
 
 ## Logging
 
