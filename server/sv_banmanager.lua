@@ -4,16 +4,11 @@ local seed, gsub, random, format = math.randomseed, string.gsub, math.random, st
 local GetNumPlayerIdentifiers, GetPlayerIdentifier, GetNumPlayerTokens, GetPlayerToken = GetNumPlayerIdentifiers, GetPlayerIdentifier, GetNumPlayerTokens, GetPlayerToken
 local encode, decode = json.encode, json.decode
 local webhook = GetConvar('valkyrie_discord_webhook', '')
-local contactLink = GetConvar('valkyrie_contact_link', '')
 local templates = {
-  ban = 'Banned\nYou have been banned from this server for %s.\nYour ban will expire on %s\nBanId %s\nThink this was a mistake? Contact us here '..contactLink,
-  kick = 'Kicked\nYou have been kicked from this server for %s.\nThink this was a mistake? Contact us here '..contactLink,
+  ban = 'Banned\nYou have been banned from this server for %s.\nYour ban will expire on %s\nBanId %s\nThink this was a mistake? Contact us here '..GetConvar('valkyrie_contact_link', ''),
+  kick = 'Kicked\nYou have been kicked from this server for %s.\nThink this was a mistake? Contact us here '..GetConvar('valkyrie_contact_link', ''),
   log = '**Valkyrie: %s**\nPlayer: %s\nReason: %s'
 }
-
-CreateThread(function()
-  TriggerEvent('vac_initalize_server', 'all')
-end)
 
 -- https://gist.github.com/skeeto/c61167ff0ee1d0581ad60d75076de62f
 local function uuid()
@@ -85,7 +80,7 @@ end
 --@param netId number the player to ban
 --@param reason string the reason for the players ban
 --@param duration number the amount of time in epoch to be added to os.time()
-local function ban(netId, reason, duration, discord)
+local function ban(netId, reason, duration)
     local log
     if type(netId) == 'number' and netId ~= 0 then
         local playerName = GetPlayerName(netId)
@@ -107,7 +102,7 @@ local function ban(netId, reason, duration, discord)
 
             SetResourceKvp(format('vac_ban_%s', uuid), encode(ban))
             DropPlayer(netId, format(templates.ban, reason, os.date('%c %p', expires), uuid))
-            log = format(templates.log..'\nBanId: `%s`\nExpires at: `%s`', 'Banned', playerName, discord, uuid, os.date('%c %p', expires))
+            log = format(templates.log..'\nBanId: `%s`\nExpires at: `%s`', 'Banned', playerName, reason, uuid, os.date('%c %p', expires))
         else
             return
         end
