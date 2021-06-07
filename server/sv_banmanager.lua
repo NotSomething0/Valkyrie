@@ -3,10 +3,11 @@
 local seed, gsub, random, format = math.randomseed, string.gsub, math.random, string.format
 local GetNumPlayerIdentifiers, GetPlayerIdentifier, GetNumPlayerTokens, GetPlayerToken = GetNumPlayerIdentifiers, GetPlayerIdentifier, GetNumPlayerTokens, GetPlayerToken
 local encode, decode = json.encode, json.decode
-local webhook = GetConvar("valkyrie_discord_webhook", "")
+local webhook = GetConvar('valkyrie_discord_webhook', '')
+local contactLink = GetConvar('valkyrie_contact_link', '')
 local templates = {
-  ban = 'Banned\nYou have been banned from this server for %s.\nYour ban will expire on %s\nBanId %s',
-  kick = 'Kicked\nYou have been kicked from this server for %s.',
+  ban = 'Banned\nYou have been banned from this server for %s.\nYour ban will expire on %s\nBanId %s\nThink this was a mistake? Contact us here '..contactLink,
+  kick = 'Kicked\nYou have been kicked from this server for %s.\nThink this was a mistake? Contact us here '..contactLink,
   log = '**Valkyrie: %s**\nPlayer: %s\nReason: %s'
 }
 
@@ -84,7 +85,7 @@ end
 --@param netId number the player to ban
 --@param reason string the reason for the players ban
 --@param duration number the amount of time in epoch to be added to os.time()
-local function ban(netId, reason, duration)
+local function ban(netId, reason, duration, discord)
     local log
     if type(netId) == 'number' and netId ~= 0 then
         local playerName = GetPlayerName(netId)
@@ -93,7 +94,7 @@ local function ban(netId, reason, duration)
             -- 12/31/3000 23:59:59 PM
             local expires = 32535237599
 
-            if type(duration) == 'number' then
+            if type(duration) == 'number' and duration ~= 0 then
                 expires = os.time() + duration
             end
 
@@ -106,10 +107,10 @@ local function ban(netId, reason, duration)
 
             SetResourceKvp(format('vac_ban_%s', uuid), encode(ban))
             DropPlayer(netId, format(templates.ban, reason, os.date('%c %p', expires), uuid))
+            log = format(templates.log..'\nBanId: `%s`\nExpires at: `%s`', 'Banned', playerName, discord, uuid, os.date('%c %p', expires))
         else
             return
         end
-        log = format(templates.log, 'Banned', playerName, reason)
     else
       return print('^1[ERROR] [Valkyrie]^7 Invalid netId passed in function \'ban\'')
     end
@@ -120,12 +121,12 @@ exports('banPlayer', ban)
 
 --@param netId number the player to ban
 --@param reason string the reason kicking the player
-local function kick(netId, reason)
+local function kick(netId, reason, discord)
     local log
     if type(netId) == 'number' and netId ~= 0 then
         local playerName = GetPlayerName(netId)
         if playerName then
-            log = format(templates.log, 'Kicked', playerName, reason)
+            log = format(templates.log, 'Kicked', playerName, discord)
             DropPlayer(netId, format(templates.kick, reason))
         else
             return
