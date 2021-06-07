@@ -1,4 +1,5 @@
 local format = string.format
+local remove = table.remove
 local gsub = string.gsub
 local webhook = GetConvar("valkyrie_discord_webhook", "")
 local modules = {
@@ -9,7 +10,7 @@ local modules = {
 
 RegisterCommand('kick', function(source, args)
   local netId = tonumber(args[1])
-  local dropReason = 'No reason specified'
+  local reason = 'No reason specified'
 
   if not netId or netId == 0 or not GetPlayerName(netId) then
     if source > 0 then
@@ -21,8 +22,8 @@ RegisterCommand('kick', function(source, args)
   end
 
   if args[2] then
-    table.remove(args, 1)
-    dropReason = table.concat(args, " ")
+    remove(args, 1)
+    reason = table.concat(args, " ")
   end
 
   if IsPlayerAceAllowed(netId, 'vac.kick') then
@@ -34,47 +35,72 @@ RegisterCommand('kick', function(source, args)
   end
 
   if source > 0 then
-    TriggerClientEvent('vac_notify_client', source, format('~g~Kicked user %s with reason %s.', GetPlayerName(netId), dropReason))
+    TriggerClientEvent('vac_notify_client', source, format('~g~Kicked user %s with reason %s.', GetPlayerName(netId), reason))
   else
-    print(format('^6[INFO] [VALKYRIE]^7 Kicked user %s with reason %s.', GetPlayerName(netId), dropReason))
+    print(format('^6[INFO] [VALKYRIE]^7 Kicked user %s with reason %s.', GetPlayerName(netId), reason))
   end
 
-  exports.Valkyrie:handlePlayer(netId, dropReason, dropReason, false)
+  exports.Valkyrie:kickPlayer(netId, reason)
 end, true)
 
 RegisterCommand('ban', function(source, args)
   local netId = tonumber(args[1])
-  local dropReason = 'No reason specified'
+  local year, month, day, hour = tonumber(args[2]), tonumber(args[3]), tonumber(args[4]), tonumber(args[5])
+  local reason = 'No reason specified'
 
-  if not netId or netId == 0 or not GetPlayerName(netId) then
-    if source > 0 then
-      TriggerClientEvent('vac_notify_client', source, '~y~Invalid netId, please try again.')
-    else
-      print('^1[WARN] [Valkyrie]^7 Invalid netId, please try again.')
+  if #args >= 5 then
+
+    if not netId or netId == 0 or not GetPlayerName(netId) then
+      if source > 0 then
+        TriggerClientEvent('vac_notify_client', source, '~y~Invalid netId, please try again.')
+      else
+        print('^1[WARN] [Valkyrie]^7 Invalid netId, please try again.')
+      end
+      return
     end
-    return
-  end
 
-  if args[2] then
-    table.remove(args, 1)
-    dropReason = table.concat(args, " ")
-  end
-
-  if IsPlayerAceAllowed(netId, 'vac.ban') then
-    if source > 0 then
-      return TriggerClientEvent('vac_notify_client', source, '~y~You can\'t ban another user with elevated permissions!')
-    else
-      return print('^6[INFO] [VALKYRIE]^7 You can\'t ban another user with elevated permissions!')
+    if IsPlayerAceAllowed(netId, 'vac.ban') then
+      if source > 0 then
+        return TriggerClientEvent('vac_notify_client', source, '~y~You can\'t ban another user with elevated permissions!')
+      else
+        return print('^6[INFO] [VALKYRIE]^7 You can\'t ban another user with elevated permissions!')
+      end
     end
-  end
 
-  if source > 0 then
-    TriggerClientEvent('vac_notify_client', source, format('~g~Banned user %s with reason %s.', GetPlayerName(netId), dropReason))
+    year = year * 31556926 or 0
+    month = month * 2629743 or 0
+    day = day * 86400 or 0
+    hour = hour * 3600 or 0
+
+    local banDuration = year + month + day + hour
+
+    if banDuration == 0 then
+      banDuration = 32535237599
+    end
+
+    if args[6] then
+      -- Lua removes from table the element at position shifting down to close space
+      -- So we remove the first element every time leaving only the sixth now first arg
+      for i = 1, 5 do
+        remove(args, 1)
+      end
+      reason = table.concat(args, " ")
+    end
+
+    if source > 0 then
+      TriggerClientEvent('vac_notify_client', source, format('~g~Banned user %s with reason %s.', GetPlayerName(netId), reason))
+    else
+      print(format('^6[INFO] [VALKYRIE]^7 Banned user %s with reason %s.', GetPlayerName(netId), reason))
+    end
+
+    exports.Valkyrie:banPlayer(netId, reason, banDuration)
   else
-    print(format('^6[INFO] [VALKYRIE]^7 Banned user %s with reason %s.', GetPlayerName(netId), dropReason))
+    if source > 0 then
+      TriggerClientEvent('vac_notify_client', source, '~y~Invalid number of arguments, please try again.')
+    else
+      print('^1[WARN] [Valkyrie]^7 Invalid number of arguments, please try again.')
+    end
   end
-
-  exports.Valkyrie:handlePlayer(netId, dropReason, dropReason, true)
 end, true)
 
 RegisterCommand('unban', function(source, args)
@@ -110,7 +136,6 @@ RegisterCommand('unban', function(source, args)
   end
 
   DeleteResourceKvp(format('vac_ban_%s', banId))
-  DeleteResourceKvp(format('vac_reason_%s', banId))
 
   if source > 0 then
     TriggerClientEvent('vac_notify_client', source, format('~g~ BanId: %s successfully unbanned with reason %s.', banId, reason))
