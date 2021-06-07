@@ -74,10 +74,6 @@ RegisterCommand('ban', function(source, args)
 
     local banDuration = year + month + day + hour
 
-    if banDuration == 0 then
-      banDuration = 32535237599
-    end
-
     if args[6] then
       -- Lua removes from table the element at position shifting down to close space
       -- So we remove the first element every time leaving only the sixth now first arg
