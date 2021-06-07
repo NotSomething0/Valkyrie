@@ -77,46 +77,46 @@ local function fetchBans()
   bansHaveChanged = false
 end
 
---@param netId number the player to ban
+--@param netId number player source
 --@param reason string the reason for the players ban
 --@param duration number the amount of time in epoch to be added to os.time()
 --@param discord string the more verbose reason for the players ban
 local function ban(netId, reason, duration, discord)
-    local log
-    if type(netId) == 'number' and netId ~= 0 then
-        local playerName = GetPlayerName(netId)
-        if playerName then
-            local uuid = uuid()
-            -- 12/31/3000 23:59:59 PM
-            local expires = 32535237599
+  local log
+  if type(netId) == 'number' and netId ~= 0 then
+    local playerName = GetPlayerName(netId)
+    if playerName then
+      local uuid = uuid()
+      -- 12/31/3000 23:59:59 PM
+      local expires = 32535237599
 
-            if type(duration) == 'number' and duration ~= 0 then
-                expires = os.time() + duration
-            end
+      if type(duration) == 'number' and duration ~= 0 then
+          expires = os.time() + duration
+      end
 
-            local ban = {
-                id = uuid,
-                expires = expires,
-                identifiers = getAllPlayerIdentifiers(false, netId),
-                reason = reason
-            }
+      local ban = {
+          id = uuid,
+          expires = expires,
+          identifiers = getAllPlayerIdentifiers(false, netId),
+          reason = reason
+      }
 
-            SetResourceKvp(format('vac_ban_%s', uuid), encode(ban))
-            DropPlayer(netId, format(templates.ban, reason, os.date('%c %p', expires), uuid))
-            log = format(templates.log..'\nBanId: `%s`\nExpires at: `%s`', 'Banned', playerName, discord, uuid, os.date('%c %p', expires))
-        else
-            return
-        end
+      SetResourceKvp(format('vac_ban_%s', uuid), encode(ban))
+      DropPlayer(netId, format(templates.ban, reason, os.date('%c %p', expires), uuid))
+      log = format(templates.log..'\nBanId: `%s`\nExpires at: `%s`', 'Banned', playerName, discord, uuid, os.date('%c %p', expires))
     else
-      return print('^1[ERROR] [Valkyrie]^7 Invalid netId passed in function \'ban\'')
+      return
     end
-    bansHaveChanged = true
-    PerformHttpRequest(webhook, function(err, text, headers) end, 'POST', encode({username = name, content = log}), { ['Content-Type'] = 'application/json' })
+  else
+    return print('^1[ERROR] [Valkyrie]^7 Invalid netId passed in function \'ban\'')
+  end
+  bansHaveChanged = true
+  PerformHttpRequest(webhook, function(err, text, headers) end, 'POST', encode({username = name, content = log}), { ['Content-Type'] = 'application/json' })
 end
 exports('banPlayer', ban)
 
---@param netId number the player to ban
---@param reason string the reason kicking the player
+--@param netId number player source
+--@param reason string reason for kicking the player
 local function kick(netId, reason)
     local log
     if type(netId) == 'number' and netId ~= 0 then
@@ -144,9 +144,9 @@ AddEventHandler('playerConnecting', function(name, _, deferrals)
 
   deferrals.update(format('Hello %s, please wait while we check some information', name))
 
-  for _, v in pairs(blockedNames) do
-    if name:lower():find(v) then
-      deferrals.done(format('Abuse Prevention\nYour username contains prohibited items(s)\nItem: %s\n Please remove the prohibited item then rejoin', v))
+  for _, item in pairs(blockedNames) do
+    if name:lower():find(item) then
+      deferrals.done(format('Abuse Prevention\nYour username contains prohibited items(s)\nItem: %s\n Please remove the prohibited item then rejoin', item))
     end
   end
 
