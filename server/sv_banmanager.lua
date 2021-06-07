@@ -80,7 +80,8 @@ end
 --@param netId number the player to ban
 --@param reason string the reason for the players ban
 --@param duration number the amount of time in epoch to be added to os.time()
-local function ban(netId, reason, duration)
+--@param discord string the more verbose reason for the players ban
+local function ban(netId, reason, duration, discord)
     local log
     if type(netId) == 'number' and netId ~= 0 then
         local playerName = GetPlayerName(netId)
@@ -102,7 +103,7 @@ local function ban(netId, reason, duration)
 
             SetResourceKvp(format('vac_ban_%s', uuid), encode(ban))
             DropPlayer(netId, format(templates.ban, reason, os.date('%c %p', expires), uuid))
-            log = format(templates.log..'\nBanId: `%s`\nExpires at: `%s`', 'Banned', playerName, reason, uuid, os.date('%c %p', expires))
+            log = format(templates.log..'\nBanId: `%s`\nExpires at: `%s`', 'Banned', playerName, discord, uuid, os.date('%c %p', expires))
         else
             return
         end
@@ -116,12 +117,12 @@ exports('banPlayer', ban)
 
 --@param netId number the player to ban
 --@param reason string the reason kicking the player
-local function kick(netId, reason, discord)
+local function kick(netId, reason)
     local log
     if type(netId) == 'number' and netId ~= 0 then
         local playerName = GetPlayerName(netId)
         if playerName then
-            log = format(templates.log, 'Kicked', playerName, discord)
+            log = format(templates.log, 'Kicked', playerName, reason)
             DropPlayer(netId, format(templates.kick, reason))
         else
             return
