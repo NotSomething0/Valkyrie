@@ -7,22 +7,27 @@ local GetPlayerInvincible = GetPlayerInvincible
 local IsPlayerAceAllowed = IsPlayerAceAllowed
 
 local tracker = {}
+local function setUpPlayer(playerId)
+  local netId = tonumber(playerId)
+  if netId then
+    tracker[netId] = {strikes = 0, allowed = false}
 
-RegisterNetEvent('vac_player_activated', function()
-  tracker[source] = {strikes = 0, allowed = false}
-  if IsPlayerAceAllowed(source, 'vac.bypass') then
-    tracker[source].allowed = true
-    TriggerClientEvent('vac_receive_permission', source, true)
-  else
-    TriggerClientEvent('vac_receive_permission', source, false)
+    if IsPlayerAceAllowed(netId, 'vac.bypass') then
+      tracker[netId].allowed = true
+      TriggerClientEvent('vac_receive_permission', netId, true)
+    else
+      TriggerClientEvent('vac_receive_permission', netId, false)
+    end
   end
+end
+RegisterNetEvent('vac_player_activated', function()
+  setUpPlayer(source)
 end)
 
 CreateThread(function()
   while true do
-    local players = GetPlayers()
-    if next(players) ~= nil then
-      for _, netId in pairs(players) do
+    if next(GetPlayers()) ~= nil then
+      for _, netId in pairs(GetPlayers()) do
         local source = tonumber(netId)
         if tracker[source] then
           local playerPed = GetPlayerPed(source)
@@ -36,7 +41,7 @@ CreateThread(function()
             tracker[netId].strikes = tracker[netId].strikes + 1
           end
 
-          if tracker[netId].strikes >= 5 then
+          if tracker[source].strikes >= 5 then
             exports.Valkyrie:handlePlayer(netId, 'Maxium strikes', 'Exceeded maximum tracker strikes', true)
           end
         end
@@ -46,6 +51,17 @@ CreateThread(function()
       Wait(5000)
     end
     Wait(0)
+  end
+end)
+
+AddEventHandler('onResourceStart', function(resourceName)
+  if resourceName == GetCurrentResourceName() then
+    local players = GetPlayers()
+    if next(players) ~= nil then
+      for _, playerId in pairs(players) do
+        setUpPlayer(playerId)
+      end
+    end
   end
 end)
 
