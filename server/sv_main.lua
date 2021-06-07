@@ -54,13 +54,13 @@ CreateThread(function()
   end
 end)
 
-AddEventHandler('onResourceStart', function(resourceName)
-  if resourceName == GetCurrentResourceName() then
-    local players = GetPlayers()
-    if next(players) ~= nil then
-      for _, playerId in pairs(players) do
-        setUpPlayer(playerId)
-      end
+CreateThread(function()
+  ExecuteCommand('exec resources\\[local]\\Valkyrie\\valkyrie.cfg')
+  TriggerEvent('vac_initalize_server', 'all')
+
+  if next (GetPlayers()) then
+    for _, playerId in pairs(GetPlayers()) do
+      setUpPlayer(playerId)
     end
   end
 end)
