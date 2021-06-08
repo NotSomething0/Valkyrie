@@ -2,7 +2,7 @@
 --http://lua-users.org/wiki/OptimisingUsingLocalVariables
 local seed, gsub, random, format = math.randomseed, string.gsub, math.random, string.format
 local GetNumPlayerIdentifiers, GetPlayerIdentifier, GetNumPlayerTokens, GetPlayerToken = GetNumPlayerIdentifiers, GetPlayerIdentifier, GetNumPlayerTokens, GetPlayerToken
-local encode, decode = json.encode, json.decode
+local encode, decode = assert(json.encode), assert(json.decode)
 local webhook = GetConvar('valkyrie_discord_webhook', '')
 local templates = {
   ban = 'Banned\nYou have been banned from this server for %s.\nYour ban will expire on %s\nBanId %s\nThink this was a mistake? Contact us here '..GetConvar('valkyrie_contact_link', ''),
