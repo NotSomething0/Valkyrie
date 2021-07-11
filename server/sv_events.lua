@@ -1,16 +1,4 @@
 local format = string.format
-local decode = json.decode
-local lower = string.lower
-
-RegisterNetEvent('vac_detection', function(reason, log, bool)
-  if log and log ~= '' then
-    if bool then
-      exports.Valkyrie:handlePlayer(source, reason, log, true)
-    elseif not bool then
-      exports.Valkyrie:handlePlayer(source, reason, log, false)
-    end
-  end
-end)
 
 --[[
   Do not remove events from this table!
@@ -18,7 +6,7 @@ end)
   Need help? Open an issue on Github
 ]]
 
-local _blockedServerEvents = {
+local blockedEvents = {
   "8321hiue89js",
   "adminmenu:allowall",
   "AdminMenu:giveBank",
@@ -243,83 +231,21 @@ local _blockedServerEvents = {
   "esx_carthief:alertcoDFWMps",
   "mellotrainer:adminTeDFWMmpBan",
   "mellotrainer:adminKickDFWM",
-  "esx_society:putVehicleDFWMInGarage"
+  "esx_society:putVehicleDFWMInGarage",
+  "SEM_InteractionMenu:CuffNear",
+  "SEM_InteractionMenu:DragNear",
+  "SEM_InteractionMenu:SeatNear",
+  "SEM_InteractionMenu:UnseatNear",
+  "SEM_InteractionMenu:Jail",
+  "SEM_InteractionMenu:Unjail",
+  "SEM_InteractionMenu:Hospitalize",
+  "SEM_InteractionMenu:Unhospitalize",
 }
 
-for _, eventName in ipairs(_blockedServerEvents) do
+for _, eventName in ipairs(blockedEvents) do
   RegisterNetEvent(eventName, function()
     if GetPlayerPing(source) ~= nil then
-      exports.Valkyrie:handlePlayer(source, 'Blocked Event', format('Blocked Event | `%s`', eventName), true)
+      exports.Valkyrie:banPlayer(source, 'Blocked Event', format('Blocked Event | `%s`', eventName), true)
     end
   end)
 end
-
-local allowedEntities = {}
-AddEventHandler('entityCreating', function(entity)
-  if not allowedEntities[tonumber(GetEntityModel(entity))] then
-    CancelEvent()
-  end
-end)
-
-AddEventHandler('vac_initalize_server', function(module)
-  if module == 'entities' or module == 'all' then
-    allowedEntities = {}
-    local entities = decode(GetConvar('valkyrie_allowed_entities', '[]'))
-    for _, modelString in pairs(entities) do
-      local modelHash = tonumber(GetHashKey(modelString))
-      allowedEntities[modelHash] = true
-    end
-  end
-end)
-
-local explosionTracker, blockedExplosions = {}, {}
-AddEventHandler('explosionEvent', function(sender, ev)
-  if blockedExplosions[ev.explosionType] and ev.damageScale ~= 0.0 then
-    CancelEvent()
-    if explosionTracker[sender] then
-      explosionTracker[sender]= explosionTracker[sender] + 1
-    else
-      explosionTracker[sender] = 1
-    end
-
-    if explosionTracker[sender] >= allowedExplosions then
-      exports.Valkyrie:handlePlayer(tonumber(sender), 'Blocked Explosion', format('Blocked Explosion | Count: `%s`', explosionTracker[sender]), false)
-    end
-  end
-end)
-
-AddEventHandler('vac_initalize_server', function(module)
-  if module == 'explosion' or module == 'all' then
-    blockedExplosions = {}
-    allowedExplosions = GetConvarInt('valkyrie_maximum_allowed_explosions', 5)
-    local explosions = decode(GetConvar('valkyrie_blocked_explosions', '[]'))
-    for _, expNum in ipairs(explosions) do
-      blockedExplosions[expNum] = true
-    end
-  end
-end)
-
-exports.chat:registerMessageHook(function(source, outMessage, hookRef)
-  local message = outMessage.args[2]
-  if filterMessages == 1 then
-    for _, text in pairs(censoredText) do
-      if message:find(text) then
-        message = message:gsub(text, ("#"):rep(text:len()))
-      end
-    end
-      hookRef.updateMessage({args = {outMessage.args[1], message}})
-  else
-      for _, text in pairs(censoredText) do
-          if lower(message):find(lower(text)) then
-              hookRef.cancel()
-          end
-      end
-  end
-end)
-
-AddEventHandler('vac_initalize_server', function(module)
-  if module == 'filter' or 'all' then
-    censoredText = decode(GetConvar('valkyrie_blocked_expressions', '[]'))
-    filterMessages = GetConvarInt('valkyrie_filter_messages', 0)
-  end
-end)
