@@ -87,8 +87,7 @@ local function ban(netId, reason, duration, discord)
     local playerName = GetPlayerName(netId)
     if playerName then
       local uuid = uuid()
-      -- 12/31/3000 23:59:59 PM
-      local expires = 32535237599
+      local expires = 31536000 + os.time()
 
       if type(duration) == 'number' and duration ~= 0 then
           expires = os.time() + duration

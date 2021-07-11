@@ -4,7 +4,7 @@ author 'https://github.com/NotSomething0'
 
 description 'An open source FiveM anticheat'
 
-version '1.1.1'
+version '1.2.0'
 
 game 'gta5'
 
@@ -13,5 +13,6 @@ client_scripts {
 }
 
 server_scripts {
-    'server**/sv_*.lua'
+    'server**/sv_*.lua',
+    'util/util.lua'
 }
