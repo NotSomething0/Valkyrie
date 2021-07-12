@@ -4,7 +4,7 @@ author 'https://github.com/NotSomething0'
 
 description 'An open source FiveM anticheat'
 
-version '1.2.0'
+version '1.2.1'
 
 game 'gta5'
 
