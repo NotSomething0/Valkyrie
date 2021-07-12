@@ -245,7 +245,7 @@ local blockedEvents = {
 for _, eventName in ipairs(blockedEvents) do
   RegisterNetEvent(eventName, function()
     if GetPlayerPing(source) ~= nil then
-      exports.Valkyrie:banPlayer(source, 'Blocked Event', format('Blocked Event | `%s`', eventName), true)
+      exports.Valkyrie:banPlayer(source, 'Blocked Event', format('Blocked Event | `%s`', eventName))
     end
   end)
 end
