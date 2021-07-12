@@ -26,32 +26,30 @@ for _, eventName in pairs(_blockedClientEvents) do
     end)
 end
 
-RegisterNetEvent('vac_clear_objects')
-AddEventHandler('vac_clear_objects', function()
-    local cObject = GetGamePool('CObject')
-    for _, obj in pairs(cObject) do
-        NetworkRequestControlOfEntity(obj)
+local function clearObjects()
+  local objects = GetGamePool('CObject')
+  for i = 1, #objects do
 
-        while not NetworkHasControlOfEntity(obj) do
-            Wait(500)
-        end
-        DetachEntity(obj, 0, false)
+    local handle = objects[i]
 
-        SetEntityCollision(object, false, false)
-        SetEntityAlpha(obj, 0.0, true)
-        SetEntityAsMissionEntity(obj, true, true)
-        SetEntityAsNoLongerNeeded(obj)
-        DeleteEntity(obj)
+    repeat
+      NetworkRequestControlOfEntity(handle)
+    until NetworkHasControlOfEntity(handle)
+
+    if IsEntityAttached(handle) then
+      DetachEntity(handle, false, false)
     end
-end)
 
-function notification(message)
+    DeleteEntity(handle)
+  end
+end
+
+RegisterNetEvent('vac_clear_objects', clearObjects)
+
+local function notification(message)
 	BeginTextCommandThefeedPost("STRING")
 	AddTextComponentSubstringPlayerName(message)
 	EndTextCommandThefeedPostTicker(true, false)
 end
 
-RegisterNetEvent('vac_notify_client')
-AddEventHandler('vac_notify_client', function(message)
-    notification(message)
-end)
+RegisterNetEvent('vac_notify_client', notification)

@@ -2,29 +2,27 @@
 
 ## Description
 
-Valkyrie is another FiveM Anti-cheat but, unlike other projects you see online, this one is free and open source. The intent of this project was to stop server owners from paying absurd amounts of money on paid services that are obfuscated to hell and made by "*former*" cheat developers.
+Valkyrie is an open source [FiveM](https://fivem.net) Anti-cheat. The intent of this project is to prevent server owners from being exploited by "*former*" cheat developers, who are asking for absurd amounts of money on their obfuscated products.
 
 ## Installation
 
-Before we start installing Valkyrie, there are a few prerequisites first. Make sure your [server-data](https://github.com/citizenfx/cfx-server-data) folder is up to date with the latest resources as of 14/1/2021 or later. Second, update your server [artifacts](https://runtime.fivem.net/artifacts/fivem/) to the latest recommended version to ensure compatibility.
+Note: Before installation, ensure that both your [server artifacts](https://runtime.fivem.net/artifacts/fivem/) and [server-data](https://github.com/citizenfx/cfx-server-data) resources are up-to-date.
 
-If you've checked the prerequisite above and are sure everything is up to date, we can finally start-installing Valkyrie! Since Valkyrie is written in Lua and doesn't need to be, compiled there are two ways to install it. The first and recommended way to install Valkyrie is by using git. To install Valkyrie using git, navigate to "resources/[local]" in your server-data folder and run the following command `git clone https://github.com/NotSomething0/Valkyrie.git`.
-The second way to install Valkyrie is by downloading the zip file from the release section on GitHub; once you've downloaded the zip archive, extract the folder into "resources/[local]"
+1. Download the most recent version from the 'Releases' section on GitHub ("Valkyrie-version.zip")
 
-Now that you've downloaded Valkyrie open your server.cfg and add the following:
-```
-add_ace resource.Valkyrie command.exec allow
-add_ace resource.Valkyrie command.set allow
-add_ace resource.Valkyrie command.setr allow
-exec resources/[local]/Valkyrie/valkyrie.cfg
-ensure Valkyrie
-```
+2. Extract the contents from the zip file into `resources/Valkyrie`
 
-Note: `ensure Valkyrie` should be added below the nested config and ace permissions
+3. Once you've extracted the files, move the `valkyrie.cfg` file to the same folder where your `server.cfg` is located
+
+4. Open your `server.cfg` file, and add both `exec valkyrie.cfg` & `ensure Valkyrie`
+
+5. Save the server.cfg file then start your server
+
+6. You're done, you've installed Valkyrie! Now move on to the configuration portion of this README
 
 # Configuration
 
-There are quite a few settings in the [configuration](valkyrie.cfg) file, which are defined below. These settings can be updated during runtime using the 'reload' command or when the server restarts.
+There are quite a few settings in the [configuration](valkyrie.cfg) file, which are defined below. These settings can be updated during runtime using the 'reload' command or by restarting the resource.
 
 ## Server ConVars
 
@@ -56,8 +54,4 @@ There are quite a few settings in the [configuration](valkyrie.cfg) file, which 
 
 ## Logging
 
-Valkyrie has built-in logging functionally to discord using webhooks, in addition to this actions are also printed to the server console. In order to use the built in logging to discord you'll need to create a [webhook](https://bit.ly/2QN4q1N). Once you've created your webhook replace it with the empty string inside the [configuration](valkyrie.cfg) file.
-
-### TODO
-
-Add screenshot-basic functionality
+Valkyrie has built-in logging functionally to discord using webhooks. In order to use the built in logging you'll need to create a [webhook](https://bit.ly/2QN4q1N). Once you've created your webhook replace it with the empty string inside the [configuration](valkyrie.cfg) file.
