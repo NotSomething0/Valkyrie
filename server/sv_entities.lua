@@ -7,7 +7,10 @@ end)
 
 AddEventHandler('vac_initalize_server', function(module)
   if module == 'entities' or 'all' then
-    table.clear(allowedEntities)
+
+    for hash in pairs(allowedEntities) do
+      allowedEntities[hash] = nil
+    end
 
     local models = json.decode(GetConvar('valkyrie_allowed_entities', '[]'))
     for i = 1, #models do
