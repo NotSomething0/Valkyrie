@@ -1,5 +1,4 @@
 -- Micro optimizations https://www.lua.org/gems/sample.pdf
-local GetNumPlayerIndices = GetNumPlayerIndices
 local GetPlayers = GetPlayers
 local GetPlayerPed = GetPlayerPed
 local GetEntityMaxHealth = GetEntityMaxHealth
@@ -20,6 +19,7 @@ local function setUpPlayer(playerId)
     end
   end
 end
+
 RegisterNetEvent('vac_player_activated', function()
   setUpPlayer(source)
 end)
@@ -54,15 +54,20 @@ CreateThread(function()
   end
 end)
 
-CreateThread(function()
-  ExecuteCommand('exec resources\\[local]\\Valkyrie\\valkyrie.cfg')
-  TriggerEvent('vac_initalize_server', 'all')
+AddEventHandler('onResourceStart', function(resourceName)
+  if (GetCurrentResourceName() ~= resourceName) then
+    return
+  end
 
-  if next (GetPlayers()) then
-    for _, playerId in pairs(GetPlayers()) do
-      setUpPlayer(playerId)
+  local players = GetPlayers()
+
+  if next(players) then
+    for i = 1, #players do
+      setUpPlayer(tonumber(players[i]))
     end
   end
+
+  TriggerEvent('vac_initalize_server', 'all')
 end)
 
 AddEventHandler('playerDropped', function()
