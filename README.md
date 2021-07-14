@@ -1,7 +1,5 @@
 # Valkyrie Anti-cheat
 
-## Description
-
 Valkyrie is an open source [FiveM](https://fivem.net) Anti-cheat. The intent of this project is to prevent server owners from being exploited by "*former*" cheat developers, who are asking for absurd amounts of money on their obfuscated products.
 
 ## Installation
