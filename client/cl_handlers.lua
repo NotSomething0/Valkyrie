@@ -45,11 +45,3 @@ local function clearObjects()
 end
 
 RegisterNetEvent('vac_clear_objects', clearObjects)
-
-local function notification(message)
-	BeginTextCommandThefeedPost("STRING")
-	AddTextComponentSubstringPlayerName(message)
-	EndTextCommandThefeedPostTicker(true, false)
-end
-
-RegisterNetEvent('vac_notify_client', notification)
