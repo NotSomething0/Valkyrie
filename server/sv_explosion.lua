@@ -23,7 +23,10 @@ end)
 
 AddEventHandler('vac_initalize_server', function(module)
   if module == 'explosion' or 'all' then
-    table.clear(explosionIndex)
+
+    for index in pairs(explosionIndex) do
+      explosionIndex[index] = nil
+    end
 
     for _, idx in pairs(json.decode(GetConvar('valkyrie_blocked_explosions', '[]'))) do
       explosionIndex[idx] = true

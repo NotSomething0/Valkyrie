@@ -23,7 +23,12 @@ end)
 
 AddEventHandler('vac_initalize_server', function(module)
   if module == 'filter' or 'all' then
-    table.clear(filteredText)
+
+    local count = #filteredText
+
+    for i = 1, count do
+      filteredText[i] = nil
+    end
 
     local text = json.decode(GetConvar('valkyrie_blocked_expressions', '[]'))
 
