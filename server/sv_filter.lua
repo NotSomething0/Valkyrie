@@ -2,18 +2,24 @@ local filterMessages = 0
 local filteredText = {}
 
 exports.chat:registerMessageHook(function(source, outMessage, hookRef)
-  local content = outMessage.args[2]
+  local message = outMessage.args[2]
 
-  if filterMessages == 1 then
-    for _, text in pairs(filteredText) do
-      if content:find(text) then
-        content = content:gsub(text, ("#"):rep(text:len()))
+  if (filterMessages == 1 and #filteredText ~= 0) then
+    for _, v in pairs(filteredText) do
+      local b, e = message:lower():find(v:lower())
+      local s = b and e and message:sub(b, e)
+
+      if (s) then
+        message = message:sub(1, b - 1) ..('#'):rep(s:len()) .. message:sub(e + 1)
       end
     end
-    hookRef.updateMessage({args = {outMessage.args[1], content}})
+
+    hookRef.updateMessage({args = {outMessage.args[1], message}})
   else
-    for _, text in pairs(filteredText) do
-      if content:lower():find(text:lower()) then
+    message = outMessage.args[2]:lower()
+
+    for _, v in pairs(filteredText) do
+      if (message:find(v:lower())) then
         hookRef.cancel()
         break
       end
@@ -21,21 +27,24 @@ exports.chat:registerMessageHook(function(source, outMessage, hookRef)
   end
 end)
 
-AddEventHandler('vac_initalize_server', function(module)
-  if module == 'filter' or 'all' then
-
+AddEventHandler('__vac_internel:intalizeServer', function(module)
+  if (module == 'chat' or 'all') then
     local count = #filteredText
 
-    for i = 1, count do
-      filteredText[i] = nil
+    if (count ~= 0) then
+      for i = 1, count do
+        filteredText[i] = nil
+      end
     end
 
-    local text = json.decode(GetConvar('valkyrie_blocked_expressions', '[]'))
+    local toFilter = json.decode('vac_filterText', '{}')
 
-    for i = 0, #text do
-      rawset(filteredText, i, text[i])
+    if (toFilter ~= '{}') then
+      for i = 1, #toFilter do
+        rawset(filteredText, i, toFilter[i])
+      end
     end
 
-    filterMessages = GetConvarInt('valkyrie_filter_messages', 0)
+    filterMessages = GetConvarInt('vac_filterMessages' 0)
   end
 end)
