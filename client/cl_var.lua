@@ -100,10 +100,11 @@ function CheckVariables()
     end
 end
 
-
+--[[
 Citizen.CreateThread(function()
     while true do
         CheckVariables()
         Citizen.Wait(15000)
     end
 end)
+]]
