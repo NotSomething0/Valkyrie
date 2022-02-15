@@ -1,19 +1,14 @@
-local format = string.format
-
 --[[
-  Do not remove events from this table!
-  If you have an exploitable event on your server fix it!
-  Need help? Open an issue on Github
+  Do not comment out or remove entries from this table!
+  If you find an exploitable event on your server fix it, don't ignore the problem!
+  Need help? Open an issue on GitHub
 ]]
 
 local blockedEvents = {
-  "8321hiue89js",
   "adminmenu:allowall",
   "AdminMenu:giveBank",
   "AdminMenu:giveCash",
   "AdminMenu:giveDirtyMoney",
-  "Tem2LPs5Para5dCyjuHm87y2catFkMpV",
-  "dqd36JWLRC72k8FDttZ5adUKwvwq9n9m",
   "antilynx8:anticheat",
   "antilynxr4:detect",
   "antilynxr6:detection",
@@ -242,10 +237,15 @@ local blockedEvents = {
   "SEM_InteractionMenu:Unhospitalize",
 }
 
-for _, eventName in ipairs(blockedEvents) do
+for i = 1, #blockedEvents do
+  local eventName = blockedEvents[i]
+
   RegisterNetEvent(eventName, function()
-    if GetPlayerPing(source) ~= nil then
-      exports.Valkyrie:banPlayer(source, 'Blocked Event', format('Blocked Event | `%s`', eventName))
+    if (GetPlayerEndpoint(source) ~= nil) then
+      BanPlayer(source, 'Blocked Event', ('Blocked Event | `%s`'):format(eventName))
     end
+    CancelEvent()
   end)
+
+  logger.verbose('Registered: ' ..blockedEvents[i])
 end
