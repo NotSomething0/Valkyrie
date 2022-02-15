@@ -34,8 +34,8 @@ RegisterCommand('unban', function(source, args)
 end, true)
 
 RegisterCommand('clearo', function()
-  for _, netId in pairs(GetPlayers()) do
-    TriggerClientEvent('vac_clear_objects', netId)
+  for _, object in pairs(GetAllObjects()) do
+    DeleteEntity(object)
   end
 end, true)
 
