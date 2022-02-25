@@ -81,7 +81,7 @@ end
 --@param reason string the reason for the players ban
 --@param duration number the amount of time in epoch to be added to os.time()
 --@param discord string the more verbose reason for the players ban
-local function ban(netId, reason, discord, duration)
+function BanPlayer(netId, reason, discord, duration)
   local log
   if type(netId) == 'number' and netId ~= 0 then
     local playerName = GetPlayerName(netId)
