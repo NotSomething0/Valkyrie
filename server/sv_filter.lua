@@ -1,35 +1,46 @@
 local filterMessages = 0
-local filteredText = {}
+local filterText = {}
 
 exports.chat:registerMessageHook(function(source, outMessage, hookRef)
-  local message = outMessage.args[2]
+  local old = outMessage.args[2]:lower()
+  local new = outMessage.args[2]
 
-  if (filterMessages == 1 and #filteredText ~= 0) then
+  if (filterMessages and #filteredText ~= 0) then
     for _, v in pairs(filteredText) do
-      local b, e = message:lower():find(v:lower())
+      local b, e = old:find(v:lower())
       local s = b and e and message:sub(b, e)
 
       if (s) then
-        message = message:sub(1, b - 1) ..('#'):rep(s:len()) .. message:sub(e + 1)
+        new = new:sub(1, b - 1) ..('#'):rep(s:len()) .. new:sub(e + 1)
       end
     end
 
-    hookRef.updateMessage({args = {outMessage.args[1], message}})
+    hookRef.updateMessage({args = {outMessage.args[2], new}})
   else
-    message = outMessage.args[2]:lower()
+    local hit
 
     for _, v in pairs(filteredText) do
-      if (message:find(v:lower())) then
-        hookRef.cancel()
+      if (old:find(v:lower())) then
+        hit = v
         break
       end
+    end
+
+    if (hit) then
+      TriggerClientEvent('chat:addMessage', source, {
+        template = 'vac_bad_message',
+        args = {'Server', 'Your message contains a blocked pieace of text ' ..v}
+      })
+      
+      hookRef.cancel()
     end
   end
 end)
 
 AddEventHandler('__vac_internel:intalizeServer', function(module)
   if (module == 'chat' or 'all') then
-    local count = #filteredText
+    local toFilter = json.decode(GetConvar('vac_filterText', '{}'))
+    local count = #filterText
 
     if (count ~= 0) then
       for i = 1, count do
@@ -37,11 +48,9 @@ AddEventHandler('__vac_internel:intalizeServer', function(module)
       end
     end
 
-    local toFilter = json.decode('vac_filterText', '{}')
-
     if (toFilter ~= '{}') then
       for i = 1, #toFilter do
-        rawset(filteredText, i, toFilter[i])
+        filterText[i] = toFilter[i]
       end
     end
 
