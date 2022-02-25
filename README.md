@@ -1,10 +1,8 @@
 # Valkyrie Anti-cheat
-
-Valkyrie is an open source [FiveM](https://fivem.net) Anti-cheat. The intent of this project is to prevent server owners from being exploited by "*former*" cheat developers, who are asking for absurd amounts of money on their obfuscated products.
+A free as in free beer open source [FiveM]('https://fivem.net') Anti-cheat. Using the most modern technologies currently available on FiveM. Valkyrie aims to be your one-stop solution to preventing modders from wreaking havoc on your server. Take peace and mind with peer reviewed code and runtime reloadable modules that keeps you in control!
 
 ## Installation
-
-Note: Before installation, ensure that both your [server artifacts](https://runtime.fivem.net/artifacts/fivem/) and [server-data](https://github.com/citizenfx/cfx-server-data) resources are up-to-date.
+Note: Before installation, ensure that your [server-data](https://github.com/citizenfx/cfx-server-data) resources are up-to-date. Valkyrie uses the registerMessageHook export provided by the default chat resource for message filtering, which is not available in older versions of the chat resource.
 
 1. Download the most recent version from the 'Releases' section on GitHub ("Valkyrie-version.zip")
 
@@ -19,10 +17,15 @@ Note: Before installation, ensure that both your [server artifacts](https://runt
 6. You're done, you've installed Valkyrie! Now move on to the configuration portion of this README
 
 # Configuration
+Note: These settings can be updated during runtime using the `reload` command or by restarting the resource 
 
-There are quite a few settings in the [configuration](valkyrie.cfg) file, which are defined below. These settings can be updated during runtime using the 'reload' command or by restarting the resource.
+## Server Settings
 
-## Server ConVars
+|      ConVar     | Default | Description | Parameters |
+| --------------- | ------- | ----------- | ---------- |
+| vac_setWebhook  | false   | Discord [webhook](https://bit.ly/2QN4q1N) | string |
+| vac_blockedText | {}      | Text 
+
 
 | ConVar | Default | Description | Parameters |
 |--------|---------|-------------|------------|
@@ -53,3 +56,75 @@ There are quite a few settings in the [configuration](valkyrie.cfg) file, which 
 ## Logging
 
 Valkyrie has built-in logging functionally to discord using webhooks. In order to use the built in logging you'll need to create a [webhook](https://bit.ly/2QN4q1N). Once you've created your webhook replace it with the empty string inside the [configuration](valkyrie.cfg) file.
+
+## FAQ
+
+### Q. Why is feature x, y, z not implemented, but it is in other Anti-cheats?
+
+Certain popular detection methods seen in other Anti-cheats rely solely on the client sending reliable data to the server; basic software security practices teach us to never do this, and thus is why certain detection methods are missing. If you believe a feature is missing and could easily be built into the Anti-cheat without relying on the client, don't hesitate to open an issue on GitHub describing implementation details along with a valid use case for the feature.
+
+Blacklisted variable detection although very popular is very poor way of checking for malicious clients. Most malevolent individuals will use Lua as the programming language of choice for their runtime code; this allows us to check for global variables using the Lua global enviorment.
+```lua
+local ProhibitedVariables = {
+  'WarMenu',
+  'Plane',
+  'LynxEvo',
+  'AlphaV',
+  'Dopamine'
+}
+
+function CheckVariables()
+    for _, varName in pairs(ProhibitedVariables) do
+        if _G[varName] ~= nil then
+            print('Prohibited variable found ' .. _G[varName])
+        end
+    end
+end
+```
+On the surface this may seem like a good idea, however you can simply set any of the global variable to nil for example `_G.WarMenu = nil` bypassing the check with one line of code. Another commonly used detection method is redefining native functions to instally ban if they're ever called. 
+```lua
+_G.SetEntityProofs = function(...)
+  print(PlayerId().." just called this function")
+end
+```
+Once again this may seem like a good idea, but just like we can redefine functions creators of malicious code can do the same thing
+```lua
+_G.SetEntityProofs = function()
+	return {false, false, false, false, false, false, false, false}
+end
+```
+easily bypassing this check in three lines of code.
+
+### Q. What is Entity Lockdown
+
+One of the many features offered by FiveM through state awareness mode aka OneSync, entity lockdown allows for the creation of objects, vehicles and peds solely by the server. This complete prevents events like mass spawning of entities however, you'll need to update all of your resources to support server side entity creation.
+
+### Q. Temporary Permission
+
+Certain resources including your own may want to set a player as temporarily or permanently invincible, Valkyrie makes this quick and easy only adding a few additional steps into your programming logic. Properly setting a player invincible with Valkyrie can only be done server-side, and therefore requires OneSync to be set to on. The following example provides basic syntax for setting up temporary invincibility.  
+
+```lua
+RegisterNetEvent('myEvent', function()
+  -- Temporary don't need a reliable identifier
+  local playerIdentifier = GetAllPlayerIdentifiers(source)[1]
+  local playerPed = GetPlayerPed(source)
+  local playerCoords = GetEntityCoords(playerPed)
+  local locationCoords = vector3(0, 0, 0)
+
+  -- Check that we're allowed invincibllity 
+  if (#(playerCoords - locationCoords) <= 100) then
+    ExecuteCommand(('add_principal identifier.%s vac.godMode'):format(playerIdentifier))
+
+    SetPlayerInvincible(source, true)
+    --other code
+  end
+
+  SetPlayerInvincible(source, false)
+  ExecuteCommand(('remove_principal identifier.%s vac.godMode'))
+end)
+```
+
+# Support
+Note: To maintain compatibility support will only be provided to those using the latest recommend or above [server artifacts]('https://runtime.fivem.net/artifacts/fivem/').
+
+Please open an issue on GitHub if you need help securing your server, want to report a critical security concern, or you're facing an issue with the resource.
