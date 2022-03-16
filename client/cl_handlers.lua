@@ -25,23 +25,3 @@ for _, eventName in pairs(_blockedClientEvents) do
         Triggered = true
     end)
 end
-
-local function clearObjects()
-  local objects = GetGamePool('CObject')
-  for i = 1, #objects do
-
-    local handle = objects[i]
-
-    repeat
-      NetworkRequestControlOfEntity(handle)
-    until NetworkHasControlOfEntity(handle)
-
-    if IsEntityAttached(handle) then
-      DetachEntity(handle, false, false)
-    end
-
-    DeleteEntity(handle)
-  end
-end
-
-RegisterNetEvent('vac_clear_objects', clearObjects)
