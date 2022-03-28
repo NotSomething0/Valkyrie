@@ -246,6 +246,4 @@ for i = 1, #blockedEvents do
     end
     CancelEvent()
   end)
-
-  logger.verbose('Registered: ' ..blockedEvents[i])
 end
