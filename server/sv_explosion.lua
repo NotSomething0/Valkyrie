@@ -28,11 +28,11 @@ AddEventHandler('vac_initalize_server', function(module)
       explosionIndex[index] = nil
     end
 
-    for _, idx in pairs(json.decode(GetConvar('valkyrie_blocked_explosions', '[]'))) do
+    for _, idx in pairs(json.decode(GetConvar('vac:explosion:allowedExp ', '[]'))) do
       explosionIndex[idx] = true
     end
 
-    explosionLimit = GetConvarInt('valkyrie_maximum_allowed_explosions', 5)
+    explosionLimit = GetConvarInt('vac:explosion:maxAllowedExp', 5)
   end
 end)
 

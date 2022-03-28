@@ -11,7 +11,7 @@ AddEventHandler('__vac_internel:intalizeServer', function(module)
   if (module == 'entities' or 'all') then
 
     if (GetConvar('sv_entityLockdown', 'inactive') == 'inactive') then
-      logger.warn('Client side spawning of entities is discouraged learn more here')
+      print('[^1WARNING^7]: Client side spawning of entities is discouraged learn more here: https://github.com/NotSomething0/Valkyrie#q-what-is-entity-lockdown')
 
       local next = next
       if (next(allowedEntities) ~= nil) then
@@ -20,7 +20,7 @@ AddEventHandler('__vac_internel:intalizeServer', function(module)
         end
       end
 
-      local allowedModels = json.decode(GetConvar('valkyrie_allowed_entities', '[]'))
+      local allowedModels = json.decode(GetConvar('vac:entity:allowedEntities', '[]'))
 
       if (allowedModels ~= '') then
         for i = 1, #models do
@@ -32,5 +32,4 @@ AddEventHandler('__vac_internel:intalizeServer', function(module)
     isActive = true
   end
   isActive = false
-  print('[LOG] Entity lockdown enabled')
 end)

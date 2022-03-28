@@ -39,7 +39,7 @@ end)
 
 AddEventHandler('__vac_internel:intalizeServer', function(module)
   if (module == 'chat' or 'all') then
-    local toFilter = json.decode(GetConvar('vac_filterText', '{}'))
+    local toFilter = json.decode(GetConvar('vac:chat:filterText', '[]'))
     local count = #filterText
 
     if (count ~= 0) then
@@ -54,6 +54,6 @@ AddEventHandler('__vac_internel:intalizeServer', function(module)
       end
     end
 
-    filterMessages = GetConvarInt('vac_filterMessages' 0)
+    filterMessages = GetConvarInt('vac:chat:filterMessages', 0)
   end
 end)
