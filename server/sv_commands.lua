@@ -1,3 +1,18 @@
+-- Copyright (C) 2019 - 2022  NotSomething
+
+-- This program is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+
+-- This program is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+
+-- You should have received a copy of the GNU General Public License
+-- along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 local format = string.format
 local webhook = GetConvar("valkyrie_discord_webhook", "")
 local modules = {
@@ -33,23 +48,6 @@ RegisterCommand('unban', function(source, args)
   PerformHttpRequest(webhook, function(err, text, headers) end, 'POST', json.encode({username = name, content = log}), { ['Content-Type'] = 'application/json' })
 end, true)
 
-RegisterCommand('clearo', function()
-  for _, object in pairs(GetAllObjects()) do
-    DeleteEntity(object)
-  end
-end, true)
-
-RegisterCommand('clearv', function()
-  for _, vehicles in pairs(GetAllVehicles()) do
-    DeleteEntity(vehicles)
-  end
-end, true)
-
-RegisterCommand('clearp', function(source, args)
-  for _, pedHandle in pairs(GetAllPeds()) do
-    DeleteEntity(pedHandle)
-  end
-end, true)
 
 RegisterCommand('reload', function(source, args)
   if source ~= 0 then
