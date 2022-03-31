@@ -1,5 +1,8 @@
 # Valkyrie Anti-cheat
-A free as in free beer open source [FiveM]('https://fivem.net') Anti-cheat. Using the most modern technologies currently available on FiveM. Valkyrie aims to be your one-stop solution to preventing modders from wreaking havoc on your server. Take peace and mind with peer reviewed code and runtime reloadable modules that keeps you in control!
+An open source [FiveM]('https://fivem.net') Anti-cheat. Using the most modern technologies currently available on FiveM, Valkyrie aims to be your solution to preventing modders from wreaking havoc on your server. No sketchy obfuscated files and runtime reloadable modules that keep you in control.
+
+## Disclaimer
+No Anti-cheat is a silver bullet, especially not the paid versions, notice how mpst claim 99% protection against cheaters 😕. You as the server owner/developer should be taking an active role in preventing the exploitation of resources on your server because nothing is a substitute for good programming practices.
 
 ## Installation
 Note: Before installation, ensure that your [server-data](https://github.com/citizenfx/cfx-server-data) resources are up-to-date. Valkyrie uses the registerMessageHook export provided by the default chat resource for message filtering, which is not available in older versions of the chat resource.
@@ -123,7 +126,7 @@ RegisterNetEvent('myEvent', function()
   ExecuteCommand(('remove_principal identifier.%s vac.godMode'))
 end)
 ```
-#Road Map 
+##Road Map 
 []: Easy api to allow other resource to mainipulate certain conditions for individual players
 []: Ditch of client side code, it's useless anyway
 
