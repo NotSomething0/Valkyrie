@@ -126,7 +126,7 @@ RegisterNetEvent('myEvent', function()
   ExecuteCommand(('remove_principal identifier.%s vac.godMode'))
 end)
 ```
-##Road Map 
+## Road Map 
 []: Easy api to allow other resource to mainipulate certain conditions for individual players
 []: Ditch of client side code, it's useless anyway
 
