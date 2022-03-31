@@ -123,8 +123,14 @@ RegisterNetEvent('myEvent', function()
   ExecuteCommand(('remove_principal identifier.%s vac.godMode'))
 end)
 ```
+#Road Map 
+[]: Easy api to allow other resource to mainipulate certain conditions for individual players
+[]: Ditch of client side code, it's useless anyway
+
 
 # Support
 Note: To maintain compatibility support will only be provided to those using the latest recommend or above [server artifacts]('https://runtime.fivem.net/artifacts/fivem/').
 
 Please open an issue on GitHub if you need help securing your server, want to report a critical security concern, or you're facing an issue with the resource.
+
+![GPL v3](https://www.gnu.org/graphics/gplv3-127x51.png "GPL v3")
