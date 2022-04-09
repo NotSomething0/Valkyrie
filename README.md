@@ -64,39 +64,40 @@ Valkyrie has built-in logging functionally to discord using webhooks. In order t
 
 ### Q. Why is feature x, y, z not implemented, but it is in other Anti-cheats?
 
-Certain popular detection methods seen in other Anti-cheats rely solely on the client sending reliable data to the server; basic software security practices teach us to never do this, and thus is why certain detection methods are missing. If you believe a feature is missing and could easily be built into the Anti-cheat without relying on the client, don't hesitate to open an issue on GitHub describing implementation details along with a valid use case for the feature.
+TL;DR: Certain popular detection methods seen in other Anti-cheats rely solely on the client sending reliable data to the server; basic software security practices teach us to never do this, and thus is why certain detection methods are missing. If you believe a feature is missing and could be built into the Anti-cheat without relying on the client, don't hesitate to open an issue on GitHub describing implementation details along with a valid use case for the feature.
 
-Blacklisted variable detection although very popular is very poor way of checking for malicious clients. Most malevolent individuals will use Lua as the programming language of choice for their runtime code; this allows us to check for global variables using the Lua global enviorment.
-```lua
-local ProhibitedVariables = {
-  'WarMenu',
-  'Plane',
-  'LynxEvo',
-  'AlphaV',
-  'Dopamine'
-}
+<b>Blocked variable detection: A very popular yet poor way of checking for malicious clients.</b>
 
-function CheckVariables()
-    for _, varName in pairs(ProhibitedVariables) do
-        if _G[varName] ~= nil then
-            print('Prohibited variable found ' .. _G[varName])
-        end
-    end
-end
-```
-On the surface this may seem like a good idea, however you can simply set any of the global variable to nil for example `_G.WarMenu = nil` bypassing the check with one line of code. Another commonly used detection method is redefining native functions to instally ban if they're ever called. 
-```lua
-_G.SetEntityProofs = function(...)
-  print(PlayerId().." just called this function")
-end
-```
-Once again this may seem like a good idea, but just like we can redefine functions creators of malicious code can do the same thing
-```lua
-_G.SetEntityProofs = function()
-	return {false, false, false, false, false, false, false, false}
-end
-```
-easily bypassing this check in three lines of code.
+  Attacker code ran in game is usually written in Lua in order to utilize the FiveM Lua Scripting Runtime. This allows developers access to the Lua global environment ([_G](https://www.lua.org/pil/14.html)) a central storage spot for all global variables currently initialized in the runtime. Which leads to developers looking for certain blocked variables, however this can be easily bypassed and leads to a lot of file manipulation of system resources, which is heavily discouraged.
+
+  Checking for blocked variables:
+  ```lua
+  local ProhibitedVariables = {
+    'WarMenu',
+    'Plane',
+    'LynxEvo',
+    'AlphaV',
+    'Dopamine'
+  }
+
+  function CheckVariables()
+      for _, varName in pairs(ProhibitedVariables) do
+          if _G[varName] ~= nil then
+              print('Prohibited variable found ' .. _G[varName])
+          end
+      end
+  end
+  ```
+  It may seem like at least on the surface like a good idea however this would require us and moreover yourself to maintain a curated list of variables considred to be "bad" or "malicious" and isn't realistically an option. Moreover the value of each variable can easily be changed to nil bypassing the entire check.
+  
+  Bypassing blocked variable detection:
+  ```lua
+  _G['WarMenu'] = nil
+  ```
+
+<b>Blocking NUI Developer Tools: A naive way to block access to client side files.</b>
+
+  FiveM uses CEF (Chromium Embed Framework) an embedded "browser" allowing for full scale web pages to be created in game. Being that CEF is in simple terms a browser it also includes access to the Chrome developer tools you usually access by pressing F12, users have been trying to block access to these tools because of either a fear of code being stolen or their code being exploited for malicious purposes. A check will not be put in place for this because it only harms those who are curious and goes against this projects core values.
 
 ### Q. What is Entity Lockdown
 
@@ -127,8 +128,10 @@ RegisterNetEvent('myEvent', function()
 end)
 ```
 ## Road Map 
-[]: Easy api to allow other resource to mainipulate certain conditions for individual players
-[]: Ditch of client side code, it's useless anyway
+[]: A simple API for easy resource integration\
+[]: Removal of client side code\
+[]: Switch to a more robust logging system\
+[]: Vulnerability scanner
 
 
 # Support
