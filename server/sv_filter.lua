@@ -23,7 +23,7 @@ exports.chat:registerMessageHook(function(source, outMessage, hookRef)
   if (filterMessages and #filteredText ~= 0) then
     for _, v in pairs(filteredText) do
       local b, e = old:find(v:lower())
-      local s = b and e and message:sub(b, e)
+      local s = b ~= nil and old:sub(b, e)
 
       if (s) then
         new = new:sub(1, b - 1) ..('#'):rep(s:len()) .. new:sub(e + 1)
@@ -43,7 +43,7 @@ exports.chat:registerMessageHook(function(source, outMessage, hookRef)
 
     if (hit) then
       TriggerClientEvent('chat:addMessage', source, {
-        template = 'vac_bad_message',
+        color = {255, 0, 0}
         args = {'Server', 'Your message contains a blocked pieace of text ' ..v}
       })
       
