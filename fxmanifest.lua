@@ -1,10 +1,12 @@
 fx_version 'cerulean'
 
+lua54 'yes'
+
 author 'https://github.com/NotSomething0'
 
 description 'An open source FiveM anticheat'
 
-version '1.3.0'
+version '1.3.1'
 
 game 'gta5'
 
