@@ -17,7 +17,7 @@ local isActive
 local allowedEntities = {}
 
 AddEventHandler('entityCreating', function(entity)
-  if (not allowedEntities[tonumber(GetEntityModel(entity))] and isActive) then
+  if (isActive and not allowedEntities[tonumber(GetEntityModel(entity))]) then
     CancelEvent()
   end
 end)
