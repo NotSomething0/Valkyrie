@@ -13,53 +13,51 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-local format = string.format
-local webhook = GetConvar("valkyrie_discord_webhook", "")
+local RESOURCE_NAME <const> = GetCurrentResourceName()
+local BAN_PREFIX <const> = 'vac_ban_%s'
 local modules = {
-  ['entities'] = 'entities',
-  ['explosion'] = 'explosion',
-  ['filter'] = 'filter'
-}
-
-RegisterCommand('unban', function(source, args)
-  if source ~= 0 then
-    print('^1[ERROR] [Valkyrie]^7 This command can only be run from the console.')
-    return
-  end
-
-  local banId = args[1]
-  local reason = 'No reason specified'
-
-  if banId and GetResourceKvpString(format('vac_ban_%s', banId)) then
-    DeleteResourceKvp(format('vac_ban_%s', banId))
-    print('^6[INFO] [VALKYRIE]^7 BanId: %s successfully unbanned', banId)
-  else
-    print('^1[WARN] [Valkyrie]^7 Invalid banId, please try again.')
-    return
-  end
-
-  if args[2] then
-    table.remove(args, 1)
-    reason = table.concat(args, " ")
-  end
-
-  local log = format('**Valkyrie: Unbanned**\n BanId:%s\n Reason:%s', banId, reason)
-
-  PerformHttpRequest(webhook, function(err, text, headers) end, 'POST', json.encode({username = name, content = log}), { ['Content-Type'] = 'application/json' })
-end, true)
-
+  ['entities'] = true,
+  ['explosion'] = true,
+  ['chat'] = true,
+  ['ptfx'] = true
+} 
 
 RegisterCommand('reload', function(source, args)
-  if source ~= 0 then
-    print('^1[ERROR] [Valkyrie]^7 This command can only be run from the console.')
+  if (tonumber(source) ~= 0) then
+    log.warn('unable to use reload command, console access is required', false)
     return
   end
 
-  local module = modules[args[1]] or 'all'
+  local module = args[1] and modules[args[1]] or 'all'
+  local cmd = string.format('exec @%s/valkyrie.cfg', RESOURCE_NAME)
 
-  ExecuteCommand('exec valkyrie.cfg')
+  ExecuteCommand(cmd)
+  TriggerEvent('__vac_internel:intalizeServer', module)
+end, true)
 
-  print(format('[Valkyrie] Reloaded: %s', module))
+local webhook = GetConvar("vac:internel:discoWebhook", "")
 
-  TriggerEvent('vac_initalize_server', module)
+
+RegisterCommand('unban', function(source, args)
+  if (source ~= 0) then
+    log.warn('unable to preform action, console access is required!')
+    return
+  end
+
+  local banId = args[1] and GetResourceKvpString(BAN_PREFIX:format(args[1]))
+  local reason = 'No reason specified'
+
+  if (banId) then
+    -- check if a reason was provided
+    if (args[2]) then
+      table.remove(args, 1)
+      reason = table.concat(args, " ")
+    end
+
+    DeleteResourceKvp(BAN_PREFIX:format(banId))
+    
+    log.trace('Sucsesfully deleted banId: %s', true)  
+  else
+    log.error('unable to find banId: are you sure this is a valid ban?', false)
+  end
 end, true)
