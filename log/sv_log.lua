@@ -73,7 +73,7 @@ for idx, lvl in pairs(levels, disco) do
         f:write(msg..'\n')
         f:close()
       else
-        error('unable to create log file)
+        error('unable to create log file')
       end
     end
   end
