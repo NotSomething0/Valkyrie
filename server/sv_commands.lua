@@ -16,15 +16,15 @@
 local RESOURCE_NAME <const> = GetCurrentResourceName()
 local BAN_PREFIX <const> = 'vac_ban_%s'
 local modules = {
-  ['entities'] = true,
-  ['explosion'] = true,
-  ['chat'] = true,
-  ['ptfx'] = true
+  ['entities'] = 'entities',
+  ['explosion'] = 'explosion',
+  ['chat'] = 'chat',
+  ['ptfx'] = 'ptfx'
 } 
 
 RegisterCommand('reload', function(source, args)
   if (tonumber(source) ~= 0) then
-    log.warn('unable to use reload command, console access is required', false)
+    TriggerClientEvent('chat:addMessage', source, {color = {255, 0, 0}, args = {'Valkyrie', 'Unable to use command, console access required'}})
     return
   end
 
@@ -40,7 +40,7 @@ local webhook = GetConvar("vac:internel:discoWebhook", "")
 
 RegisterCommand('unban', function(source, args)
   if (source ~= 0) then
-    log.warn('unable to preform action, console access is required!')
+    TriggerClientEvent('chat:addMessage', source, {color = {255, 0, 0}, args = {'Valkyrie', 'Unable to use command, console access required'}})
     return
   end
 
@@ -58,6 +58,7 @@ RegisterCommand('unban', function(source, args)
     
     log.trace('Sucsesfully deleted banId: %s', true)  
   else
-    log.error('unable to find banId: are you sure this is a valid ban?', false)
+    log.warn(string.format('unable to find banId: %s are you sure this is a valid ban?', args[1]), false)
+    log.warn('unable to find banId: are you sure this is a valid ban?', false)
   end
 end, true)
