@@ -29,9 +29,12 @@ RegisterCommand('reload', function(source, args)
   end
 
   local module = args[1] and modules[args[1]] or 'all'
-  local cmd = string.format('exec @%s/valkyrie.cfg', RESOURCE_NAME)
-
-  ExecuteCommand(cmd)
+   local conf = string.format('exec @%s/valkyrie.cfg', RESOURCE_NAME)
+  local perm = string.format('exec @%s/vac_permissions.cfg', RESOURCE_NAME)
+ 
+  ExecuteCommand(perm)
+  ExecuteCommand(conf)
+  
   TriggerEvent('__vac_internel:intalizeServer', module)
 end, true)
 
@@ -58,7 +61,6 @@ RegisterCommand('unban', function(source, args)
     
     log.trace('Sucsesfully deleted banId: %s', true)  
   else
-    log.warn(string.format('unable to find banId: %s are you sure this is a valid ban?', args[1]), false)
-    log.warn('unable to find banId: are you sure this is a valid ban?', false)
+    log.warn(string.format('unable to find banId: %s are you sure this is a valid ban?', args[1]))
   end
 end, true)
