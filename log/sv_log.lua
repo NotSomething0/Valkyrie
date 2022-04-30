@@ -20,14 +20,10 @@ log.webhook = GetConvar('vac:internel:discoWebhook', '')
 log.out = 'log.txt'
 
 log.discord = function(msg)
-  if (not log.webhook) then
-    return
-  end
-
   PerformHttpRequest(log.webhook, function(code)
     if (code == 200) then
       log.trace('successfully sent message to discord')
-    elseif (code == 403)
+    elseif (code == 403) then
       log.error('invalid webhook token provided')
     elseif (code == 429) then
       log.error('failed to send message to discord, too many requests (rate limited)')
@@ -42,7 +38,7 @@ local levels = {
   'error'
 }
 
-for idx, lvl in pairs(levels, disco) do
+for idx, lvl in pairs(levels) do
   log[lvl] = function(...)
     -- exit early because we're above the current log level
     if (idx > log.level) then
@@ -51,21 +47,17 @@ for idx, lvl in pairs(levels, disco) do
 
     local msg = string.format('%s | %s | %s', lvl, os.date('%c'), ...)
 
+    if (log.webhook) then
+      log.discord(msg)
+    end
+
     if (io.open(log.out, 'r')) then
       local f = io.open(log.out, 'a')
 
       f:write(msg..'\n')
       f:close()
 
-      if (disco) then
-        log.discord(...)
-      end
-
-      if (lvl == 'info') then
-        print(msg)
-      elseif (lvl == 'error') then
-        error(msg)
-      end
+      print(msg)
     else
       local f = io.open(log.out, 'w')
 
