@@ -20,8 +20,8 @@ exports.chat:registerMessageHook(function(source, outMessage, hookRef)
   local old = outMessage.args[2]:lower()
   local new = outMessage.args[2]
 
-  if (filterMessages and #filteredText ~= 0) then
-    for _, v in pairs(filteredText) do
+  if (filterMessages and #filterText ~= 0) then
+    for _, v in pairs(filterText) do
       local b, e = old:find(v:lower())
       local s = b ~= nil and old:sub(b, e)
 
@@ -30,7 +30,9 @@ exports.chat:registerMessageHook(function(source, outMessage, hookRef)
       end
     end
 
-    hookRef.updateMessage({args = {outMessage.args[2], new}})
+    if (old ~= new:lower()) then
+      hookRef.updateMessage({args = {outMessage.args[1], new}})
+    end
   else
     local hit
 
@@ -43,7 +45,7 @@ exports.chat:registerMessageHook(function(source, outMessage, hookRef)
 
     if (hit) then
       TriggerClientEvent('chat:addMessage', source, {
-        color = {255, 0, 0}
+        color = {255, 0, 0},
         args = {'Server', 'Your message contains a blocked pieace of text ' ..v}
       })
       
@@ -59,14 +61,16 @@ AddEventHandler('__vac_internel:intalizeServer', function(module)
 
     if (count ~= 0) then
       for i = 1, count do
-        filteredText[i] = nil
+        filterText[i] = nil
       end
     end
 
-    if (toFilter ~= '{}') then
+    if (toFilter ~= nil) then
       for i = 1, #toFilter do
         filterText[i] = toFilter[i]
       end
+    else
+      log.error('unable to parse convar `vac:chat:filterText`, ensure the array is properly formatted')
     end
 
     filterMessages = GetConvarInt('vac:chat:filterMessages', 0)
