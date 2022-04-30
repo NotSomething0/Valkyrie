@@ -12,39 +12,35 @@
 
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-local isActive
-local allowedEntities = {}
+local filterAllowedModels = {}
 
 AddEventHandler('entityCreating', function(entity)
-  if (isActive and not allowedEntities[tonumber(GetEntityModel(entity))]) then
+  if (filterIsActive and not filterAllowedModels[tonumber(GetEntityModel(entity))]) then
     CancelEvent()
   end
 end)
 
 AddEventHandler('__vac_internel:intalizeServer', function(module)
   if (module == 'entities' or 'all') then
-
     if (GetConvar('sv_entityLockdown', 'inactive') == 'inactive') then
-      print('[^1WARNING^7]: Client side spawning of entities is discouraged learn more here: https://github.com/NotSomething0/Valkyrie#q-what-is-entity-lockdown')
+      log.warn('client side spawning of entities is discouraged learn more here: https://github.com/NotSomething0/Valkyrie#q-what-is-entity-lockdown')
 
-      local next = next
-      if (next(allowedEntities) ~= nil) then
-        for hash in pairs(allowedEntities) do
-          allowedEntities[hash] = nil
-        end
+      for hash in pairs(filterAllowedModels) do
+        filterAllowedModels[hash] = nil
       end
 
-      local allowedModels = json.decode(GetConvar('vac:entity:allowedEntities', '[]'))
+      local filterModels = json.decode(GetConvar('vac:entity:allowedEntities', '[]'))
 
-      if (allowedModels ~= '') then
-        for i = 1, #models do
-          local hash = tonumber(GetHashKey(models[i]))
+      if (filterModels ~= nil) then
+        for i = 1, #filterModels do
+          local hash = tonumber(GetHashKey(filterModels[i]))
 
-          allowedEntities[hash] = true
+          filterAllowedModels[hash] = true
         end
+      else
+        log.error('unable to parse convar `vac:entity:allowedEntities`, ensure the table is proper formatted')
+        return
+      end
     end
-    isActive = true
   end
-  isActive = false
 end)
