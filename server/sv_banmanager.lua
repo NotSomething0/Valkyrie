@@ -131,8 +131,6 @@ local function onPlayerConnecting(name, skr)
     if (#hits ~= 0) then
       skr(('Your username contains blocked text ' ..json.encode(hits).. '\nremove these items then reconnect'))
     end
-  else
-    logger.verbose('Username filter disabled')
   end
 
   -- maybe use deferrals here?

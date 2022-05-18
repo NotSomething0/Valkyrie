@@ -259,6 +259,7 @@ for i = 1, #blockedEvents do
     if (GetPlayerEndpoint(source) ~= nil) then
       BanPlayer(source, 'Blocked Event', ('Blocked Event | `%s`'):format(eventName))
     end
+
     CancelEvent()
   end)
 end
