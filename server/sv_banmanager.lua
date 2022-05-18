@@ -13,7 +13,6 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-local KVP_BAN_PREFIX <const> = 'vac_ban_%s'
 local _CACHE = {
   identifiers = {},
   bans = {}
@@ -24,7 +23,7 @@ local is_cacheUpdated = false
 -- @return table
 local function fetchBans()
   if (not is_cacheUpdated) then
-    local handle = StartFindKvp(KVP_BAN_PREFIX)
+    local handle = StartFindKvp('vac_ban_')
     local bans = {}
     local key
 
@@ -74,22 +73,22 @@ local function getIdentifiers(netId, temp)
 
       -- unreliable multiple users can have the same first and second token
       if (idx ~= '0' and idx ~= '1') then
-        t[#t + 1] = value
+        t[idx] = value
       end
     end
 
     -- if the player doesn't have a permanent netId
     -- don't populate the cache table as they might be dropped in connection
     if (not temp) then
-      _CACHE.identifiers[netId] = msgpack.pack(t)
-    else
-      return t
+      _CACHE.identifiers[netId] = t
     end
+
+    return t
   end
 
   -- ensure the player is in our cache table before returning data
   -- otherwise return an empty table
-  return (_CACHE.identifiers[netId] and msgpack.unpack(_CACHE.identifiers) or {})
+  return (_CACHE.identifiers[netId] and _CACHE.identifiers[netId]) or {})
 end
 
 
@@ -107,8 +106,8 @@ function BanPlayer(netId, duration, reason)
       reason = reason or 'No reason specified'
     }
 
-    SetResourceKvp(BAN_PREFIX:format(uuid), json.encode(ban))
-    DropPlayer(netId, i18n.getTranslation('DROP_BANNED'):format(uuid, ban.duration, ban.reason))
+    SetResourceKvp(string.format('vac_ban_%s', uuid), json.encode(ban))
+    DropPlayer(netId, string.format('You have been banned\nBan Id:%s\nExpires: %s\nReason: %s', uuid, os.date('%c', ban.duration), ban.reason))
 
     is_cacheUpdated = false
   end
@@ -117,7 +116,7 @@ end
 local checkName = 0
 local filterText = {}
 
-local function onPlayerConnecting(name, skr)
+local function onPlayerConnecting(name, skr, d)
   if (checkName == 1 and #filterText ~= 0) then
     local name = name:lower()
     local hits = {}
@@ -129,16 +128,24 @@ local function onPlayerConnecting(name, skr)
     end
 
     if (#hits ~= 0) then
-      skr(('Your username contains blocked text ' ..json.encode(hits).. '\nremove these items then reconnect'))
+      skr(('Your username contains blocked text:  \n' ..json.encode(hits).. '\nremove these items then reconnect'))
     end
   end
 
-  -- maybe use deferrals here?
+  d.defer()
+
+  Wait(0)
+
+  d.update('Fetching ban data')
+
   local banlist = fetchBans()
   local identifiers = getIdentifiers()
 
-  for banId, data in pairs(banlist) do
+  d.update('Got ban data, checking if you are banned')
 
+  Wait(0)
+
+  for banId, data in pairs(banlist) do
     -- clean up expired bans
     if (data.duration - os.time() <= 0) then
       DeleteResourceKvp(banId)
@@ -146,16 +153,15 @@ local function onPlayerConnecting(name, skr)
     end
 
     for _, id in pairs(json.decode(data.identifiers)) do
-
-      if (identifiers:find(id)) then
-        local reason = data.reason
-        skr(i18n.translate(i18n.lang, 'balh'))
+      if (json.encode(identifiers):find(id)) then
+        d.done(string.format('You have been banned\nBan Id:%s\nExpires: %s\nReason: %s', data.uuid, os.date('%c', data.duration), data.reason))
         break
       end
-
     end
 
     ::continue::
   end
+
+  d.done()
 end
 AddEventHandler('playerConnecting', onPlayerConnecting)
