@@ -60,6 +60,9 @@ exports.chat:registerMessageHook(function(source, out, hook)
       local wasSent = true
       local content = out.args[2]
 
+      -- TODO: fix(chat): implement message normalization
+      -- some messages sent with differing colors/whitespace but the same text
+      -- will get through initally but will be prevented from being sent afterward
       for _, v in pairs(throttleBody[source].msgs) do
         if (v.content == content and v.time > os.time()) then
           wasSent = false
@@ -74,8 +77,9 @@ exports.chat:registerMessageHook(function(source, out, hook)
         TriggerClientEvent('chat:addMessage', source, {args = {'Server', 'You\'ve sent the same message too many times, please wait sometime before sending it again.'}})
       end
 
-      if (#throttleBody[source].msgs > 5) then
-        table.remove(thorttleBody[source].msgs)
+      if (#throttleBody[source].msgs > 10) then
+        table.remove(throttleBody[source].msgs)
+      end
     end
   end
 end)
@@ -85,36 +89,39 @@ AddEventHandler('__vac_internel:intalizeServer', function(module)
     return
   end
 
-  filterIsActive = GetConvar('vac:chat:filterMessages', "false") == "true" and true or false
+  filterIsActive = GetConvar('vac:chat:filterMessages', 'false') == 'true' and true or false
 
   if (filterIsActive) then
     local text = json.decode(GetConvar('vac:chat:filterText', '[]'))
-    local count = #text
 
     table.wipe(filterText)
-
-    if (text ~= '[]') then
-      for i = 1, #count do
-        filterText[i] = text[i]
+    
+    if (text ~= '[]' and text ~= nil) then
+      for _, v in pairs(text) do
+        table.insert(filterText, v)
       end
     end
   end
 
-  throttleIsOpen = GetConvar('vac:chat:rlChat', 'false') == 'false' and true or false
+  throttleIsOpen = GetConvar('vac:chat:rlChat', 'false') == 'true' and true or false
 
   if (throttleIsOpen) then
     throttleReset = GetConvarInt('vac:chat:rlReset', 30)
 
     table.wipe(throttleBody)
 
-    for _, v in pairs(throttleBody) do
-      throttleBody[v].msgs = {}
+    local players = GetPlayers()
+
+    if (players ~= '{}') then
+      for _, v in pairs(players) do
+        throttleBody[tonumber(v)] = {msgs = {}}
+      end
     end
   end
 end)
 
 AddEventHandler('playerJoining', function()
-  throttleBody[source].msgs = {}
+  throttleBody[source] = {msgs = {}}
 end)
 
 AddEventHandler('playerDropped', function()
