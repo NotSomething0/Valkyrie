@@ -117,6 +117,8 @@ local checkName = 0
 local filterText = {}
 
 local function onPlayerConnecting(name, skr, d)
+  local source = source
+
   if (checkName == 1 and #filterText ~= 0) then
     local name = name:lower()
     local hits = {}
@@ -128,6 +130,7 @@ local function onPlayerConnecting(name, skr, d)
     end
 
     if (#hits ~= 0) then
+      -- TODO: Better way to format each hit
       skr(('Your username contains blocked text:  \n' ..json.encode(hits).. '\nremove these items then reconnect'))
     end
   end
@@ -139,7 +142,7 @@ local function onPlayerConnecting(name, skr, d)
   d.update('Fetching ban data')
 
   local banlist = fetchBans()
-  local identifiers = getIdentifiers()
+  local identifiers = getIdentifiers(source, true)
 
   d.update('Got ban data, checking if you are banned')
 
@@ -152,7 +155,7 @@ local function onPlayerConnecting(name, skr, d)
       goto continue
     end
 
-    for _, id in pairs(json.decode(data.identifiers)) do
+    for _, id in pairs(data.identifiers) do
       if (json.encode(identifiers):find(id)) then
         d.done(string.format('You have been banned\nBan Id:%s\nExpires: %s\nReason: %s', data.uuid, os.date('%c', data.duration), data.reason))
         break
