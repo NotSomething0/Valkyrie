@@ -88,7 +88,7 @@ local function getIdentifiers(netId, temp)
 
   -- ensure the player is in our cache table before returning data
   -- otherwise return an empty table
-  return (_CACHE.identifiers[netId] and _CACHE.identifiers[netId]) or {})
+  return (_CACHE.identifiers[netId] and _CACHE.identifiers[netId] or {})
 end
 
 
@@ -107,25 +107,36 @@ function BanPlayer(netId, duration, reason)
     }
 
     SetResourceKvp(string.format('vac_ban_%s', uuid), json.encode(ban))
+
+    if (not GetResourceKvpString(string.format('vac_ban_%s', uuid))) then
+      log.info('Unable to ban ' ..GetPlayerName(netId).. ' this is a fatal error, please report this to the developers.')
+      log.info(json.encode(ban))
+      log.info('Dropping player with no reason specified')
+
+      DropPlayer(netId, 'No reason specified')
+      return
+    end
+
+    log.info('Banned ' ..GetPlayerName(netId).. ' for ' ..ban.reason)
     DropPlayer(netId, string.format('You have been banned\nBan Id:%s\nExpires: %s\nReason: %s', uuid, os.date('%c', ban.duration), ban.reason))
 
     is_cacheUpdated = false
   end
 end
 
-local checkName = 0
-local filterText = {}
+local filter_username = false
+local filter_text = {}
 
 local function onPlayerConnecting(name, skr, d)
   local source = source
 
-  if (checkName == 1 and #filterText ~= 0) then
+  if (filter_username and #filter_text ~= 0) then
     local name = name:lower()
     local hits = {}
 
-    for i = 1, #filterText do
-      if (name:find(filterText[i]:lower())) then
-        hits[i] = filterText[i]
+    for i = 1, #filter_text do
+      if (name:find(filter_text[i]:lower())) then
+        hits[i] = filter_text[i]
       end
     end
 
@@ -157,7 +168,8 @@ local function onPlayerConnecting(name, skr, d)
 
     for _, id in pairs(data.identifiers) do
       if (json.encode(identifiers):find(id)) then
-        d.done(string.format('You have been banned\nBan Id:%s\nExpires: %s\nReason: %s', data.uuid, os.date('%c', data.duration), data.reason))
+        log.info(GetPlayerName(source).. ' attempted to connect but was banned')
+        d.done(string.format('You have been banned\nBan Id:%s\nExpires: %s\nReason: %s', data.id, os.date('%c', data.duration), data.reason))
         break
       end
     end
@@ -168,3 +180,7 @@ local function onPlayerConnecting(name, skr, d)
   d.done()
 end
 AddEventHandler('playerConnecting', onPlayerConnecting)
+
+AddEventHandler('__vac_internal:playerUnbanned', function()
+  is_cacheUpdated = false
+end)
