@@ -14,7 +14,6 @@
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 local RESOURCE_NAME <const> = GetCurrentResourceName()
-local BAN_PREFIX <const> = 'vac_ban_%s'
 local modules = {
   ['entities'] = 'entities',
   ['explosion'] = 'explosion',
@@ -28,17 +27,17 @@ RegisterCommand('reload', function(source, args)
     return
   end
 
-  local module = args[1] and modules[args[1]] or 'all'
-   local conf = string.format('exec @%s/valkyrie.cfg', RESOURCE_NAME)
+  local module = modules[args[1]] or 'all'
+  local conf = string.format('exec @%s/valkyrie.cfg', RESOURCE_NAME)
   local perm = string.format('exec @%s/vac_permissions.cfg', RESOURCE_NAME)
  
   ExecuteCommand(perm)
   ExecuteCommand(conf)
   
   TriggerEvent('__vac_internel:intalizeServer', module)
-end, true)
 
-local webhook = GetConvar("vac:internel:discoWebhook", "")
+  log.info(string.format('Successfully reloaded module %s and permissions', module))
+end, true)
 
 
 RegisterCommand('unban', function(source, args)
@@ -47,20 +46,22 @@ RegisterCommand('unban', function(source, args)
     return
   end
 
-  local banId = args[1] and GetResourceKvpString(BAN_PREFIX:format(args[1]))
+  local data = GetResourceKvpString(string.format('vac_ban_%s', args[1]))
   local reason = 'No reason specified'
 
-  if (banId) then
+  if (data) then
     -- check if a reason was provided
     if (args[2]) then
       table.remove(args, 1)
       reason = table.concat(args, " ")
     end
 
-    DeleteResourceKvp(BAN_PREFIX:format(banId))
+    DeleteResourceKvp(string.format('vac_ban_%s', args[1]))
     
-    log.trace('Sucsesfully deleted banId: %s', true)  
+    log.info(string.format('Sucsesfully deleted Ban Id: %s with Reason: %s', args[1], reason))
   else
-    log.warn(string.format('unable to find banId: %s are you sure this is a valid ban?', args[1]))
+    log.warn(string.format('Unable to find Ban Id: %s are you sure this is a valid ban?', args[1]))
   end
+
+  TriggerEvent('__vac_internal:playerUnbanned')
 end, true)
