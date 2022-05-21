@@ -12,12 +12,14 @@
 
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
+local RESOURCE_NAME <const> = GetCurrentResourceName()
+local RESOURCE_PATH <const> = GetResourcePath(RESOURCE_NAME)
 
 log = {}
 
-log.level = GetConvarInt('vac:internel:logLevel', 0)
+log.level = 1
 log.webhook = GetConvar('vac:internel:discoWebhook', '')
-log.out = 'log.txt'
+log.out = RESOURCE_PATH..'/log/log.txt'
 
 log.discord = function(msg)
   PerformHttpRequest(log.webhook, function(code)
@@ -32,14 +34,14 @@ log.discord = function(msg)
 end
 
 local levels = {
-  'trace',
-  'info',
-  'warn',
-  'error'
+  'INFO',
+  'TRACE',
+  'WARN',
+  'ERROR'
 }
 
 for idx, lvl in pairs(levels) do
-  log[lvl] = function(...)
+  log[lvl:lower()] = function(...)
     -- exit early because we're above the current log level
     if (idx > log.level) then
       return
@@ -51,22 +53,40 @@ for idx, lvl in pairs(levels) do
       log.discord(msg)
     end
 
-    if (io.open(log.out, 'r')) then
-      local f = io.open(log.out, 'a')
+    local f = io.open(log.out, 'r+')
+
+    if (f) then
+      print(msg)
 
       f:write(msg..'\n')
       f:close()
-
-      print(msg)
     else
-      local f = io.open(log.out, 'w')
+      f = io.open(log.out, 'w')
 
-      if (f) then
-        f:write(msg..'\n')
-        f:close()
-      else
-        error('unable to create log file')
+      if (not f) then
+        error('Unable to create log file, check that FXServer has the proper permissions set')
+        return
       end
+
+      f:write(msg..'\n')
+      f:close()
     end
   end
 end
+
+AddEventHandler('__vac_internel:initalizeServer', function(module)
+  if (module ~= 'log' and module ~= 'all') then
+    return
+  end
+
+  local new_log_level = GetConvarInt('vac:internal:logLevel', 1)
+
+  if (new_log_level < 1) then
+    log.level = new_log_level
+
+    log.info('vac:internal:logLevel is set lower than allowed, defaulting Log Level to one')
+    return
+  end
+
+  log.level = new_log_level
+end)
