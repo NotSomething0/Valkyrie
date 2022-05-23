@@ -54,8 +54,6 @@ exports.chat:registerMessageHook(function(source, out, hook)
   end
 
   if (throttleIsOpen) then
-    local shouldSend = true
-
     if (throttleBody[source]) then
       local wasSent = true
       local content = out.args[2]
@@ -71,7 +69,7 @@ exports.chat:registerMessageHook(function(source, out, hook)
         end
       end
 
-      table.insert(throttleBody[source].msgs, 1, {content = content, time = os.time() + throttleReset * 1000})
+      table.insert(throttleBody[source].msgs, 1, {content = content, time = os.time() + throttleReset})
 
       if wasSent == false then
         TriggerClientEvent('chat:addMessage', source, {args = {'Server', 'You\'ve sent the same message too many times, please wait sometime before sending it again.'}})
