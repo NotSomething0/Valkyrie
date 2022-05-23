@@ -22,11 +22,6 @@ local modules = {
 } 
 
 RegisterCommand('reload', function(source, args)
-  if (tonumber(source) ~= 0) then
-    TriggerClientEvent('chat:addMessage', source, {color = {255, 0, 0}, args = {'Valkyrie', 'Unable to use command, console access required'}})
-    return
-  end
-
   local module = modules[args[1]] or 'all'
   local conf = string.format('exec @%s/valkyrie.cfg', RESOURCE_NAME)
   local perm = string.format('exec @%s/vac_permissions.cfg', RESOURCE_NAME)
@@ -41,11 +36,6 @@ end, true)
 
 
 RegisterCommand('unban', function(source, args)
-  if (source ~= 0) then
-    TriggerClientEvent('chat:addMessage', source, {color = {255, 0, 0}, args = {'Valkyrie', 'Unable to use command, console access required'}})
-    return
-  end
-
   local data = GetResourceKvpString(string.format('vac_ban_%s', args[1]))
   local reason = 'No reason specified'
 
