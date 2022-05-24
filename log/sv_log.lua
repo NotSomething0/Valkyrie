@@ -17,7 +17,6 @@ local RESOURCE_PATH <const> = GetResourcePath(RESOURCE_NAME)
 
 log = {}
 
-log.level = 1
 log.webhook = GetConvar('vac:internel:discoWebhook', '')
 log.out = RESOURCE_PATH..'/log/log.txt'
 
@@ -42,11 +41,6 @@ local levels = {
 
 for idx, lvl in pairs(levels) do
   log[lvl:lower()] = function(...)
-    -- exit early because we're above the current log level
-    if (idx > log.level) then
-      return
-    end
-
     local msg = string.format('%s | %s | %s', lvl, os.date('%c'), ...)
 
     if (log.webhook) then
@@ -73,20 +67,3 @@ for idx, lvl in pairs(levels) do
     end
   end
 end
-
-AddEventHandler('__vac_internel:initalizeServer', function(module)
-  if (module ~= 'log' and module ~= 'all') then
-    return
-  end
-
-  local new_log_level = GetConvarInt('vac:internal:logLevel', 1)
-
-  if (new_log_level < 1) then
-    log.level = new_log_level
-
-    log.info('vac:internal:logLevel is set lower than allowed, defaulting Log Level to one')
-    return
-  end
-
-  log.level = new_log_level
-end)
