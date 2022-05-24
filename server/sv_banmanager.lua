@@ -95,7 +95,7 @@ end
 -- @param netId | string | player source
 -- @param duration | number | epoch
 -- @param reason | string | reason  
-function BanPlayer(netId, duration, reason)
+function BanPlayer(netId, duration, reason, extra)
   if (GetPlayerEndpoint(netId)) then
     local uuid = uuid()
     local ban = {
@@ -109,15 +109,15 @@ function BanPlayer(netId, duration, reason)
     SetResourceKvp(string.format('vac_ban_%s', uuid), json.encode(ban))
 
     if (not GetResourceKvpString(string.format('vac_ban_%s', uuid))) then
-      log.info('Unable to ban ' ..GetPlayerName(netId).. ' this is a fatal error, please report this to the developers.')
-      log.info(json.encode(ban))
-      log.info('Dropping player with no reason specified')
+      log.error('Unable to ban ' ..GetPlayerName(netId).. ' this is a fatal error, please report this to the developers.')
+      log.error(json.encode(ban))
+      log.error('Dropping player with no reason specified')
 
       DropPlayer(netId, 'No reason specified')
       return
     end
 
-    log.info('Banned ' ..GetPlayerName(netId).. ' for ' ..ban.reason)
+    log.info('Banned ' ..GetPlayerName(netId).. ' for ' ..extra)
     DropPlayer(netId, string.format('You have been banned\nBan Id:%s\nExpires: %s\nReason: %s', uuid, os.date('%c', ban.duration), ban.reason))
 
     is_cacheUpdated = false
