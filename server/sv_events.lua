@@ -255,9 +255,9 @@ local blockedEvents = {
 for i = 1, #blockedEvents do
   local eventName = blockedEvents[i]
 
-  RegisterNetEvent(eventName, function()
+  RegisterNetEvent(eventName, function(...)
     if (GetPlayerEndpoint(source) ~= nil) then
-      BanPlayer(source, 31536000, 'Blocked Event')
+      BanPlayer(source, 31536000, 'Blocked Event', string.format('Blocked Server Event | %s | %s', eventName, ...)
     end
 
     CancelEvent()
