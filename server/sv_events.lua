@@ -257,7 +257,7 @@ for i = 1, #blockedEvents do
 
   RegisterNetEvent(eventName, function(...)
     if (GetPlayerEndpoint(source) ~= nil) then
-      BanPlayer(source, 31536000, 'Blocked Event', string.format('Blocked Server Event | %s | %s', eventName, ...)
+      BanPlayer(source, 31536000, 'Blocked Event', string.format('Blocked Server Event | %s | %s', eventName, ...))
     end
 
     CancelEvent()
