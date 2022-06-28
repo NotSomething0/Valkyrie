@@ -2,63 +2,71 @@
 An open source [FiveM]('https://fivem.net') Anti-cheat. Using the most modern technologies currently available on FiveM, Valkyrie aims to be your solution to preventing modders from wreaking havoc on your server. No sketchy obfuscated files and runtime reloadable modules that keep you in control.
 
 ## Disclaimer
-No Anti-cheat is a silver bullet, especially not the paid versions, notice how mpst claim 99% protection against cheaters 😕. You as the server owner/developer should be taking an active role in preventing the exploitation of resources on your server because nothing is a substitute for good programming practices.
+No Anti-cheat is a silver bullet, especially not the paid versions, notice how most claim 99% protection against cheaters 😕. You as the server owner/developer should be taking an active role in preventing the exploitation of resources on your server because nothing is a substitute for good programming practices.
 
 ## Installation
-Note: Before installation, ensure that your [server-data](https://github.com/citizenfx/cfx-server-data) resources are up-to-date. Valkyrie uses the registerMessageHook export provided by the default chat resource for message filtering, which is not available in older versions of the chat resource.
 
+### Notes: 
+
+- Before installation, ensure that your [server-data](https://github.com/citizenfx/cfx-server-data) resources are up-to-date. Valkyrie uses the registerMessageHook export provided by the default chat resource for message filtering, which is not available in older versions of the chat resource.
+
+- Please keep in mind the main branch is also the development branch, only code downloaded from the release section is considered to be *stable.* If you do not know what you're doing, please don't request help when downloading the resource via git.
+---
+### Installing: 
 1. Download the most recent version from the 'Releases' section on GitHub ("Valkyrie-version.zip")
 
 2. Extract the contents from the zip file into `resources/Valkyrie`
 
-3. Once you've extracted the files, move the `valkyrie.cfg` file to the same folder where your `server.cfg` is located
+3. Open your `server.cfg` file, and add the below, making sure `ensure Valkyrie` is added after the config file execution.
+    * `exec @Valkyrie/valkyrie.cfg`
+    * `exec @Valkyrie/vac_permissions.cfg`
+    * `ensure Valkyrie`
 
-4. Open your `server.cfg` file, and add both `exec valkyrie.cfg` & `ensure Valkyrie`
+4. Save the server.cfg file then start your server
 
-5. Save the server.cfg file then start your server
-
-6. You're done, you've installed Valkyrie! Now move on to the configuration portion of this README
+5. You're done, you've installed Valkyrie! Now move on to the configuration portion of this README
 
 # Configuration
 Note: These settings can be updated during runtime using the `reload` command or by restarting the resource 
 
 ## Server Settings
 
-|      ConVar     | Default | Description | Parameters |
+|      ConVar     | Default | Description | Parameter(s) |
 | --------------- | ------- | ----------- | ---------- |
-| vac_setWebhook  | false   | Discord [webhook](https://bit.ly/2QN4q1N) | string |
-| vac_blockedText | {}      | Text 
-
-
-| ConVar | Default | Description | Parameters |
-|--------|---------|-------------|------------|
-| _discord_webhook | none | Discord [webhook](https://bit.ly/2QN4q1N) | string |
-| _blocked_expressions | none | Sets text to be filtered out of chat messages if _filter_messages is set to one. If _filter_messages is set to zero, chat message(s) containing any blocked text will be prevented from populating. | array |
-| _filter_messages | 0 | Enable message [filtering](https://imgur.com/a/20B68iS) | array |
-| _blocked_explosions | none | Sets [explosion(s)](https://bit.ly/3fiJdpX) to cancel. Note: Canceling an explosion only prevents it from being routed the owner; of the explosion(s) will still see it but, other clients won't. | array |
-| _maximum_allowed_explosions | 5 | Sets the maximum amount of blocked explosion(s) a client can create before being dropped | int |
-| _allowed_entities | none | Set entities that can be spawned in the server. Note: entity lockdown is a much better solution to prevent modders from spawning props. | array |
+| vac:main:useGodModeChecks| false | Enables/disables checks for God Mode via the server | bool | 
+| vac:main:useMaximumHealthChecks | false | Enables/disables checks for Maximum health > 200 via the server | bool |
+| vac:connect:filterUsername | false | Whether to check for blocked text on connecting players username | bool |
+| vac:connect:filterUsernameText | [] | Text to check for on connecting players username | list |
+| vac:chat:filterMessages | false | Wether to filter incoming chat messages via a list of blocked text | bool |
+| vac:chat:rlimitChat | true | Wether to rate limit incoming chat messages (spam prevention) | bool |
+| vac:chat:rlReset | 30 | Time in seconds to prevent the same message from being sent | int |
+| vac:cmd:requestPermission | true | Allow players to request permission for specific | bool |
+| vac::ptfx:allowedFx| [] | Particle effects allowed to be used on the server | list |
+| vac:entity:filterEntities | true | Wether to filter entity creation on the server via `entityCreating`, **will** be disabled if uisng entity lockdown. | bool |
+| vac:entity:filteredModels | [] | List of models allowed to be spawned on the server, a default list of all models from 1604 is included. Remember don't forget commas! | list |
 
 ## Client ConVars
 
 | ConVar | Default | Description | Parameters |
 |--------|---------|-------------|------------|
-| _maximum_godmode_strikes | 5 | Sets the maximum strikes a client can recieve from the GodMode thread | int |
-| _maximum_spectator_strikes | 5 | Sets the maximum strikes a client can recieve from the spectator thread | int |
-| _maximum_cam_distance | 200 | Sets the maximum distance a clients camera is allowed to be from their ped | int |
-| _maximum_modifier | 2 | Sets the maximum amount of speed modification that can be added to a vehicle | int |
+
+Currently no convars exist for the client (this is a possible planned feature)
 
 ## Exports
 
 | Export | Description | Parameters |
 |--------|-------------|------------|
-| getAllPlayerIdentifiers | Returns a json string with a clients identifier(s) and token(s) | bool, int |
-| banPlayer | Used to ban clients, parameter usage can be found [here](https://bit.ly/2TQvVc1)  | int, string, int, string |
-| kickPlayer | Used to kick clients, parameter usage can be found [here](https://bit.ly/3gcNEle) | int, string |
+
+Currently no exports exist (this is a planned feature)
 
 ## Logging
+Valkyrie allows both discord logging and file based logging, the latter is preferred as it's a persistent file does not rely on some random company to be online. Regardless, the persistent log file will still be used and the original log message along with a status code returned by discord will be included. 
 
-Valkyrie has built-in logging functionally to discord using webhooks. In order to use the built in logging you'll need to create a [webhook](https://bit.ly/2QN4q1N). Once you've created your webhook replace it with the empty string inside the [configuration](valkyrie.cfg) file.
+|      ConVar     | Default | Description | Parameter(s) |
+| --------------- | ------- | ----------- | ---------- |
+| vac:log:discordEnabled | false | Enable support for discord based logging | bool | 
+| vac:log:webhook | ""   | Discord [webhook](https://bit.ly/2QN4q1N) | string |
+| vac:log:level   | 0    | Sets the current log level (trace, warn, etc) | int |
 
 ## FAQ
 
