@@ -13,13 +13,13 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-local RESOURCE_PATH <const> = GetResourcePath(RESOURCE_NAME)
+local RESOURCE_PATH <const> = GetResourcePath(CurrentResourceName)
 
 log = {
-  webhook = GetConvar('vac:log:webhook', '')
-  out = RESOURCE_PATH..'/log/log.txt'
-  level = GetConvarInt('vac:log:level', 1)
-  discordEnabled = GetConvarBool('vac:log:discordLogs', false)
+  webhook = '',
+  out = RESOURCE_PATH..'/log/log.txt',
+  level = 0,
+  discordEnabled = false
 }
 
 setmetatable(log, {
@@ -38,6 +38,11 @@ local levels = {
 for idx, lvl in pairs(levels) do
   log[lvl:lower()] = function(...)
     local msg = string.format('%s | %s | %s', lvl, os.date('%c'), ...)
+
+    if (log.discordEnabled) then
+      log('discord', msg)
+    end
+
     local f = io.open(log.out, 'r+')
 
     if (f) then
@@ -49,7 +54,7 @@ for idx, lvl in pairs(levels) do
       f = io.open(log.out, 'w')
 
       if (not f) then
-        error('Unable to create log file, check that FXServer has the proper permissions set')
+        error('Unable to create log file, check that the FXServer process has proper read and write permissions.')
         return
       end
 
@@ -60,14 +65,14 @@ for idx, lvl in pairs(levels) do
 end
 
 log.discord = function(msg)
-  if (log.discordEnabled and not log.webhook) then
-    log.warn('Discord logs are enabled but an invalid webhook was provided, please check your config or disable discord logs.')
-
+  if (not log.webhook) then
+    log('warn', 'Discord logs are enabled but an invalid webhook was provided, please check your config or disable discord logs.')
     return
   end
 
-
   PerformHttpRequest(log.webhook, function(code)
+    code = tostring(code)
+
     if (code == '403') then
       error('Invalid webhook token provided, unable to send log to discord')
     end
@@ -76,18 +81,18 @@ log.discord = function(msg)
       error('Unable to send log information to discord')
     end
 
-    if (code == '200') then
-      log.trace('sent log to discord')
+    if (code:find('2')) then
+      log('trace', 'Log message successfully sent to discord.\nContent: ' ..msg)
     end
-  end, 'POST', json.encode({username = 'Valkyrie Anti-cheat', content = msg}))
+  end, 'POST', json.encode({content = msg, username = "Valkyrie Anti-cheat"}), {['Content-Type'] = 'application/json'})
 end
 
-AddEventHandler('__vac_internal:initalizeServer', function(module)
+AddEventHandler('__vac_internel:intalizeServer', function(module)
   if (module ~= 'all' and module ~='log') then
     return
   end
 
   log.webhook = GetConvar('vac:log:webhook', '')
   log.level = GetConvarInt('vac:log:level', 1)
-  log.discordEnabled = GetConvarBool('vac:log:discordLogs', false)
+  log.discordEnabled = GetConvar('vac:log:discordEnabled', false) == 'true' and true or false
 end)
