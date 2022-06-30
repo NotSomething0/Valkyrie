@@ -10,6 +10,12 @@ version '1.5.0'
 
 game 'gta5'
 
+dependencies {
+    '/onesync',
+    '/server:5511',
+    '/native:0x54C06897'
+}
+
 client_scripts {
     'client**/cl_*.lua'
 }
