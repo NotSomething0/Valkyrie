@@ -12,35 +12,81 @@
 
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
-local filterAllowedModels = {}
+local VAC_USE_ALLOWLIST = false
+local VAC_USE_BLOCKLIST = false
+local VAC_LIST_READY
+local VAC_ENTITY_LIST = {}
 
-AddEventHandler('entityCreating', function(entity)
-  if (filterIsActive and not filterAllowedModels[tonumber(GetEntityModel(entity))]) then
-    CancelEvent()
+local function setFilterStatus(allow, block)
+  log('info', string.format('[ENTITY]: Changing filter status. Allowlist is %s | Blocklist is %s.', allow, block))
+
+  VAC_USE_ALLOWLIST = allow
+  VAC_USE_BLOCKLIST = block
+end
+
+local function buildEntityList()
+  VAC_LIST_READY = false
+
+  if (VAC_USE_ALLOWLIST and VAC_USE_BLOCKLIST) then
+    setFilterStatus(false, false)
+    error('Entity allowlist and blocklist cannot be used interchangeably.')
   end
+
+  if (VAC_USE_ALLOWLIST or VAC_USE_BLOCKLIST) then
+    table.clear(VAC_ENTITY_LIST)
+    
+    local entityList = json.decode(GetConvar('vac:entity:entityList', '{}'))
+
+    if (not entityList) then
+      setFilterStatus(false, false)
+
+      error('No entries could be gathered for VAC_ENTITY_LIST from ConVar vac:entity:entityList.')
+    end
+
+    for model, status in pairs(entityList) do
+      VAC_ENTITY_LIST[tonumber(GetHashKey(model))] = status
+    end
+
+    VAC_LIST_READY = true
+  end
+end
+
+local function isModelAllowed(modelHash)
+  if (VAC_LIST_READY and VAC_USE_ALLOWLIST) then
+    if (VAC_ENTITY_LIST[modelHash]) then
+      return true
+    end
+  end
+
+  if (VAC_LIST_READY and VAC_USE_BLOCKLIST) then
+    if (not VAC_ENTITY_LIST[modelHash]) then
+      return true
+    end
+  end
+
+  return false
+end
+exports('isModelAllowed', isModelAllowed)
+
+AddEventHandler('__vac_internel:initialize', function(module)
+  if (GetInvokingResource() ~= GetCurrentResourceName() or module ~= 'all' and module ~= 'entities') then
+    return
+  end
+
+  if (GetConvar('sv_entityLockdown', 'inactive') ~= 'inactive') then
+    log('info', '[ENTITY]: Entity Lockdown is enabled disabiling entity filter')
+    setFilterStatus(false, false)
+    return
+  end
+
+  setFilterStatus(GetConvarBool('vac:entity:allowlistEnabled', false), GetConvarBool('vac:entity:blocklistEnabled', false))
+  buildEntityList()
 end)
 
-AddEventHandler('__vac_internel:intalizeServer', function(module)
-  if (module == 'entities' or 'all') then
-    if (GetConvar('sv_entityLockdown', 'inactive') == 'inactive') then
-      log.warn('client side spawning of entities is discouraged learn more here: https://github.com/NotSomething0/Valkyrie#q-what-is-entity-lockdown')
+AddEventHandler('entityCreating', function(handle)
+  local modelHash = tonumber(GetEntityModel(handle))
 
-      for hash in pairs(filterAllowedModels) do
-        filterAllowedModels[hash] = nil
-      end
-
-      local filterModels = json.decode(GetConvar('vac:entity:allowedEntities', '[]'))
-
-      if (filterModels ~= nil) then
-        for i = 1, #filterModels do
-          local hash = tonumber(GetHashKey(filterModels[i]))
-
-          filterAllowedModels[hash] = true
-        end
-      else
-        log.error('unable to parse convar `vac:entity:allowedEntities`, ensure the table is proper formatted')
-        return
-      end
-    end
+  if (VAC_LIST_READY and not isModelAllowed(modelHash)) then
+    CancelEvent()
   end
 end)
