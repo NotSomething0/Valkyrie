@@ -82,7 +82,7 @@ exports.chat:registerMessageHook(function(source, out, hook)
   end
 end)
 
-AddEventHandler('__vac_internel:intalizeServer', function(module)
+AddEventHandler('__vac_internel:initialize', function(module)
   if (module ~= 'chat' and module ~= 'all') then
     return
   end
