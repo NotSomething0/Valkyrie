@@ -12,52 +12,21 @@
 
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
+local VAC_BAN_PREFIX <const> = 'vac_ban_'
+local VAC_DEFAULT_BAN_LENGTH <const> = 31536000
 
-local _CACHE = {
-  identifiers = {},
-  bans = {}
-}
-local is_cacheUpdated = false
-
--- Get a list of all current bans on the server
--- @return table
-local function fetchBans()
-  if (not is_cacheUpdated) then
-    local handle = StartFindKvp('vac_ban_')
-    local bans = {}
-    local key
-
-    repeat
-      key = FindKvp(handle)
-
-      if (key) then
-        bans[key] = json.decode(GetResourceKvpString(key))
-      end
-    until not key
-    EndFindKvp(handle)
-
-    _CACHE.bans = bans
-    is_cacheUpdated = true
-  end
-  return _CACHE.bans
-end
-
--- https://gist.github.com/jrus/3197011
-local function uuid()
-  local template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
-  return string.gsub(template, '[xy]', function(c)
-    local v = (c == 'x') and math.random(0, 0xf) or math.random(8, 0xb)
-    return string.format('%x', v)
-  end)
-end
+local cache = {}
+cache.identifiers = {}
+cache.bans = {}
+cache.outdated = true
 
 -- @param netId | string | player source
--- @param temp | bool | is player fully connected
+-- @param temp | bool | Is this connection deferred
 -- @return table | player identifiers 
-local function getIdentifiers(netId, temp)
+function cache.getIdentifiers(netId, deferred)
   local t = {}
 
-  if (tonumber(netId) >= 1 and not _CACHE.identifiers[netId]) then
+  if (tonumber(netId) >= 1 and not cache.identifiers[netId]) then
     for _, v in pairs(GetPlayerIdentifiers(netId)) do
       local idx, value = v:match("^([^:]+):(.+)$")
 
@@ -79,108 +48,302 @@ local function getIdentifiers(netId, temp)
 
     -- if the player doesn't have a permanent netId
     -- don't populate the cache table as they might be dropped in connection
-    if (not temp) then
-      _CACHE.identifiers[netId] = t
+    if (not deferred) then
+      cache.identifiers[netId] = t
+      return cache.identifiers[netId]
     end
 
     return t
   end
 
-  -- ensure the player is in our cache table before returning data
-  -- otherwise return an empty table
-  return (_CACHE.identifiers[netId] and _CACHE.identifiers[netId] or {})
+  return cache.identifiers[netId]
 end
 
+-- @return table | All player bans currently on the server
+function cache.getBans()
+  if (not cache.outdated) then
+    return cache.bans
+  end
 
--- @param netId | string | player source
--- @param duration | number | epoch
--- @param reason | string | reason  
-function BanPlayer(netId, duration, reason, extra)
-  if (GetPlayerEndpoint(netId)) then
-    local uuid = uuid()
-    local ban = {
-      id = uuid,
-      -- if no time is passed default to one year 
-      duration = (duration and duration + os.time() or 31536000 + os.time()),
-      identifiers = getIdentifiers(netId, false),
-      reason = reason or 'No reason specified'
-    }
+  local handle = StartFindKvp(VAC_BAN_PREFIX)
+  local collectedBans = {}
+  local key
+  
+  repeat
+    key = FindKvp(handle)
+    
+    if (key) then
+      collectedBans[key] = json.decode(GetResourceKvpString(key))
+    end
+  until not key
+  EndFindKvp(handle)
 
-    SetResourceKvp(string.format('vac_ban_%s', uuid), json.encode(ban))
+  if (next(collectedBans) == nil) then
+    return {}
+  end
 
-    if (not GetResourceKvpString(string.format('vac_ban_%s', uuid))) then
-      log.error('Unable to ban ' ..GetPlayerName(netId).. ' this is a fatal error, please report this to the developers.')
-      log.error(json.encode(ban))
-      log.error('Dropping player with no reason specified')
+  cache.outdated = false
+  cache.bans = collectedBans
+  return cache.bans
+end
 
-      DropPlayer(netId, 'No reason specified')
-      return
+VPlayer = {}
+
+setmetatable(VPlayer, {
+  __call = function(self, netId)
+    if (not VPlayer[netId]) then
+      return VPlayer.createPlayer(netId)
     end
 
-    log.info('Banned ' ..GetPlayerName(netId).. ' for ' ..extra)
-    DropPlayer(netId, string.format('You have been banned\nBan Id:%s\nExpires: %s\nReason: %s', uuid, os.date('%c', ban.duration), ban.reason))
-
-    is_cacheUpdated = false
+    return VPlayer[netId]
   end
+})
+
+function VPlayer.createPlayer(netId)
+  if (type(netId) ~= 'string' and type(netId) ~= 'number') then
+    log('error', 'Invalid argument passed at index #1, player source of type string or number got ' ..type(netId))
+    return
+  end
+
+  if (not GetPlayerEndpoint(netId)) then
+    log('error', string.format('Invalid player source pased at index #1, GetPlayerEndpoint returned nil'))
+    return
+  end
+
+  if (not VPlayer[netId]) then
+    local player_data = {
+      source = netId,
+      strikes = 0,
+      permissions = {},
+      identifiers = cache.getIdentifiers(netId, false)
+    }
+    
+    VPlayer[netId] = player_data
+  end
+
+  return VPlayer[netId]
 end
 
-local filter_username = false
-local filter_text = {}
+function VPlayer.addPermission(netId, permissions, identifier)
+  if (type(permissions) ~= 'table') then
+    error('Invalid argument in function VPlayer.addPermission. Index #2 (permissionType) must be of type table.')
+  end
 
-local function onPlayerConnecting(name, skr, d)
-  local source = source
+  if (#permissions <= 0) then
+    error('Invalid argument in function VPlayer.addPermission. Index #2 (permissionType) must have at least one table entry.')
+  end
 
-  if (filter_username and #filter_text ~= 0) then
-    local name = name:lower()
-    local hits = {}
+  local player = VPlayer(netId)
 
-    for i = 1, #filter_text do
-      if (name:find(filter_text[i]:lower())) then
-        hits[i] = filter_text[i]
+  for _, permission in pairs(permissions) do
+    if (player and not player.permissions[permission]) then
+      player.permissions[permission] = identifier
+      ExecuteCommand(string.format('add_ace identifier.%s %s allow', identifier, permission))
+    end
+
+    if (not IsPlayerAceAllowed(netId, permission)) then
+      error('An ukown error occured, unable to add ' ..permission..' to player.')
+      return false
+    end
+  end
+
+  return true
+end
+exports('addPermission', VPlayer.addPermission)
+
+function VPlayer.removePermission(netId, permissions)
+  if (type(permissions) ~= 'table') then
+    error('Invalid argument in function VPlayer.removePermission. Index #2 (permissionType) must be of type table.')
+  end
+
+  if (#permissions <= 0) then
+    error('Invalid argument in function VPlayer.removePermission. Index #2 (permissionType) must have at least one table entry.')
+  end
+
+  local player = VPlayer(netId)
+
+  for _, permission in pairs(permissions) do
+    if (player and player.permissions[permission]) then
+      local identifier = player.permissions[permission]
+
+      if (identifier) then
+        ExecuteCommand(string.format('remove_ace identifier.%s %s allow', identifier, permission))
+        player.permissions[permission] = nil
+      end
+      
+      print(netId, permission)
+      print(IsPlayerAceAllowed(netId, permission))
+
+      if (IsPlayerAceAllowed(netId, permission)) then
+        error('An ukown error occured, unable to add ' ..permission..' to player.')
+        return false
       end
     end
+  end
 
-    if (#hits ~= 0) then
-      -- TODO: Better way to format each hit
-      skr(('Your username contains blocked text:  \n' ..json.encode(hits).. '\nremove these items then reconnect'))
+  return false
+end
+exports('removePermission', VPlayer.removePermission)
+
+-- @return string | Universally unique identifier
+local function uuid()
+  --https://gist.github.com/jrus/3197011
+  local template ='xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+  return string.gsub(template, '[xy]', function(c)
+    local v = (c == 'x') and math.random(0, 0xf) or math.random(8, 0xb)
+    return string.format('%x', v)
+  end)
+end
+
+-- @param netId | number | player source
+-- @param duration | number | epoch ban length
+-- @param reason | string | reason for the ban
+-- @param extra | string | any additonal data
+local function VPlayer.Ban(netId, duration, reason, extra)
+  -- Check if the player is online
+  if (not GetPlayerEndpoint(netId)) then
+    return false
+  end
+
+  if (type(duration) ~= 'number' or duration == -1) then
+    duration = (VAC_DEFAULT_BAN_LENGTH + os.time())
+  end
+
+  duration = (duration + os.time())
+
+  if (not reason or reason == "") then
+    reason = "No reason specified"
+  end
+
+  local data = {
+    banId = uuid(),
+    expires = duration,
+    identifiers = json.encode(cache.getIdentifiers(netId, false)),
+    reason = reason
+  }
+
+  SetResourceKvp(('vac_ban_%s'):format(data.banId), json.encode(data))
+  local data = GetResourceKvpString(('vac_ban_%s'):format(data.banId))
+
+  if (not data) then
+    log('error', json.encode(data))
+    error(('Failed to create ban for player %s, an unkown error has occured'):format(GetPlayerName(netId)))
+  end
+
+  DropPlayer(netId, string.format('You have been banned\nBanId: %s\nExpires: %s\nReason: %s', data.banId, os.date('%c', data.expires), data.reason))
+  cache.outdated = true
+  return true 
+end
+exports('ban', VPlayer.Ban)
+
+-- @param banId | string | Database BanId with prerfix (vac_ban_)
+-- @param reason | string | Reason for the removal of the ban
+-- @return bool | Was the ban removed
+local function VPlayer.Unban(banId, reason)
+  local data = GetResourceKvpString(banId)
+
+  if (not data) then
+    log('info', ('BanId %s is not in the database'):format(banId))
+    return false
+  end
+
+  DeleteResourceKvp(banId)
+
+  if (GetResourceKvpString(banId)) then
+    log('error', json.encode(data))
+    error(string.format('Failed to delete ban from database BanId %s', banId))
+  end
+
+  log('info', string.format('Deleted ban by BanId %s from the database with reason %s', banId, reason))
+  return true
+end
+exports('unban', VPlayer.Unban)
+
+-- @param name | string| player username
+-- @return string | Blocked text found in the players username
+local function isUsernameBlocked(name)
+  local blockedText = ""
+
+  for txt, status in pairs(VAC_FILTER_USERNAME_TEXT) do
+    if (status and name:find(txt:lower())) then
+      blockedText = blockedText.."\n".."txt"
     end
   end
 
-  d.defer()
+  if (blockedText) then
+    return blockedText
+  end
 
-  Wait(0)
+  return ""
+end
 
-  d.update('Fetching ban data')
+-- @param netId | string | player network Id
+-- @return bool | If the player is banned
+-- @return table | Data associated with the ban
+local function isPlayerBanned(netId)
+  local banlist = cache.getBans()
 
-  local banlist = fetchBans()
-  local identifiers = getIdentifiers(source, true)
+  -- There are no bans in the database so this user can't be banned
+  if (next(banlist) == nil) then
+    return false
+  end
 
-  d.update('Got ban data, checking if you are banned')
-
-  Wait(0)
-
+  local playerIdentifiers = cache.getIdentifiers(netId, true)
   for banId, data in pairs(banlist) do
-    -- clean up expired bans
-    if (data.duration - os.time() <= 0) then
-      DeleteResourceKvp(banId)
+    -- Automatically clean up expired bans
+    if (data.expires - os.time() <= 0) then
+      removeBan(banId, 'Ban has expired')
       goto continue
     end
 
-    for _, id in pairs(data.identifiers) do
-      if (json.encode(identifiers):find(id)) then
-        log.info(GetPlayerName(source).. ' attempted to connect but was banned')
-        d.done(string.format('You have been banned\nBan Id:%s\nExpires: %s\nReason: %s', data.id, os.date('%c', data.duration), data.reason))
-        break
+    -- Loop through bannd identifiers and check
+    -- If the index of that identifier is equal to a players
+    for idx, value in pairs(json.decode(data.identifiers)) do
+      print(playerIdentifiers[idx], value)
+      if (playerIdentifiers[idx] == value) then
+        return true, data
       end
     end
 
     ::continue::
   end
 
+  return false, {}
+end
+
+local function onPlayerConnecting(name, _, d)
+  local source = source
+
+  d.defer()
+
+  -- Mandatory Wait!
+  Wait(0)
+
+  d.update(string.format('Hello %s. Please wait while your username is being checked.', name))
+
+  if (VAC_FILTER_USERNAME and next(VAC_FILTER_USERNAME_TEXT) ~= nil) then
+    local blocked = isUsernameBlocked(name:lower())
+    if (blocked ~= "") then
+      -- Mandatory Wait!
+      Wait(0)
+
+      d.done(string.format('Unable to complete connection, your username or part of it contains blocked characters. Please remove the below items and reconnect.\n%s', blocked))
+    end
+  end
+
+  -- Mandatory Wait!
+  Wait(0)
+
+  d.update('Fetching ban data please wait')
+
+  -- Mandatory Wait!
+  Wait(0)
+
+  local isBanned, data = isPlayerBanned(source)
+  if (isBanned) then
+    d.done(string.format('You have been banned\nBan Id: %s\nExpires: %s\nReason: %s', data.banId, os.date('%c', data.expires), data.reason))
+  end
+
   d.done()
 end
 AddEventHandler('playerConnecting', onPlayerConnecting)
-
-AddEventHandler('__vac_internal:playerUnbanned', function()
-  is_cacheUpdated = false
-end)
