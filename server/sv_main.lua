@@ -13,7 +13,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 local RESOURCE_NAME <const> = GetCurrentResourceName()
-local CURRENT_VERSION <const> = GetResourceMetadata(RESOURCE_NAME, 'version')
+local CURRENT_VERSION <const> = GetResourceMetadata(RESOURCE_NAME, 'version', 0)
 local LATEST_VERSION = '0.0.0'
 
 AddEventHandler('onResourceStart', function(resourceName)
@@ -27,34 +27,42 @@ AddEventHandler('onResourceStart', function(resourceName)
     end
 
     if (LATEST_VERSION ~= CURRENT_VERSION) then
-      print(('This version of Valkyrie is outdated! Please update as soon as possible!\n Latest Version: %s | Current Version: %s^7'):format(LATEST_VERSION, CURRENT_VERSION))
+      log.info(('This version of Valkyrie is outdated! Please update as soon as possible!\n Latest Version: %s | Current Version: %s^7'):format(LATEST_VERSION, CURRENT_VERSION))
     end
   end)
 
   TriggerEvent('__vac_internel:initialize', 'all')
 end)
 
-local godmodeCheck = false
-local healthCheck = false
+local function checkForGodmode()
+  local players = GetPlayers()
 
+  for i = 1, #players do
+    local netId = players[i]
+    local player = VPlayer(netId)
+
+    if (not player) then
+      return
+    end
+
+    if (IsPlayerAceAllowed(netId, 'vac:godmode')) then
+      log.trace(('[MAIN]: %s has bypassed Godmode checks, they have the \'vac:godmode\' permission.'):format(GetPlayerName(netId)))
+      return
+    end
+
+    if (GetPlayerInvincible(netId)) then
+      player:strike('Positive result from GetPlayerInvincible')
+    end
+  end
+end
+
+local godmodeCheck = false
 CreateThread(function()
   while true do
     Wait(1000)
 
-    for _, netId in pairs(GetPlayers()) do
-      local player = VPlayer(netId)
-
-      if (not IsPlayerAceAllowed(netId, 'vac:admin') and not IsPlayerAceAllowed(netId, 'vac:godmode')) then
-        local playerPed = GetPlayerPed(netId)
-
-        if (godmodeCheck and GetPlayerInvincible(netId)) then
-          player.strikes += 1
-        end
-
-        if (healthCheck and GetEntityMaxHealth(playerPed) >= 201) then
-          player.strikes += 1
-        end
-      end
+    if (godmodeCheck) then
+      checkForGodmode()
     end
   end
 end)
@@ -65,7 +73,6 @@ AddEventHandler('__vac_internel:initialize', function(module)
   end
 
   godmodeCheck = GetConvarBool('vac:main:godmodeCheck', false)
-  healthCheck = GetConvarBool('vac:main:healthCheck', false)
 
-  log('info', ('[MAIN]: Updating basic checks Godmode Check: %s | Health Check: %s'):format(godmodeCheck, healthCheck))
+  log.info(('[MAIN]: Updating basic checks Godmode Check: %s '):format(godmodeCheck))
 end)
