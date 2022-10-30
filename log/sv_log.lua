@@ -13,86 +13,72 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-local RESOURCE_PATH <const> = GetResourcePath(CurrentResourceName)
+local RESOURCE_NAME <const> = GetCurrentResourceName()
+local RESOURCE_PATH <const> = GetResourcePath(RESOURCE_NAME)
+local LOG_OUT_PATH <const> = RESOURCE_PATH..'/log/log.txt'
+local LOG_OUT_SCHEME <const> = '%s | %s | %s'
 
-log = {
-  webhook = '',
-  out = RESOURCE_PATH..'/log/log.txt',
-  level = 0,
-  discordEnabled = false
-}
+local f, err = io.open(LOG_OUT_PATH, 'r+')
 
-setmetatable(log, {
-  __call = function(self, level, msg)
-    log[level](msg)
+if (not f) then
+  f, err = io.open(LOG_OUT_PATH, 'w+')
+
+  if (not f) then
+    error(('Unable to create log file: %s'):format(err))
   end
-})
 
-local levels = {
-  'INFO',
-  'TRACE',
-  'WARN',
-  'ERROR'
-}
-
-for idx, lvl in pairs(levels) do
-  log[lvl:lower()] = function(...)
-    local msg = string.format('%s | %s | %s', lvl, os.date('%c'), ...)
-
-    if (log.discordEnabled) then
-      log('discord', msg)
-    end
-
-    local f = io.open(log.out, 'r+')
-
-    if (f) then
-      print(msg)
-
-      f:write(msg..'\n')
-      f:close()
-    else
-      f = io.open(log.out, 'w')
-
-      if (not f) then
-        error('Unable to create log file, check that the FXServer process has proper read and write permissions.')
-        return
-      end
-
-      f:write(msg..'\n')
-      f:close()
-    end
-  end
+  f:write(LOG_OUT_SCHEME:format('[info]', os.date('%c'), ('[LOG]: Log file generated at %s\n'):format(LOG_OUT_PATH)))
+  f:close()
+else
+  f:close()
 end
 
-log.discord = function(msg)
-  if (not log.webhook) then
-    log('warn', 'Discord logs are enabled but an invalid webhook was provided, please check your config or disable discord logs.')
+log = {}
+log.level = GetConvarInt('vac:internal:logLevel', 1)
+
+-- @param level | string | log suffix formatted with color for stdout
+-- @param txt | string | log message
+-- @return string | formatted output to the log file
+function log.write(level, txt)
+  local f, err = io.open(LOG_OUT_PATH, 'a+')
+
+  if (not f) then
+    error(('Unable to open log file for reading/writing: %s'):format(err))
+  end
+
+  f:write(LOG_OUT_SCHEME:format(level:match('%[.+%]'), os.date('%c'), txt)..'\n')
+  f:close()
+
+  return LOG_OUT_SCHEME:format(level, os.date('%c'), txt)
+end
+
+-- @param err | string | error message
+function log.error(err)
+  error(log.write('^1[error]^7', err), 2)
+end
+
+-- @param txt | string | log message
+function log.warn(txt)
+  if (log.level < 3) then return end
+  print(log.write('^3[warn]^7', txt))
+end
+
+-- @param txt | string | log message
+function log.trace(txt)
+  if (log.level < 2) then return end
+  print(log.write('^5[trace]^7', txt))
+end
+
+-- @param txt | string | log message
+function log.info(txt)
+  if (log.level < 1) then return end
+  print(log.write('[info]', txt))
+end
+
+AddEventHandler('__vac_internel:initialize', function(module)
+  if (module ~= 'log' and module ~= 'all') then
     return
   end
 
-  PerformHttpRequest(log.webhook, function(code)
-    code = tostring(code)
-
-    if (code == '403') then
-      error('Invalid webhook token provided, unable to send log to discord')
-    end
-
-    if (code == '429') then
-      error('Unable to send log information to discord')
-    end
-
-    if (code:find('2')) then
-      log('trace', 'Log message successfully sent to discord.\nContent: ' ..msg)
-    end
-  end, 'POST', json.encode({content = msg, username = "Valkyrie Anti-cheat"}), {['Content-Type'] = 'application/json'})
-end
-
-AddEventHandler('__vac_internel:intalizeServer', function(module)
-  if (module ~= 'all' and module ~='log') then
-    return
-  end
-
-  log.webhook = GetConvar('vac:log:webhook', '')
-  log.level = GetConvarInt('vac:log:level', 1)
-  log.discordEnabled = GetConvar('vac:log:discordEnabled', false) == 'true' and true or false
+  log.level = GetConvarInt('vac:internal:logLevel', 1)
 end)
