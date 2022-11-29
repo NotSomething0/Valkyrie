@@ -38,16 +38,9 @@ AddEventHandler('onResourceStart', function(resourceName)
 end)
 
 local function checkForGodmode()
-  local players = GetPlayers()
+  local players = VCache.players
 
-  for i = 1, #players do
-    local netId = players[i]
-    local player = VPlayer(netId)
-
-    if (not player) then
-      return
-    end
-
+  for netId, player in pairs(players) do
     if (IsPlayerAceAllowed(netId, 'vac:godmode')) then
       return
     end
@@ -70,16 +63,9 @@ CreateThread(function()
 end)
 
 local function checkForSuperJump()
-  local players = GetPlayers()
+  local players = VCache.players
 
-  for i = 1, #players do
-    local netId = players[i]
-    local player = VPlayer(netId)
-
-    if (not player) then
-      return
-    end
-
+  for netId, player in pairs(players) do
     if (IsPlayerAceAllowed(netId, 'vac:superjump')) then
       return
     end
