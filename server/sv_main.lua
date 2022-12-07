@@ -95,5 +95,5 @@ AddEventHandler('__vac_internel:initialize', function(module)
   godModeCheck = GetConvarBool('vac:main:god_mode_check', false)
   superJumpCheck = GetConvarBool('vac:main:super_jump_check', false)
 
-  log.info(('[MAIN]: Updating basic checks Godmode Check: %s | Super Jump Check: %s'):format(godModeCheck, superJumpCheck))
+  log.info(('[MAIN]: Data synced | Godmode Check: %s | Super Jump Check: %s'):format(godModeCheck, superJumpCheck))
 end)
