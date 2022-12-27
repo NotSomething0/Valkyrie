@@ -1,4 +1,4 @@
--- Copyright (C) 2019 - 2022  NotSomething
+-- Copyright (C) 2019 - 2023  NotSomething
 
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
   Need help? Open an issue on GitHub
 ]]
 
-local blockedEvents = {
+local BLOCKED_EVENTS <const> = {
   "adminmenu:allowall",
   "AdminMenu:giveBank",
   "AdminMenu:giveCash",
@@ -252,14 +252,33 @@ local blockedEvents = {
   "SEM_InteractionMenu:Unhospitalize",
 }
 
-for i = 1, #blockedEvents do
-  local eventName = blockedEvents[i]
+for i = 1, #BLOCKED_EVENTS do
+  local eventName = BLOCKED_EVENTS[i]
 
   RegisterNetEvent(eventName, function(...)
-    if (GetPlayerEndpoint(source) ~= nil) then
-      BanPlayer(source, 31536000, 'Blocked Event', string.format('Blocked Server Event | %s | %s', eventName, ...))
+    local player = VPlayer(source)
+
+    if not player then
+      return
     end
 
+    local arguments = {...}
+    local payload = 'Payload: \n'
+
+    for index, value in pairs(arguments) do
+      -- If triggerd purposefully limit the size of the payload sent to five arguments and a string length of 255
+      if index > 5 then
+        break
+      end
+
+      if string.len(value) > 255 then
+        payload = payload..'Argument '..index..': Maximum argument length exceeded'
+      else
+        payload = payload..'Argument '..index..': '..value..'\n'
+      end
+    end
+
+    player:ban(0, 'Triggered a malicious network event', ('Blocked Server Event: %s %s'):format(eventName, payload))
     CancelEvent()
   end)
 end
