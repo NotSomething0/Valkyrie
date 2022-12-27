@@ -271,7 +271,7 @@ for i = 1, #BLOCKED_EVENTS do
         break
       end
 
-      if string.len(value) > 255 then
+      if not tostring(value) or string.len(value) > 255 then
         payload = payload..'Argument '..index..': Maximum argument length exceeded'
       else
         payload = payload..'Argument '..index..': '..value..'\n'
