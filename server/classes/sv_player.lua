@@ -13,29 +13,14 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-local Players = VCache:new('number', 'table')
-
 VPlayer = {}
 
-setmetatable(VPlayer, {
-  __call = function(_, netId)
-    if (not Players:get(netId)) then
-      return false
-    end
-
-    return Players:get(netId)
-  end
-})
-
--- Create and store a new player object
--- @param netId | string | player source
+-- Create a new player object
+-- @param netId | number | player source
+-- @return table | player object
 function VPlayer:create(netId)
   if netId < 1 or not GetPlayerEndpoint(netId) then
     error(('Invalid server ID specified: %s'):format(netId))
-  end
-
-  if (Players:get(netId)) then
-    error(('Player object already exists for server ID: %s'):format(netId))
   end
 
   local player = {
@@ -48,33 +33,7 @@ function VPlayer:create(netId)
   setmetatable(player, self)
   self.__index = self
 
-  Players:set(netId, player)
-end
-
-AddEventHandler('playerJoining', function()
-  VPlayer:create(tonumber(source))
-end)
-
--- Destroy player object
--- @param netId | string | player source
-function VPlayer:destroy(netId)
-  if netId < 1 or not GetPlayerEndpoint(netId) then
-    error(('Invalid server ID specified: %s'):format(netId))
-  end
-
-  if not Players:get(netId) then
-    error(('No player object exists for server ID: %s'):format(netId))
-  end
-
-  Players:remove(netId)
-end
-
-AddEventHandler('playerDropped', function()
-  VPlayer:destroy(tonumber(source))
-end)
-
-function VPlayer:getPlayers()
-  return Players:getData()
+  return player
 end
 
 local UUID_TEMPLATE <const> = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
@@ -92,7 +51,7 @@ local BAN_LENGTHS = {}
 -- @param reason | string | reason given to player as to why they've been banned
 -- @param extended | string | reason given to staff/console as to why this player was banned
 function VPlayer:ban(duration, reason, extended)
-  local banId = uuid()
+  local banId = ('vac_ban_%s'):format(uuid())
   local duration = BAN_LENGTHS[duration]
 
   if (not duration) then
@@ -109,15 +68,15 @@ function VPlayer:ban(duration, reason, extended)
     reason = reason
   }
 
-  SetResourceKvp(('vac_ban_%s'):format(banId), json.encode(data))
+  SetResourceKvp(banId, json.encode(data))
 
-  if (not GetResourceKvpString(('vac_ban_%s'):format(banId))) then
+  if not GetResourceKvpString(banId) then
     DropPlayer(self.source, 'Goodbye')
     error(('Unable to create ban for player %s dumping ban data %s'):format(self.source, json.encode(data, {indent = true})))
   end
 
   DropPlayer(self.source, ('You have been banned from this server!\nBanId: %s\nExpires: %s\nReason: %s'):format(banId, os.date('%c', duration), reason))
-  TriggerEvent('__vac_internel:banIssued', banId, data)
+  TriggerEvent('__vac_internel:banIssued', banId, data, extended)
 end
 
 local strikeLimit = 5
