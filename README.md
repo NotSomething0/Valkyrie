@@ -18,8 +18,8 @@ No Anti-cheat is a silver bullet, especially not the paid versions, notice how m
 2. Extract the contents from the zip file into `resources/Valkyrie`
 
 3. Open your `server.cfg` file, and add the below, making sure `ensure Valkyrie` is added after the config file execution.
-    * `exec @Valkyrie/valkyrie.cfg`
-    * `exec @Valkyrie/vac_permissions.cfg`
+    * `exec @Valkyrie/config.cfg`
+    * `exec @Valkyrie/permission.cfg`
     * `ensure Valkyrie`
 
 4. Save the server.cfg file then start your server
