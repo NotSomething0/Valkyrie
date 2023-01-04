@@ -57,5 +57,5 @@ AddEventHandler('__vac_internel:initialize', function(module)
     log.warn('[ENTITIES]: Your blocked entity count is rather large consider using sv_entityLockdown instead.')
   end
 
-  log.info(('[ENTITIES]: Data synced | Entity Validation %s'))
+  log.info(('[ENTITIES]: Data synced | Entity Validation: %s'):format(useEntityValidation and 'Enabled' or 'Disabled'))
 end)
