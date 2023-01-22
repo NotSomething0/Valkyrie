@@ -1,4 +1,4 @@
--- Copyright (C) 2019 - 2022  NotSomething
+-- Copyright (C) 2019 - 2023  NotSomething
 
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -17,19 +17,18 @@ local RESOURCE_NAME <const> = GetCurrentResourceName()
 local CURRENT_VERSION <const> = GetResourceMetadata(RESOURCE_NAME, 'version', 0)
 
 AddEventHandler('onResourceStart', function(resourceName)
-  if (RESOURCE_NAME ~= resourceName) then
+  if RESOURCE_NAME ~= resourceName then
     return
   end
 
-  ---@diagnostic disable-next-line: missing-parameter
-  PerformHttpRequest('https://api.github.com/repos/NotSomething0/Valkyrie/releases', function(code, data)
+  PerformHttpRequest('https://api.github.com/repos/NotSomething0/Valkyrie/releases', function(code, data, _)
     local latestVersion = CURRENT_VERSION
 
-    if (code == 200) then
+    if code == 200 then
       latestVersion = json.decode(data)[1].name
     end
 
-    if (latestVersion ~= CURRENT_VERSION) then
+    if latestVersion ~= CURRENT_VERSION then
       log.info(('This version of Valkyrie is outdated! Please update as soon as possible!\n Latest Version: %s | Current Version: %s^7'):format(latestVersion, CURRENT_VERSION))
     end
   end)
@@ -37,42 +36,46 @@ AddEventHandler('onResourceStart', function(resourceName)
   TriggerEvent('__vac_internel:initialize', 'all')
 end)
 
-local function checkForGodmode()
-  local players = VPlayer:getPlayers()
+local invincibilityCheck = false
+local function checkForInvincibility()
+  local players = PlayerCache()
 
   for netId, player in pairs(players) do
-    if (IsPlayerAceAllowed(netId, 'vac:godmode')) then
-      return
+    if not IsPlayerAceAllowed(netId, 'vac:invincible') then
+      goto continue
     end
 
-    if (GetPlayerInvincible(netId)) then
+    if GetPlayerInvincible(netId) then
       player:strike('Positive result from GetPlayerInvincible')
     end
+
+    ::continue::
   end
 end
 
-local godModeCheck = false
 CreateThread(function()
   while true do
     Wait(1000)
 
-    if (godModeCheck) then
-      checkForGodmode()
+    if invincibilityCheck then
+      checkForInvincibility()
     end
   end
 end)
 
 local function checkForSuperJump()
-  local players = VPlayer:getPlayers()
+  local players = PlayerCache()
 
   for netId, player in pairs(players) do
-    if (IsPlayerAceAllowed(netId, 'vac:superjump')) then
-      return
+    if IsPlayerAceAllowed(netId, 'vac:superJump') then
+      goto continue
     end
 
-    if (IsPlayerUsingSuperJump(netId)) then
+    if IsPlayerUsingSuperJump(netId) then
       player:strike('Positive result from IsPlayerUsingSuperJump')
     end
+
+    ::continue::
   end
 end
 
@@ -88,12 +91,12 @@ CreateThread(function()
 end)
 
 AddEventHandler('__vac_internel:initialize', function(module)
-  if (module ~= 'all' and module ~= 'main') then
+  if GetInvokingResource() ~= RESOURCE_NAME and module ~= 'all' and module ~= 'main' then
     return
   end
 
-  godModeCheck = GetConvarBool('vac:main:god_mode_check', false)
-  superJumpCheck = GetConvarBool('vac:main:super_jump_check', false)
+  invincibilityCheck = GetConvarBool('vac:main:god_mode', false)
+  superJumpCheck = GetConvarBool('vac:main:super_jump', false)
 
-  log.info(('[MAIN]: Data synced | Godmode Check: %s | Super Jump Check: %s'):format(godModeCheck, superJumpCheck))
+  log.info(('[MAIN]: Data synced | Invincibility Check: %s | Super Jump Check: %s'):format(invincibilityCheck, superJumpCheck))
 end)
