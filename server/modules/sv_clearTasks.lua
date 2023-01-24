@@ -4,8 +4,7 @@ AddEventHandler('clearPedTasksEvent', function(sender, data)
     local pedOwner = NetworkGetEntityOwner(pedHandle)
 
     if IsPedAPlayer(pedHandle) then
+        log.info(('%s attempted to clear tasks on %s, preventing sync. Immediate: %s'):format(GetPlayerName(sender), GetPlayerName(pedOwner), immediately))
         CancelEvent()
     end
-
-    log.info(('%s attempted to clear tasks on %s, preventing sync. Immediate: %s'):format(GetPlayerName(sender), GetPlayerName(pedOwner), immediately))
 end)
