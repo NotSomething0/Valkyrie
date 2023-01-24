@@ -1,14 +1,15 @@
 fx_version 'cerulean'
 
+use_experimental_fxv2_oal 'yes'
 lua54 'yes'
+
+game 'gta5'
 
 author 'https://github.com/NotSomething0'
 
-description 'An open source FiveM anticheat'
+description 'Open source FiveM Anti-cheat'
 
-version '1.5.0'
-
-game 'gta5'
+version 'v1.5.0'
 
 dependencies {
     '/onesync',
@@ -16,11 +17,9 @@ dependencies {
     '/native:0x54C06897'
 }
 
-client_scripts {
-    'client**/cl_*.lua'
-}
-
 server_scripts {
-    'server**/sv_*.lua',
-    'log/sv_log.lua'
+    'server/util/sv_*.lua',
+    'server/classes/sv_*.lua',
+    'server/modules/sv_*.lua',
+    'server/sv_*.lua',
 }
