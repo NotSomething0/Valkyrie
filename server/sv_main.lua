@@ -84,7 +84,7 @@ CreateThread(function()
   while true do
     Wait(1000)
 
-    if (superJumpCheck) then
+    if superJumpCheck then
       checkForSuperJump()
     end
   end
