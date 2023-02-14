@@ -15,7 +15,7 @@
 
 VCache = {}
 
--- Create a new virtual cache object
+-- Create a new cache object
 -- @param keyLock | string | a type to do internal type checking on or any to skip type checking
 -- @param valueLock | string | a type to do internal type checking on or any to skip type checking
 function VCache:new(keyLock, valueLock)
@@ -25,13 +25,19 @@ function VCache:new(keyLock, valueLock)
         data = {}
     }
 
-    setmetatable(cache, self)
     self.__index = self
+    self.__call = function(self, key)
+        if not key then
+            return self.data
+        end
 
-    return cache
+        return self:get(key)
+    end
+
+    return setmetatable(cache, self)
 end
 
--- Set a new or existing key value in the cache data store
+-- Set a key/value in the data store
 -- @param key | any | key to set data for
 -- @param vcalue | any | value for the key
 function VCache:set(key, value)
@@ -39,48 +45,37 @@ function VCache:set(key, value)
     local valueLock = self.valueLock
 
     if keyLock ~= 'any' and type(key) ~= keyLock then
-        error('Invalid type for key, expected %s got %s'):format(keyLock, type(key))
+        error(('Invalid type for key, expected %s got %s')):format(keyLock, type(key))
     end
 
     if valueLock ~= 'any' and type(value) ~= valueLock then
         error(('Invalid type for value, expected %s got %s'):format(valueLock, type(value)))
     end
 
-    self.data[key] = value
+    rawset(self.data, key, value)
 end
 
--- Get the value of a key in the cache data store
+-- Get the value of a key in the data store
 -- @param key | any | key to get the value of
 -- @return any | value of the key
 function VCache:get(key)
     local keyLock = self.keyLock
 
-    if (keyLock ~= 'any' and type(key) ~= keyLock) then
+    if keyLock ~= 'any' and type(key) ~= keyLock then
         error(('Invalid type for key, expected %s got %s'):format(keyLock, type(key)))
     end
 
-    if (not self.data[key]) then
-        return false
+    return rawget(self.data, key)
+end
+
+-- Set the value of the key in the data store to nil
+-- @param key | any | the key to remove from the cache
+function VCache:invalidate(key)
+    local keyLock = self.keyLock
+
+    if keyLock ~= 'any' and type(key) ~= keyLock then
+        error(('Invalid type for key, expected %s got %s')):format(keyLock, type(key))
     end
 
-    return self.data[key]
-end
-
--- Set the value of the passed key to nil avoding the valueLock type check
--- @param key | any | the key to remove from the cache
-function VCache:remove(key)
-    self.data[key] = nil
-end
-
--- Get the entire data store
--- @return table | cache data store
-function VCache:getData()
-    return self.data
-end
-
--- Clear's the cache data store
-function VCache:clear()
-    -- CfxLua/LuaGLM implements the table.clear function
-    ---@diagnostic disable-next-line: undefined-field
-    table.clear(self.data)
+    rawset(self.data, key, nil)
 end
