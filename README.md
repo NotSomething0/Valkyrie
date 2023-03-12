@@ -78,12 +78,15 @@ Notes:
 | vac:ultraviolet | Bypass **everything**! Users **will not** be added to the PlayerCache registery and are seen as "invisible" to the resource |
 | vac:explosion | Bypass explosion checks |
 
-
+## Events
+| Event Name | Description | Parameter(s) |
+|----------- |-------------| ------------ |
+| __vac_internal:initialize | Used to reload a specific module or the entire module stack | string | 
 ## FAQ
 
 ### Q. Why is feature x, y, z not implemented, but it is in other Anti-cheats?
 
-TL;DR: Certain popular detection methods rely solely on the client having accurate data basic software security practices teach us to never rely on the client and is why certain features are missing. If you believe a feature is missing and could be built into the Anti-cheat without relying on the client, don't hesitate to open an issue on GitHub describing implementation details!
+TL;DR: Certain popular detection methods rely solely on the client having accurate data basic software security practices teach us to never rely on the client and is why certain features are "missing". If you believe a feature is missing and could be built into the Anti-cheat without relying on the client, don't hesitate to open an issue on GitHub describing implementation details!
 
 <b>"Injection detection" (Prohibited variable detection)</b>
 
@@ -103,7 +106,7 @@ function checkVariables()
 end
 ```
 
-This however can be easily bypassed, simply by setting the variable we want to *hide* to nil in the global envrionment table. This process could be easily automated as shown below.
+This however can be easily bypassed, simply by setting the variable we want to hide to nil in the global envrionment table. This process could be easily automated as shown below.
 
 ```lua
 local MY_VARIABLES <const> = {'Dopamine', 'Dopamine.openMenu'}
@@ -115,35 +118,31 @@ function hideVariables()
 end
 ```
 
-This also commonly accompanied with modification to all resource manifest files to include a reference to the variable check file (`client_script @anticheat/check.lua`). Although small an addition like this has potentional to prevent a resource from working properly, by adding/over-writing/removing an entry from the manifest file!
+This also comes with the downside of modifying all resource manifest files to include a reference to this check (`client_script @anticheat/check.lua`). Although a small addition it has the potentional to break certain resources and depending on the resources requirements can cause false positive.
 
 <b>Detect/Prevent connections with a VPN/Proxy</b>
 
-Valkyrie already purposefully skips over the IP addres of any player when saving identifiers. Why? IP's are generally not static and have the chance of changing at any point making them unreliable for long term identification. Certain circumstances may also require a user to use a proxy just to join the server! Lastly VPN's are massively promoted by online influencers and privacy advocates 
+1. Valkyrie already purposefully skips over the IP addres of any player when saving identifiers. Why? IP's are generally not static and have the chance of changing at any point making them unreliable for long term identification. 
 
-<b>Blocking CEF Dev Tools.</b>
+2. Most people using a proxy (including myself) don't have any bad intentions in mind and may just want to hide their network activity as an overall [strategy](https://www.ivpn.net/blog/why-you-dont-need-a-vpn/) to protect their online privacy. 
 
-FiveM uses CEF [(Chromium Embedded Framework)](https://bitbucket.org/chromiumembedded/cef/src/master/) an embedded version of Chrome allowing rendering of full-scale web pages in game. CEF like Chrome includes DevTools or 
+3. Certain circumstances may require the use of a proxy just to join your server! This can range from geographical restrictions to government censorship and without knowing the circumstances of all connecting players scrutinizing them for using a proxy doesn't seem fair.
 
+<b>Blocking NUI DevTools.</b>
 
-For one reason or another users have wanted access to these tools 
-For a while users have been wanting to block access to the Chrome developer tools commonly found by pressing F12 in your browser. 
+FiveM uses CEF [(Chromium Embedded Framework)](https://bitbucket.org/chromiumembedded/cef/src/master/) an embedded version of Chrome which "offers an asynchronous, performant way of creating in-game UI." CEF like Chrome comes with access to DevTools commonly found by pressing F12 or "Inspect Element" in your browser, for a while now users have been waiting to block access to these tools to protect their assets from getting "dumped" or to detect "malicious" individuals. But as is outlined in this [post](https://forum.cfx.re/t/stop-blocking-devtools-on-your-server-and-how-to-bypass-the-block/1979857/) it's rather easy to bypass.
 
-CEF like most modern browsers comes with access to developer tools giving information about loaded content in the "browser". For a while now users have been wanting to block access to these tools for one reason or another and while these reasons might be valid, bypassing this check is rather easy as is outlined in this [post](https://forum.cfx.re/t/stop-blocking-devtools-on-your-server-and-how-to-bypass-the-block/1979857/). Since this feature can be easily bypassed and I belive it goes against the nature of open source work it will not be added to this resource.
+<b>Optical character recognition (OCR)</b>
+
+You've probably seen this advertised by other Anti-cheats are their "AI" detection system but more than likely they're just using [tesseract](https://github.com/tesseract-ocr/tesseract).....   
 
 <b>Abnormal Key Detection</b>
-other programs like geforce now to record game use these keybinds
-the keybinds can simply be changed
-fivem chat can be moved with pg up/dwn 
-this is j dumb
 
-
-<b>OCR</b>
-You can just delete the element lol 
+Third party software for capturing gameplay for example Nvidia's ShadowPlay or SteelSeries Moments is very commonly used among players with the capture button(s) usually being assigned to what some server owners deem to be abnormal keys......
 
 ### Q. What is Entity Lockdown
 
-One of the many features offered by FiveM through state awareness mode aka OneSync, entity lockdown allows for the creation of objects, vehicles and peds solely by the server. This complete prevents events like mass spawning of entities however, you'll need to update all of your resources to support server side entity creation.
+One of the many features offered by FiveM through state awareness mode aka OneSync, entity lockdown allows for the creation of objects, vehicles and peds solely by the server. This completely prevents events like mass spawning of entities however, you'll need to update all of your resources to support server side entity creation. You can find more information on the FiveM [docs](https://docs.fivem.net/docs/scripting-reference/onesync/#entity-lockdown)
 
 ### Q. Dynamic Permission
 
@@ -151,7 +150,7 @@ Resource creators may have legitimate use cases for wanting to make a player inv
 
 ```lua
 RegisterNetEvent('server:hospital:inpatient', function(data)
-  if (exports["Valkyrie"]:addPermission(source, 'vac:godmode')) then
+  if exports["Valkyrie"]:addPermission(source, 'vac:godmode') then
     SetPlayerInvincible(source, true)
   end
 
@@ -159,16 +158,18 @@ RegisterNetEvent('server:hospital:inpatient', function(data)
 end)
 
 RegisterNetEvent('server:hospital:outpatient', function(data)
-  if (exports["Valkyrie"]:removePermission(source, 'vac:godmode')) then
-    SetPlayerInvincible(source, false)
+  -- Remove player enhancements before removing permission
+  SetPlayerInvincible(source, false)
+  
+  if exports["Valkyrie"]:removePermission(source, 'vac:godmode') then
+    -- Permission successfully removed 
   end
 
   -- event code
 end)
 ```
 ## Road Map 
-[]: Removal of client side code\
-[]: Switch to a more robust logging system\
+[]: Add Grafana Loki as the prefered logging system\
 []: Vulnerability scanner
 
 
