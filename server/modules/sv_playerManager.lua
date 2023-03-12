@@ -13,65 +13,51 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
--- PlayerCache | key: player source | value: VPlayer object
+local RESOURCE_NAME <const> = GetCurrentResourceName()
+
+-- PlayerCache | key: player source | value: VPlayer
 PlayerCache = VCache:new('number', 'table')
 
--- Extends VCache allows for retrival of a specific player object or the entire set of player objects
-setmetatable(PlayerCache, {
-  __index = VCache,
-  __call = function(self, netId)
-    if netId == -1 then
-      return self:getData()
-    end
-
-    return self:get(netId) or {}
-  end
-})
-
--- Re-initialize player data upon a module update
-local function initializePlayerCache()
-  PlayerCache:clear()
-
+function PlayerCache:initialize()
   local players = GetPlayers()
+
+  ---@diagnostic disable-next-line: undefined-field
+  table.clear(self.data)
 
   for i = 1, #players do
     local netId = tonumber(players[i])
 
-    PlayerCache:set(netId, VPlayer:create(netId))
+    self:set(netId, VPlayer:new(netId))
   end
 end
 
 -- Handle creation of new entries into the PlayerCache once the player transitions to joining
 AddEventHandler('playerJoining', function()
-  local netId = tonumber(source)
+  if IsPlayerAceAllowed(source, 'vac:ultraviolet') then
+    return
+  end
 
-  PlayerCache:set(netId, VPlayer:create(netId))
+  PlayerCache:set(source, VPlayer:new(source))
 end)
 
--- Handle deltion of PlayerCache entries upon player disconnect
+-- Handle deltion of PlayerCache entries upon player disconnection
 AddEventHandler('playerDropped', function()
-  local netId = tonumber(source)
+  if IsPlayerAceAllowed(source, 'vac:ultraviolet') then
+    return
+  end
 
-  PlayerCache:remove(netId)
+  PlayerCache:invalidate(source)
 end)
 
--- Virtual BanCache | key: Ban Id | value: Ban Data
-local BanCache = VCache:new('string', 'table')
+-- BanCache | key: Ban Id | value: Ban Data
+BanCache = VCache:new('string', 'table')
 
--- Overloaded VCache:remove which provides a reason for parameter for why the ban is being revoked
--- @param key | string | the ban Id to revoke
--- @param reason | string | the reason for the ban being revoked
-function BanCache:remove(key, reason)
-  log.info(('[CONNECT]: Removing Ban entry %s for %s'):format(key, reason or 'no reason specified'))
-  self.data[key] = nil
-end
-
--- Re-initialize the BanCache upon a module update
-local function initializeBanCache()
-  BanCache:clear()
-
+function BanCache:initialize()
   local handle = StartFindKvp('vac_ban_')
   local key
+
+  ---@diagnostic disable-next-line: undefined-field
+  table.clear(self.data)
 
   repeat
     key = FindKvp(handle)
@@ -84,74 +70,43 @@ local function initializeBanCache()
   EndFindKvp(handle)
 end
 
--- Check for expired bans this happens upon any player connection
-local function pruneBanCache()
-  local cache = BanCache:getData()
+function BanCache:prune()
+  local banData = self.data
 
-  for banId, data in pairs(cache) do
-    local expires = data.expires
-
-    if expires - os.time() <= 0 then
-      BanCache:remove(banId, 'ban expired')
+  for banId, data in pairs(banData) do
+    if data.expires - os.time() <= 0 then
+      self:invalidate(banId)
       DeleteResourceKvp(('vac_ban_%s'):format(banId))
     end
   end
 end
 
--- Used to check if the connecting players identifiers are in the BanCache
--- @param netId | number | player source
--- @return table | banned player data
-local function isPlayerBanned(netId)
-  pruneBanCache()
+-- Check if a connecting player is banned
+-- @param netId | string | player source
+-- @param deferrals | object | playerConnecting deferrals object
+-- @return bool | whether the player is banned
+function BanCache:isPlayerBanned(netId, deferrals)
+  self:prune()
 
-  local cache = BanCache:getData()
-  local playerIdentifiers = GetIdentifiers(netId)
+  local playerIdentifiers = GetPlayerIdentifiers(netId)
 
-  for _, data in pairs(cache) do
-    local identifiers = data.identifiers
-
+  for _, data in pairs(self.data) do
     for suffix, value in pairs(playerIdentifiers) do
-      if identifiers[suffix] == value then
-        return data
+      if data.identifiers[suffix] == value then
+        deferrals.done(('You have been banned from this server!\nBan ID: %s\nExpires: %s (UTC)\nReason: %s\nIf you feel this was done in error rech out to %s'):format(data.id, os.date('!%c', data.expires), data.reason, GetConvar('vac:internal:contact_link', '')))
+
+        return true
       end
     end
   end
 
-  return {}
+  return false
 end
 
--- Remove a cached ban entry if it were to be removed externally or via the unban command
-AddEventHandler('__vac_internel:banRevoked', function(banId, reason)
-  BanCache:remove(banId, reason)
-end)
+local checkUsernameInput = false
+local prohibitedUsernameInput = {}
 
--- Add a new cached ban entry
-AddEventHandler('__vac_internel:banIssued', function(banId, data, extended)
-  log.info(('[CONNECT]: %s has just been banned for: %s\nBan ID:%s\nThey will be unbanned on %s'):format(GetPlayerName(data.source), extended, data.id, os.date('%c', data.expires)))
-  BanCache:set(banId, data)
-end)
-
-local blockedUsernameInput = {}
-local function isUsernameBlocked(playerName)
-  local blockedInput = ''
-
-  if next(blockedUsernameInput) == nil then
-    return blockedInput
-  end
-
-  for i = 1, #blockedUsernameInput do
-    local input = blockedUsernameInput[i]:lower()
-
-    if playerName:find(input) then
-      blockedInput = blockedInput .. input .. '\n'
-    end
-  end
-
-  return blockedInput
-end
-
-local contactLink = GetConvar('vac:internal:contact_link', 'nobody')
-local function onPlayerConnecting(playerName, _, deferrals)
+AddEventHandler('playerConnecting', function(playerName, _, deferrals)
   local source = source
 
   deferrals.defer()
@@ -159,51 +114,51 @@ local function onPlayerConnecting(playerName, _, deferrals)
   -- Mandatory Wait!
   Wait(0)
 
-  deferrals.update(('Hello %s thanks for joining! Please wait while we check your username.'):format(playerName))
+  if checkUsernameInput then
+    deferrals.update(('Hello %s thanks for joining! Please wait while we check your username.'):format(playerName))
 
-  --Mandatory Wait!
-  Wait(0)
+    -- Mandatory Wait!
+    Wait(0)
 
-  local blockedUsernameData = isUsernameBlocked(playerName:lower())
+    -- normalize connecting players name for this scope only 
+    local playerName = playerName:lower()
 
-  if blockedUsernameData ~= '' then
-    deferrals.done(('Unable to connect to server\nYour username or part of it contains prohibited text.\nPlease remove the following text from your username and reconnect: %s'):format(blockedUsernameData))
+    for i = 1, #prohibitedUsernameInput do
+      local prohibitedInput = prohibitedUsernameInput[i]:lower()
+
+      if playerName:find(prohibitedInput) then
+        deferrals.done(('Unable to connect to server!\nYour username contains prohibited input %s. Please remove the prohibited input and reconnect.'):format(prohibitedInput))
+      end
+    end
   end
 
-  deferrals.update('Your username looks good! Please wait while we check if you\'re banned.')
-
-  local bannedPlayerdata = isPlayerBanned(source)
-
-  if next(bannedPlayerdata) ~= nil then
-    local banId = bannedPlayerdata.id
-    local expires = os.date('%c', bannedPlayerdata.expires)
-    local reason = bannedPlayerdata.reason
-
-    deferrals.done(('You have been banned from this server!\nBan ID: %s\nExpires: %s\nReason: %s\nIf you feel this was done in error rech out to %s'):format(banId, expires, reason, contactLink))
-  end
-
-  deferrals.done()
-end
-AddEventHandler('playerConnecting', onPlayerConnecting)
-
-local function onServerInitalize(module)
-  if (module ~= 'all' and module ~= 'connect') then
+  if BanCache:isPlayerBanned(source, deferrals) then
+    log.info(('Banned player %s has just attempted to connect'):format(playerName))
     return
   end
 
-  contactLink = GetConvar('vac:connect:contact_link', 'nobody')
+  deferrals.done()
+end)
 
-  CreateThread(initializePlayerCache)
-  CreateThread(initializeBanCache)
-
-  table.clear(blockedUsernameInput)
-
-  local _blockedUsernameInput = GetConvar('vac:connect:blocked_username_input', '[]')
-
-  if _blockedUsernameInput:find(']') then
-    blockedUsernameInput = json.decode(_blockedUsernameInput)
+AddEventHandler('__vac_internel:initialize', function(module)
+  if GetInvokingResource() ~= RESOURCE_NAME or module ~= 'all' and module ~= 'connect' then
+    return
   end
 
-  log.info(('[CONNECT]: Data synced | Username check: %s | Contact link: %s'):format(checkUsername, contactLink))
-end
-AddEventHandler('__vac_internel:initialize', onServerInitalize)
+  PlayerCache:initialize()
+  BanCache:initialize()
+
+  checkUsernameInput = GetConvarBool('vac:internal:check_username_input', false)
+
+  if checkUsernameInput then
+    table.clear(prohibitedUsernameInput)
+
+    local prohibitedInput = json.decode(GetConvar('vac:internal_prohibited_username_input', '{}'))
+
+    for i = 1, #prohibitedInput do
+      prohibitedUsernameInput[i] = prohibitedInput[i]
+    end
+  end
+
+  log.info(('[CONNECT]: Data synced | Username check: %s'):format(checkUsernameInput))
+end)
