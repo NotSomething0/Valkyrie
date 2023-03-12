@@ -14,11 +14,12 @@
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 local filteredEntities = {}
-local useEntityValidation = false
+local entityValidation = false
+
 AddEventHandler('entityCreating', function(handle)
   local modelHash = tonumber(GetEntityModel(handle))
 
-  if filteredEntities[modelHash] then
+  if entityValidation and filteredEntities[modelHash] then
     CancelEvent()
   end
 end)
@@ -28,21 +29,21 @@ AddEventHandler('__vac_internel:initialize', function(module)
     return
   end
 
-  useEntityValidation = GetConvarBool('vac:entity:validate_entities', false)
+  entityValidation = GetConvarBool('vac:entity:validate_entities', false)
 
   if GetConvar('sv_entityLockdown', 'inactive') ~= 'inactive' then
-    useEntityValidation = false
+    entityValidation = false
   end
 
-  ---@diagnostic disable-next-line: undefined-field
-  table.clear(filteredEntities)
-
   local blockedEntityCount = 0
-  if useEntityValidation then
+
+  if entityValidation then
     local models = GetConvar('vac:entity:blocked_models', '{}')
 
+    table.clear(filteredEntities)
+
     if not models:find('}') then
-      error()
+      error('Unable to parse \'vac:entity:blocked_models\' check for proper syntax')
     end
 
     models = json.decode(models)
@@ -57,5 +58,5 @@ AddEventHandler('__vac_internel:initialize', function(module)
     log.warn('[ENTITIES]: Your blocked entity count is rather large consider using sv_entityLockdown instead.')
   end
 
-  log.info(('[ENTITIES]: Data synced | Entity Validation: %s'):format(useEntityValidation and 'Enabled' or 'Disabled'))
+  log.info(('[ENTITIES]: Data synced | Entity Validation: %s'):format(entityValidation and 'Enabled' or 'Disabled'))
 end)
