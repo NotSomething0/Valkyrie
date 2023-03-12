@@ -1,4 +1,4 @@
--- Copyright (C) 2019 - 2022  NotSomething
+-- Copyright (C) 2019 - 2023  NotSomething
 
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -13,59 +13,49 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+local RESOURCE_NAME <const> = GetCurrentResourceName()
+
 VPlayer = {}
 
--- Create a new player object
+-- Creates and returns a new instance of VPlayer for the specified player
 -- @param netId | number | player source
--- @return table | player object
-function VPlayer:create(netId)
-  if netId < 1 or not GetPlayerEndpoint(netId) then
-    error(('Invalid server ID specified: %s'):format(netId))
+-- @return table | VPlayer
+function VPlayer:new(netId)
+  if not tonumber(netId) or tonumber(netId) < 1 or not GetPlayerEndpoint(netId) then
+    error(('Invalid player specified: %s'):format(netId))
   end
 
-  local player = {
+  local playerObject = {
     source = netId,
-    identifiers = GetIdentifiers(netId),
-    strikes = 0,
-    strikeInfo = {}
+    identifiers = GetPlayerIdentifiers(netId),
+    strikes = {},
+    explosions = {}
   }
 
-  setmetatable(player, self)
   self.__index = self
 
-  return player
+  return setmetatable(playerObject, self)
 end
 
-local UUID_TEMPLATE <const> = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
--- https://gist.github.com/jrus/3197011
--- @return string | UUID
-local function uuid()
-  return string.gsub(UUID_TEMPLATE, '[xy]', function(c)
-    local v = (c == 'x') and math.random(0, 0xf) or math.random(8, 0xb)
-    return string.format('%x', v)
-  end)
-end
+local BAN_KEY <const> = 'vac_ban_%s'
 
-local BAN_LENGTHS = {}
 -- @param duration | number | epoch timestamp to be added to os.time()
 -- @param reason | string | reason given to player as to why they've been banned
 -- @param extended | string | reason given to staff/console as to why this player was banned
-function VPlayer:ban(duration, reason, extended)
-  local banId = ('vac_ban_%s'):format(uuid())
-  local duration = BAN_LENGTHS[duration]
-
+function VPlayer:ban(duration, playerReason, staffReason)
+  local banId = BAN_KEY:format(UUID())
   if (not duration) then
     duration = 31536000
   end
 
   duration = (duration + os.time())
-  reason = reason or "No reason specified"
+  playerReason = playerReason or "No reason specified"
 
   local data = {
     id = banId,
     expires = duration,
     identifiers = self.identifiers,
-    reason = reason
+    reason = playerReason
   }
 
   SetResourceKvp(banId, json.encode(data))
@@ -75,44 +65,34 @@ function VPlayer:ban(duration, reason, extended)
     error(('Unable to create ban for player %s dumping ban data %s'):format(self.source, json.encode(data, {indent = true})))
   end
 
-  DropPlayer(self.source, ('You have been banned from this server!\nBanId: %s\nExpires: %s\nReason: %s'):format(banId, os.date('%c', duration), reason))
-  TriggerEvent('__vac_internel:banIssued', banId, data, extended)
+  DropPlayer(self.source, ('You have been banned from this server!\nBanId: %s\nExpires: %s\nReason: %s'):format(banId, os.date('%c', duration), playerReason))
+  TriggerEvent('__vac_internel:banIssued', banId, data, staffReason)
 end
 
 local strikeLimit = 5
+
+-- @param reason | string
 function VPlayer:strike(reason)
-  self.strikes += 1
-  self.strikeInfo[#self.strikeInfo + 1] = reason
+  self.strikes[#self.strikes + 1] = reason
 
   log.info(('[INTERNAL]: %s has just recieved a strike for %s'):format(GetPlayerName(self.source), reason))
 
-  if (self.strikes >= strikeLimit) then
-    local extendedReason = "Strike Information:\n"
-    local strikeData = self.strikeInfo
-
-    for i = 1, #strikeData do
-      extendedReason = extendedReason..('Strike #%s: %s'):format(i, strikeData[i])
+  if #self.strikes >= strikeLimit then
+    local staffReason = 'Strike Information: \n'
+    for i = 1, #self.strikes do
+      staffReason = staffReason..('Strike #%d: %s'):format(i, self.strikes[i])
     end
 
-    self:ban(-1, 'Recieved more than the allotted amount of strikes', extendedReason)
+    self:ban(0, 'Recieved more than the allotted amount of strikes', staffReason)
   end
 end
 
 AddEventHandler('__vac_internel:initialize', function(module)
-  if (module ~= 'all' and module ~= 'internal') then
+  if GetInvokingResource() ~= RESOURCE_NAME or module ~= 'all' and module ~= 'internal' then
     return
   end
 
-  -- TODO: Custom ban lengths
-  --banLength = GetConvarInt('vac:internal:banLength', 31536000)
   strikeLimit = GetConvarInt('vac:internal:strikeLimit', 5)
 
   log.info(('[INTERNAL]: Data synced | Ban Length: %s | Strike Limit %d'):format('12 months', strikeLimit))
-
-  local players = GetPlayers()
-
-  for i = 1, #players do
-    local player = tonumber(players[i])
-    VPlayer:create(player)
-  end
 end)
