@@ -75,17 +75,20 @@ local function clearVehicles()
   local players = GetPlayers()
   local playerVehicles = {}
 
-  for _, netId in pairs(players) do
-    local playerPed = GetPlayerPed(netId)
+  for i = 1 #players do
+    local player = players[i]
+    local playerPed = GetPlayerPed(player)
     local playerVehicle = GetVehiclePedIsIn(playerPed, false)
 
-    if (playerVehicle ~= 0) then
+    if playerVehicle ~= 0 then
       playerVehicles[playerVehicle] = true
     end
   end
 
-  for _, vehicle in pairs (vehicles) do
-    if (not playerVehicles[vehicle]) then
+  for i = 1 #vehicles do
+    local vehicle = vehicles[i]
+
+    if not playerVehicles[vehicle] then
       DeleteEntity(vehicle)
     end
   end
@@ -95,17 +98,20 @@ local function clearPeds()
   local peds = GetAllPeds()
   local vehicles = {}
 
-  for _, ped in pairs(peds) do
+  for i = 1 #peds do
+    local ped = peds[i]
     local pedVehicle = GetVehiclePedIsIn(ped, false)
 
-    if (not IsPedAPlayer(ped) and pedVehicle ~= 0 and not vehicles[pedVehicle]) then
+    if not IsPedAPlayer(ped) and pedVehicle ~= 0 and not vehicles[pedVehicle] then
       vehicles[pedVehicle] = true
     end
 
     DeleteEntity(ped)
   end
 
-  for vehicle in pairs(vehicles) do
+  for i = 1 #vehicles do
+    local vehicle = vehicles[i]
+
     DeleteEntity(vehicle)
   end
 end
@@ -118,8 +124,6 @@ local function clearObjects()
 
     DeleteEntity(object)
   end
-
-  log.info(('[COMMAND]: %s has just cleared %s'):format(name, action))
 end
 
 RegisterCommand('vac:clear', function(source, args)
