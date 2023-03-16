@@ -28,7 +28,7 @@ AddEventHandler('onResourceStart', function(resourceName)
       latestVersion = json.decode(data)[1].name
     end
 
-    if latestVersion ~= CURRENT_VERSION then
+    if CURRENT_VERSION ~= latestVersion then
       log.info(('This version of Valkyrie is outdated! Please update as soon as possible!\n Latest Version: %s | Current Version: %s^7'):format(latestVersion, CURRENT_VERSION))
     end
   end)
@@ -45,6 +45,7 @@ local function checkForInvincibility()
       goto continue
     end
 
+    -- We need GetEntityProofs and SetEntityHealth server side before we can do any meaningful checks
     if GetPlayerInvincible(netId) then
       player:strike('Positive result from GetPlayerInvincible')
     end
@@ -91,12 +92,12 @@ CreateThread(function()
 end)
 
 AddEventHandler('__vac_internel:initialize', function(module)
-  if GetInvokingResource() ~= RESOURCE_NAME and module ~= 'all' and module ~= 'main' then
+  if GetInvokingResource() ~= RESOURCE_NAME or module ~= 'all' and module ~= 'main' then
     return
   end
 
-  invincibilityCheck = GetConvarBool('vac:main:god_mode', false)
-  superJumpCheck = GetConvarBool('vac:main:super_jump', false)
+  invincibilityCheck = GetConvarBool('vac:main:god_mode_check', false)
+  superJumpCheck = GetConvarBool('vac:main:super_jump_check', false)
 
   log.info(('[MAIN]: Data synced | Invincibility Check: %s | Super Jump Check: %s'):format(invincibilityCheck, superJumpCheck))
 end)
