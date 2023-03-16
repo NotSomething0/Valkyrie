@@ -38,13 +38,8 @@ LOG_LEVEL {
 | --------------- | ------- | ----------- | --------- |
 | vac:internal:contact_link | "" | Set the contact link or string for banned players to appeal or contact administration | string |
 | vac:internal:log_level | 1 | Sets the level of detail for server logs | `LOG_LEVEL` number |
-| vac:main:super_jump | false | Checks all players uisng IS_PLAYER_USING_SUPER_JUMP unless the "vac:superjump" permission has been granted | bool |
-| vac:main:god_mode | false | Checks all players using GET_PLAYER_INVINCIBLE unless the "vac:invincibility" permission has been granted | bool |
-
-### Connection settings
-|      ConVar     | Default | Description | Parameter |
-| --------------- | ------- | ----------- | --------- |
-| vac:connect:contact_link | "" | A  
+| vac:main:super_jump_check | false | Checks all players uisng IS_PLAYER_USING_SUPER_JUMP unless the "vac:superjump" permission has been granted | bool |
+| vac:main:god_mode_check | false | Checks all players using GET_PLAYER_INVINCIBLE unless the "vac:invincibility" permission has been granted | bool |
 
 ### Entity Creation settings
 Best Practice 📈: It is recommed to use entity lockdown (sv_entityLockdown) and your own server side creation logic for better protection. A future implementation of Valkyrie may include a rudimentary example that can be used as a guide for server owners/developers.
@@ -54,22 +49,30 @@ Best Practice 📈: It is recommed to use entity lockdown (sv_entityLockdown) an
 | vac:entity:validate_entities | false | Perform entity validation via the entityCreating event | bool |
 | vac:entity:blocked_models | [] | List of model names to parse through | array |
 
-
+### Particle creation
 
 |      ConVar     | Default | Description | Parameter(s) |
 | --------------- | ------- | ----------- | ---------- |
-| vac:connect:filterUsername | false | Whether to check for blocked text on connecting players username | bool |
-| vac:connect:filterUsernameText | [] | Text to check for on connecting players username | list |
-| vac:chat:filterMessages | false | Wether to filter incoming chat messages via a list of blocked text | bool |
-| vac:chat:rlimitChat | true | Wether to rate limit incoming chat messages (spam prevention) | bool |
-| vac:chat:rlReset | 30 | Time in seconds to prevent the same message from being sent | int |
-| vac:cmd:requestPermission | true | Allow players to request permission for specific | bool |
-| vac::ptfx:allowedFx| [] | Particle effects allowed to be used on the server | list |
+| vac:ptfx:prohibit_particles | false | Enable particle filtration | bool |
+| vac:ptfx:prohibited_particles | { assetName": [], "effectName": []} | | List of PTFX asset & effect names to prohibit | JSON Object |
+
+If my understanding is correct the assetName is the parent "directory" (for lack of a better term) for the effectName so prohibiting the assetName will completely block any effects from that directory. This needs more testing..... 
+
+### Connection options
+
+|      ConVar     | Default | Description | Parameter(s) |
+| --------------- | ------- | ----------- | ---------- |
+| vac:connect:check_username_content | false | Should Valkyrie check username for prohibited content | bool |
+| vac:connect:prohibited_username_content | [] | List of strings to check for in a connecting players username | list |
+
+### Command options
+
+|      ConVar     | Default | Description | Parameter(s) |
+| --------------- | ------- | ----------- | ---------- |
+| vac:cmd:requestPermission | true | Allow players to request permission for a specific bypass | bool |
 
 ## Permissions
-Notes: 
-  - These settings can be updated during runtime using the `vac:sync` command or by restarting the resource.
-  - Valkyrie will attempt to remove as many permissions as possible however currently only those with Ace's assigned directly to their identifier can be removed.
+Note 🗒️: These settings can be updated during runtime using the `vac:sync` command or by restarting the resource.
 
 ## Access Control Entries
 
@@ -122,7 +125,7 @@ This also comes with the downside of modifying all resource manifest files to in
 
 <b>Detect/Prevent connections with a VPN/Proxy</b>
 
-1. Valkyrie already purposefully skips over the IP addres of any player when saving identifiers. Why? IP's are generally not static and have the chance of changing at any point making them unreliable for long term identification. 
+1. Valkyrie already purposefully skips over the IP addres of any player when saving identifiers. IP's are generally not static and have the chance of changing at any point making them unreliable for long term identification. 
 
 2. Most people using a proxy (including myself) don't have any bad intentions in mind and may just want to hide their network activity as an overall [strategy](https://www.ivpn.net/blog/why-you-dont-need-a-vpn/) to protect their online privacy. 
 
