@@ -96,8 +96,8 @@ AddEventHandler('__vac_internel:initialize', function(module)
     return
   end
 
-  invincibilityCheck = GetConvarBool('vac:main:god_mode_check', false)
-  superJumpCheck = GetConvarBool('vac:main:super_jump_check', false)
+  invincibilityCheck = GetConvar('vac:main:god_mode_check', 'false') == true and true or false
+  superJumpCheck = GetConvar('vac:main:super_jump_check', 'false') == true and true or false
 
   log.info(('[MAIN]: Data synced | Invincibility Check: %s | Super Jump Check: %s'):format(invincibilityCheck, superJumpCheck))
 end)

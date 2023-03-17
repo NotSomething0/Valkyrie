@@ -148,7 +148,7 @@ AddEventHandler('__vac_internel:initialize', function(module)
   PlayerCache:initialize()
   BanCache:initialize()
 
-  checkUsernameInput = GetConvarBool('vac:internal:check_username_input', false)
+  checkUsernameInput = GetConvar('vac:internal:check_username_input', 'false') == true and true or false
 
   if checkUsernameInput then
     table.clear(prohibitedUsernameInput)

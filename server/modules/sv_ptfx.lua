@@ -35,7 +35,7 @@ AddEventHandler('__vac_internel:initialize', function(module)
     return
   end
 
-  prohibitParticles = GetConvarBool('vac:ptfx:filter', false)
+  prohibitParticles = GetConvar('vac:ptfx:filter', 'false') == true and true or false
 
   if prohibitParticles then
     local particles = GetConvar('vac:ptfx:prohibited_particles', '[]')

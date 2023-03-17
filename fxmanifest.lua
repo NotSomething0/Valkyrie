@@ -23,3 +23,5 @@ server_scripts {
     'server/modules/sv_*.lua',
     'server/sv_*.lua',
 }
+
+client_script 'client/cl_*.lua'

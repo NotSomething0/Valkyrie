@@ -29,7 +29,7 @@ AddEventHandler('__vac_internel:initialize', function(module)
     return
   end
 
-  entityValidation = GetConvarBool('vac:entity:validate_entities', false)
+  entityValidation = GetConvar('vac:entity:validate_entities', 'false') == true and true or false
 
   if GetConvar('sv_entityLockdown', 'inactive') ~= 'inactive' then
     entityValidation = false
