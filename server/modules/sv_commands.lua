@@ -75,7 +75,7 @@ local function clearVehicles()
   local players = GetPlayers()
   local playerVehicles = {}
 
-  for i = 1 #players do
+  for i = 1, #players do
     local player = players[i]
     local playerPed = GetPlayerPed(player)
     local playerVehicle = GetVehiclePedIsIn(playerPed, false)
@@ -85,7 +85,7 @@ local function clearVehicles()
     end
   end
 
-  for i = 1 #vehicles do
+  for i = 1, #vehicles do
     local vehicle = vehicles[i]
 
     if not playerVehicles[vehicle] then
@@ -98,7 +98,7 @@ local function clearPeds()
   local peds = GetAllPeds()
   local vehicles = {}
 
-  for i = 1 #peds do
+  for i = 1, #peds do
     local ped = peds[i]
     local pedVehicle = GetVehiclePedIsIn(ped, false)
 
@@ -109,7 +109,7 @@ local function clearPeds()
     DeleteEntity(ped)
   end
 
-  for i = 1 #vehicles do
+  for i = 1, #vehicles do
     local vehicle = vehicles[i]
 
     DeleteEntity(vehicle)
@@ -178,8 +178,6 @@ RegisterCommand('vac:request', function(source, args)
 
   for netId in pairs(PlayerCache()) do
     if IsPlayerAceAllowed(netId, 'vac:admin') then
-      -- TODO: Tell admins they have a new permission request
-      -- %s(%s) has requested the permission %s, please approve or deny this request.
       AddMessage(netId, ('%s(%s) has just requested permission for %s, please approve or deny this request.'):format(GetPlayerName(source), source))
     end
   end
