@@ -1,4 +1,4 @@
--- Copyright (C) 2019 - 2022  NotSomething
+-- Copyright (C) 2019 - 2023  NotSomething
 
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -13,13 +13,13 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-local IS_SERVER <const> = IsDuplicityVersion()
+local _GetPlayerIdentifiers <const> = GetPlayerIdentifiers
 
-local _GetPlayerIdentifiers = GetPlayerIdentifiers
+-- Overridden GetPlayerIdentifiers implementation exlcuding IP's and including tokens
 -- @param netId | string | player source
--- @return table | player identifiers and tokens
+-- @return table | all player identifiers and tokens
 function GetPlayerIdentifiers(netId)
-  if not IS_SERVER or netId < 1 or not GetPlayerEndpoint(netId) then
+  if netId < 1 or not GetPlayerEndpoint(netId) then
     return {}
   end
 
@@ -55,15 +55,12 @@ function GetPlayerIdentifiers(netId)
 end
 
 -- https://github.com/jaymo1011/hackban/blob/master/convars.lua
+-- Utility function instead of doing ternary statements  
 -- @param varName | string | ConVar key to retrive data from
 -- @param default | bool | Default value to return if the ConVar isn't specified
 -- @return | bool | Value of the ConVar
 function GetConvarBool(varName, default)
   local value = GetConvar(varName, '__nil__')
-
-  if value == '__nil__' then
-    return default
-  end
 
   if value == 'true' then
     return true
@@ -73,12 +70,14 @@ function GetConvarBool(varName, default)
     return false
   end
 
-  return false
+  return default
 end
 
--- 
+-- Utility function instead of checking if the message needs to be sent to the console or client
+-- @param target | string | whom to send the message to
+-- @param message | string | message content  
 function AddMessage(target, message)
-  if target == 0 then
+  if target == '0' then
     print(message)
     return
   end
@@ -90,6 +89,7 @@ function AddMessage(target, message)
 end
 
 -- https://gist.github.com/jrus/3197011
+-- Generate and return a pseudorandom UUID
 -- @return string | UUID
 function UUID()
   return string.gsub('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx', '[xy]', function(c)
