@@ -36,23 +36,18 @@ AddEventHandler('onResourceStart', function(resourceName)
   TriggerEvent('__vac_internel:initialize', 'all')
 end)
 
-local invincibilityCheck = false
 local function checkForInvincibility()
   local players = PlayerCache()
 
   for netId, player in pairs(players) do
-    if not IsPlayerAceAllowed(netId, 'vac:invincible') then
-      goto continue
-    end
-
     -- We need GetEntityProofs and SetEntityHealth server side before we can do any meaningful checks
-    if GetPlayerInvincible(netId) then
-      player:strike('Positive result from GetPlayerInvincible')
+    if not IsPlayerAceAllowed(netId, 'vac:invincible') and GetPlayerInvincible(netId) then
+      player:punish('playerUsingInvincibility', 'Positive result from GetPlayerInvincible')
     end
-
-    ::continue::
   end
 end
+
+local invincibilityCheck = false
 
 CreateThread(function()
   while true do
@@ -68,19 +63,14 @@ local function checkForSuperJump()
   local players = PlayerCache()
 
   for netId, player in pairs(players) do
-    if IsPlayerAceAllowed(netId, 'vac:superJump') then
-      goto continue
+    if not IsPlayerAceAllowed(netId, 'vac:superJump') and IsPlayerUsingSuperJump(netId) then
+      player:punish('playerUsingSuperJump', 'Positive result from IsPlayerUsingSuperJump')
     end
-
-    if IsPlayerUsingSuperJump(netId) then
-      player:strike('Positive result from IsPlayerUsingSuperJump')
-    end
-
-    ::continue::
   end
 end
 
 local superJumpCheck = false
+
 CreateThread(function()
   while true do
     Wait(1000)
