@@ -14,6 +14,7 @@
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 local RESOURCE_NAME <const> = GetCurrentResourceName()
+local BAN_KEY <const> = 'vac_ban_%s'
 
 VPlayer = {}
 
@@ -27,6 +28,7 @@ function VPlayer:new(netId)
 
   local playerObject = {
     source = netId,
+    banInProgress = false,
     identifiers = GetPlayerIdentifiers(netId),
     strikes = {},
     explosions = {}
@@ -37,36 +39,24 @@ function VPlayer:new(netId)
   return setmetatable(playerObject, self)
 end
 
-local BAN_KEY <const> = 'vac_ban_%s'
+local punishmentNameToType = {}
 
--- @param duration | number | epoch timestamp to be added to os.time()
--- @param reason | string | reason given to player as to why they've been banned
--- @param extended | string | reason given to staff/console as to why this player was banned
-function VPlayer:ban(duration, playerReason, staffReason)
-  local banId = BAN_KEY:format(UUID())
-  if (not duration) then
-    duration = 31536000
+function VPlayer:punish(punishmentName, punishmentReason, staffReason)
+  local punishmentType = punishmentNameToType[punishmentName]
+
+  if punishmentType == 'strike' then
+    self:strike(punishmentReason)
   end
 
-  duration = (duration + os.time())
-  playerReason = playerReason or "No reason specified"
-
-  local data = {
-    id = banId,
-    expires = duration,
-    identifiers = self.identifiers,
-    reason = playerReason
-  }
-
-  SetResourceKvp(banId, json.encode(data))
-
-  if not GetResourceKvpString(banId) then
-    DropPlayer(self.source, 'Goodbye')
-    error(('Unable to create ban for player %s dumping ban data %s'):format(self.source, json.encode(data, {indent = true})))
+  if punishmentType == 'kick' then
+    -- TODO: Add a kick function
   end
 
-  DropPlayer(self.source, ('You have been banned from this server!\nBanId: %s\nExpires: %s\nReason: %s'):format(banId, os.date('%c', duration), playerReason))
-  TriggerEvent('__vac_internel:banIssued', banId, data, staffReason)
+  if tonumber(punishmentType) then
+    local duration = tonumber(punishmentType)
+
+    self:ban(duration, punishmentReason, staffReason)
+  end
 end
 
 local strikeLimit = 5
@@ -77,7 +67,7 @@ function VPlayer:strike(reason)
 
   log.info(('[INTERNAL]: %s has just recieved a strike for %s'):format(GetPlayerName(self.source), reason))
 
-  if #self.strikes >= strikeLimit then
+  if #self.strikes >= strikeLimit and not self.banInProgress then
     local staffReason = 'Strike Information: \n'
     for i = 1, #self.strikes do
       staffReason = staffReason..('Strike #%d: %s'):format(i, self.strikes[i])
@@ -87,6 +77,45 @@ function VPlayer:strike(reason)
   end
 end
 
+-- This needs a rewrite we shouldn't store the entire json object in one entry
+-- @param duration | number | epoch timestamp to be added to os.time()
+-- @param reason | string | reason given to player as to why they've been banned
+-- @param extended | string | reason given to staff/console as to why this player was banned
+function VPlayer:ban(duration, playerReason, staffReason)
+  local banId <const> = BAN_KEY:format(UUID())
+
+  self.banInProgress = true
+
+  local playerIdentifiers = self.identifiers
+  local playerBanReason = playerReason or 'No reason specified'
+  local playerBanExpires = duration
+  local staffBanReason = staffReason or 'No reason specified'
+
+  if type(playerBanExpires) ~= 'number' or playerBanExpires < 86400 then
+    playerBanExpires = 86400 + os.time()
+  else
+    playerBanExpires = playerBanExpires + os.time()
+  end
+
+  local playerBanData = {
+    id = banId,
+    expires = playerBanExpires,
+    identifiers = playerIdentifiers,
+    reason = playerBanReason
+  }
+
+  SetResourceKvp(banId, json.encode(playerBanData))
+
+  if not GetResourceKvpString(banId) then
+    log.info(('Unable to create ban for %s dropping player with reason \'Goodbye\''):format(GetPlayerName(self.source)))
+    DropPlayer(self.source, 'Goodbye')
+    return
+  end
+
+  log.info(('%s has just been banned from the server for %s. Their ban will expire on %s'):format(GetPlayerName(self.source), staffBanReason, os.date('!%c', playerBanExpires)))
+  DropPlayer(self.source, ('You have been banned from this server!\nBanId: %s\nExpires: %s\nReason: %s'):format(banId, os.date('!%c', duration), playerBanReason))
+end
+
 AddEventHandler('__vac_internel:initialize', function(module)
   if GetInvokingResource() ~= RESOURCE_NAME or module ~= 'all' and module ~= 'internal' then
     return
@@ -94,5 +123,5 @@ AddEventHandler('__vac_internel:initialize', function(module)
 
   strikeLimit = GetConvarInt('vac:internal:strikeLimit', 5)
 
-  log.info(('[INTERNAL]: Data synced | Ban Length: %s | Strike Limit %d'):format('12 months', strikeLimit))
+  log.info(('[INTERNAL]: Data synced | Strike Limit %d'):format(strikeLimit))
 end)
