@@ -14,183 +14,6 @@
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 local RESOURCE_NAME <const> = GetCurrentResourceName()
-local WEAPON_HASH_TO_NAME <const> = {
-  [3415619887] = 'WEAPON_REVOLVER_MK2',
-  [961495388] = 'WEAPON_ASSAULTRIFLE_MK2',
-  [1737195953] = 'WEAPON_NIGHTSTICK',
-  [126349499] = 'WEAPON_SNOWBALL',
-  [2144528907] = 'VEHICLE_WEAPON_TURRET_TECHNICAL',
-  [1785463520] = 'WEAPON_MARKSMANRIFLE_MK2',
-  [1834887169] = 'WEAPON_BIRD_CRAP',
-  [3204302209] = 'WEAPON_VEHICLE_ROCKET',
-  [1161062353] = 'WEAPON_COYOTE',
-  [1198256469] = 'WEAPON_RAYCARBINE',
-  [600439132] = 'WEAPON_BALL',
-  [1186503822] = 'VEHICLE_WEAPON_PLAYER_BUZZARD',
-  [487013001] = 'WEAPON_PUMPSHOTGUN',
-  [324506233] = 'WEAPON_AIRSTRIKE_ROCKET',
-  [1317494643] = 'WEAPON_HAMMER',
-  [4256881901] = 'WEAPON_DIGISCANNER',
-  [2024373456] = 'WEAPON_SMG_MK2',
-  [3056410471] = 'WEAPON_RAYMINIGUN',
-  [1627465347] = 'WEAPON_GUSENBERG',
-  [1686798800] = 'WEAPON_ARENA_HOMING_MISSILE',
-  [341774354] = 'WEAPON_HELI_CRASH',
-  [1205296881] = 'WEAPON_PIG',
-  [2227010557] = 'WEAPON_CROWBAR',
-  [1097917585] = 'VEHICLE_WEAPON_NOSE_TURRET_VALKYRIE',
-  [317205821] = 'WEAPON_AUTOSHOTGUN',
-  [2132975508] = 'WEAPON_BULLPUPRIFLE',
-  [3231910285] = 'WEAPON_SPECIALCARBINE',
-  [3452007600] = 'WEAPON_FALL',
-  [3638508604] = 'WEAPON_KNUCKLE',
-  [2741846334] = 'WEAPON_RUN_OVER_BY_CAR',
-  [966099553] = 'OBJECT',
-  [324215364] = 'WEAPON_MICROSMG',
-  [3800181289] = 'VEHICLE_WEAPON_PLAYER_LAZER',
-  [741814745] = 'WEAPON_STICKYBOMB',
-  [4159824478] = 'WEAPON_ACIDPACKAGE',
-  [2138347493] = 'WEAPON_FIREWORK',
-  [465894841] = 'WEAPON_PISTOLXM3',
-  [3494679629] = 'WEAPON_HANDCUFFS',
-  [736523883] = 'WEAPON_SMG',
-  [4106648222] = 'WEAPON_DEER',
-  [2636060646] = 'WEAPON_MILITARYRIFLE',
-  [2640438543] = 'WEAPON_BULLPUPSHOTGUN',
-  [3800352039] = 'WEAPON_ASSAULTSHOTGUN',
-  [2484171525] = 'WEAPON_POOLCUE',
-  [3523564046] = 'WEAPON_HEAVYPISTOL',
-  [3473446624] = 'VEHICLE_WEAPON_PLANE_ROCKET',
-  [1233104067] = 'WEAPON_FLARE',
-  [2694266206] = 'WEAPON_BZGAS',
-  [889061222] = 'WEAPON_ARENA_MACHINE_GUN',
-  [2793925639] = 'WEAPON_RABBIT',
-  [883325847] = 'WEAPON_PETROLCAN',
-  [3218215474] = 'WEAPON_SNSPISTOL',
-  [1638077257] = 'VEHICLE_WEAPON_PLAYER_SAVAGE',
-  [4171469727] = 'VEHICLE_WEAPON_SPACE_ROCKET',
-  [2526821735] = 'WEAPON_SPECIALCARBINE_MK2',
-  [4284007675] = 'WEAPON_DROWNING',
-  [3126027122] = 'WEAPON_HAZARDCAN',
-  [2508868239] = 'WEAPON_BAT',
-  [1119849093] = 'WEAPON_MINIGUN',
-  [2343591895] = 'WEAPON_FLASHLIGHT',
-  [3146768957] = 'WEAPON_SMALL_DOG',
-  [584646201] = 'WEAPON_APPISTOL',
-  [727643628] = 'WEAPON_CERAMICPISTOL',
-  [910830060] = 'WEAPON_EXHAUSTION',
-  [4026335563] = 'VEHICLE_WEAPON_PLAYER_LASER',
-  [177293209] = 'WEAPON_HEAVYSNIPER_MK2',
-  [2971687502] = 'VEHICLE_WEAPON_ROTORS',
-  [4024951519] = 'WEAPON_ASSAULTSMG',
-  [3425972830] = 'WEAPON_HIT_BY_WATER_CANNON',
-  [2725352035] = 'WEAPON_UNARMED',
-  [2578778090] = 'WEAPON_KNIFE',
-  [3959029566] = 'VEHICLE_WEAPON_CANNON_BLAZER',
-  [3220176749] = 'WEAPON_ASSAULTRIFLE',
-  [2144741730] = 'WEAPON_COMBATMG',
-  [4272043364] = 'WEAPON_RAILGUNXM3',
-  [1945616459] = 'VEHICLE_WEAPON_TANK',
-  [1259576109] = 'VEHICLE_WEAPON_PLAYER_BULLET',
-  [2294779575] = 'WEAPON_BRIEFCASE',
-  [3450622333] = 'VEHICLE_WEAPON_SEARCHLIGHT',
-  [2460120199] = 'WEAPON_DAGGER',
-  [3854032506] = 'WEAPON_ANIMAL_RETRIEVER',
-  [2548703416] = 'WEAPON_DOUBLEACTION',
-  [2017895192] = 'WEAPON_SAWNOFFSHOTGUN',
-  [375527679] = 'WEAPON_PASSENGER_ROCKET',
-  [133987706] = 'WEAPON_RAMMED_BY_CAR',
-  [2339582971] = 'WEAPON_BLEEDING',
-  [2982836145] = 'WEAPON_RPG',
-  [615608432] = 'WEAPON_MOLOTOV',
-  [984333226] = 'WEAPON_HEAVYSHOTGUN',
-  [205991906] = 'WEAPON_HEAVYSNIPER',
-  [3799318422] = 'WEAPON_CAT',
-  [4222310262] = 'GADGET_PARACHUTE',
-  [453432689] = 'WEAPON_PISTOL',
-  [2578377531] = 'WEAPON_PISTOL50',
-  [2756787765] = 'VEHICLE_WEAPON_TURRET_VALKYRIE',
-  [3249783761] = 'WEAPON_REVOLVER',
-  [125959754] = 'WEAPON_COMPACTLAUNCHER',
-  [3441901897] = 'WEAPON_BATTLEAXE',
-  [100416529] = 'WEAPON_SNIPERRIFLE',
-  [1593441988] = 'WEAPON_COMBATPISTOL',
-  [539292904] = 'WEAPON_EXPLOSION',
-  [2210333304] = 'WEAPON_CARBINERIFLE',
-  [1171102963] = 'WEAPON_STUNGUN_MP',
-  [3676729658] = 'WEAPON_EMPLAUNCHER',
-  [738733437] = 'WEAPON_AIR_DEFENCE_GUN',
-  [1936677264] = 'WEAPON_DROWNING_IN_VEHICLE',
-  [1853742572] = 'WEAPON_PRECISIONRIFLE',
-  [3520460075] = 'WEAPON_TACTICALRIFLE',
-  [4256991824] = 'WEAPON_SMOKEGRENADE',
-  [3684886537] = 'WEAPON_METALDETECTOR',
-  [940833800] = 'WEAPON_STONE_HATCHET',
-  [28811031] = 'WEAPON_BRIEFCASE_02',
-  [3219281620] = 'WEAPON_PISTOL_MK2',
-  [3696079510] = 'WEAPON_MARKSMANPISTOL',
-  [4208062921] = 'WEAPON_CARBINERIFLE_MK2',
-  [171789620] = 'WEAPON_COMBATPDW',
-  [3125143736] = 'WEAPON_PIPEBOMB',
-  [2669318622] = 'VEHICLE_WEAPON_PLAYER_HUNTER',
-  [4194021054] = 'WEAPON_ANIMAL',
-  [2634544996] = 'WEAPON_MG',
-  [2874559379] = 'WEAPON_PROXMINE',
-  [3750660587] = 'WEAPON_FIRE',
-  [4191993645] = 'WEAPON_HATCHET',
-  [1752584910] = 'WEAPON_STINGER',
-  [84788907] = 'VEHICLE_WEAPON_RUINER_ROCKET',
-  [50118905] = 'VEHICLE_WEAPON_RUINER_BULLET',
-  [3041872152] = 'VEHICLE_WEAPON_TURRET_BOXVILLE',
-  [3342088282] = 'WEAPON_MARKSMANRIFLE',
-  [1141786504] = 'WEAPON_GOLFCLUB',
-  [729375873] = 'VEHICLE_WEAPON_TURRET_LIMO',
-  [1649403952] = 'WEAPON_COMPACTRIFLE',
-  [3675956304] = 'WEAPON_MACHINEPISTOL',
-  [3713923289] = 'WEAPON_MACHETE',
-  [4019527611] = 'WEAPON_DBSHOTGUN',
-  [3686625920] = 'WEAPON_COMBATMG_MK2',
-  [2441047180] = 'WEAPON_NAVYREVOLVER',
-  [148160082] = 'WEAPON_COUGAR',
-  [1155224728] = 'VEHICLE_WEAPON_TURRET_INSURGENT',
-  [1305664598] = 'WEAPON_GRENADELAUNCHER_SMOKE',
-  [1198879012] = 'WEAPON_FLAREGUN',
-  [3794977420] = 'WEAPON_GARBAGEBAG',
-  [1470379660] = 'WEAPON_GADGETPISTOL',
-  [2228681469] = 'WEAPON_BULLPUPRIFLE_MK2',
-  [94989220] = 'WEAPON_COMBATSHOTGUN',
-  [856002082] = 'WEAPON_REMOTESNIPER',
-  [743550225] = 'WEAPON_TIGER_SHARK',
-  [1223143800] = 'WEAPON_BARBED_WIRE',
-  [849905853] = 'WEAPON_TRANQUILIZER',
-  [3756226112] = 'WEAPON_SWITCHBLADE',
-  [101631238] = 'WEAPON_FIREEXTINGUISHER',
-  [1834241177] = 'WEAPON_RAILGUN',
-  [911657153] = 'WEAPON_STUNGUN',
-  [419712736] = 'WEAPON_WRENCH',
-  [2828843422] = 'WEAPON_MUSKET',
-  [2481070269] = 'WEAPON_GRENADE',
-  [1672152130] = 'WEAPON_HOMINGLAUNCHER',
-  [2939590305] = 'WEAPON_RAYPISTOL',
-  [1432025498] = 'WEAPON_PUMPSHOTGUN_MK2',
-  [2285322324] = 'WEAPON_SNSPISTOL_MK2',
-  [2803906140] = 'GADGET_NIGHTVISION',
-  [2461879995] = 'WEAPON_ELECTRIC_FENCE',
-  [1703483498] = 'WEAPON_CANDYCANE',
-  [3030980043] = 'WEAPON_HAMMERHEAD_SHARK',
-  [1566990507] = 'VEHICLE_WEAPON_ENEMY_LASER',
-  [955837630] = 'WEAPON_HEN',
-  [861723357] = 'WEAPON_BOAR',
-  [4198358245] = 'WEAPON_KILLER_WHALE',
-  [94548753] = 'WEAPON_COW',
-  [4192643659] = 'WEAPON_BOTTLE',
-  [3347935668] = 'WEAPON_HEAVYRIFLE',
-  [3530961278] = 'VEHICLE_WEAPON_RADAR',
-  [137902532] = 'WEAPON_VINTAGEPISTOL',
-  [2726580491] = 'WEAPON_GRENADELAUNCHER',
-  [2937143193] = 'WEAPON_ADVANCEDRIFLE',
-  [3173288789] = 'WEAPON_MINISMG',
-}
 local EXPLOSION_TAG_TO_NAME <const> = {
   [0] = 'DONTCARE',
   [1] = 'GRENADE',
@@ -279,6 +102,40 @@ local EXPLOSION_TAG_TO_NAME <const> = {
   [84] = 'EMPLAUNCHER_EMP'
 }
 
+local protectedExplosiveZones = {}
+
+local function initializeProtectedZones()
+  local protectedZones, _, errMsg = json.decode(GetConvar('vac:explosion:protected_zones', '{}'))
+
+  if not protectedZones or errMsg then
+    error(('An error occured while trying to parse protected explosive zones. Unable to parse from json to Lua object (%s), please check your configuration and try again.'):format(errMsg))
+  end
+
+  for i = 1, #protectedZones do
+    local zoneCoords = protectedZones[i].coords
+    local zoneRadius = protectedZones[i].radius
+
+    if not zoneCoords or not zoneRadius then
+      error(('An error occured while trying to parse protected explosive zones. Zone %d# Coords %s Radius %s is not valid, please check your configuration and try again.'):format(i, zoneCoords, zoneRadius))
+    end
+
+    -- from one table to another table, redundency at its finest
+    protectedExplosiveZones[i] = { coords = vector3(zoneCoords.x, zoneCoords.y, zoneCoords.z), radius = zoneRadius}
+  end
+end
+
+local function isExplosionInProtectedZone(explosionCoords)
+  for i = 1, #protectedExplosiveZones do
+    local protectedZone = protectedExplosiveZones[i]
+
+    if #(protectedZone.coords - explosionCoords) <= protectedZone.radius then
+      return true
+    end
+  end
+
+  return false
+end
+
 AddEventHandler('explosionEvent', function(sender, data)
   data.weaponHash = data.f164
   data.f164 = nil
@@ -307,7 +164,7 @@ AddEventHandler('explosionEvent', function(sender, data)
   local maybeOwnerPed
   local maybeOwnerCoords
 
-  if data.ownerNetId >= 1 then
+  if data.ownerNetId > 0 then
     maybeOwnerPed = GetPlayerPed(data.ownerNetId)
     maybeOwnerCoords = GetEntityCoords(maybeOwnerPed)
   end
@@ -335,22 +192,13 @@ AddEventHandler('explosionEvent', function(sender, data)
   local explosionOffset
 
   if data.vehicleNetworkId then
+    -- explosionOffset is never used again this is just here for a helpful visual
     explosionOffset = explosionCoords
-    explosionCoords = GetEntityCoords(data.vehicleNetworkId) + explosionCoords
+    explosionCoords = GetEntityCoords(data.vehicleNetworkId) + explosionOffset
+  end
 
-    local explodedVehicleModel = GetEntityModel(data.vehicleNetworkId)
-
-    local senderPreviousVehicle = GetVehiclePedIsIn(senderPed, true)
-    local maybeOwnerPreviousVehicle = maybeOwnerPed and GetVehiclePedIsIn(maybeOwnerPed, true)
-
-    if senderPreviousVehicle ~= data.vehicleNetworkId then
-
-    end
-
-    if maybeOwnerPreviousVehicle ~= data.vehicleNetworkId then
-
-    end
-
+  if isExplosionInProtectedZone(explosionCoords) then
+    CancelEvent()
   end
 end)
 
@@ -359,5 +207,5 @@ AddEventHandler('__vac_internal:initialize', function(module)
     return
   end
 
-
+  initializeProtectedZones()
 end)
