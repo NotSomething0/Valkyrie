@@ -16,10 +16,31 @@
 local RESOURCE_NAME <const> = GetCurrentResourceName()
 
 local chatFilterEnabled = false
-local chatFilterData = {}
+local chatFilterData = {
+  prohibited_text = {},
+  censored_text = {}
+}
 
 local function initializeFilterData()
   local filterData, _, errMsg = json.decode(GetConvar('vac:chat:filter_data', '{}'))
+
+  local censoredText = filterData['censored_text']
+  local prohibitedText = filterData['prohibited_text']
+
+  table.clear(chatFilterData.prohibited_text)
+  table.clear(chatFilterData.censored_text)
+
+  for i = 1, #censoredText do
+    local text = censoredText[i]
+
+    chatFilterData.censored_text[i] = text:lower()
+  end
+
+  for i = 1, #prohibitedText do
+    local text = prohibitedText[i]
+
+    chatFilterData.prohibited_text[i] = text:lower()
+  end
 end
 
 local function doesMessageContainProhibitedText(message)
@@ -44,7 +65,7 @@ local function doesMessageContainCensoredText(message)
   local censoredText = chatFilterData['censored_text']
 
   for i = 1, #censoredText do
-    local text = censoredText[i]:lower()
+    local text = censoredText[i]
 
     if message:find(text) then
       return true
@@ -76,15 +97,16 @@ exports.chat:registerMessageHook(function(source, out, hook)
 
     for i = 1, #chatFilterData['censored_text'] do
       local text = chatFilterData['censored_text'][i]:lower()
+      local textCensored = ("#"):rep(text:len())
       local idx, sfx
 
       repeat
         idx, sfx = _pendingMessage:find(text)
 
         if idx and sfx then
-          pendingMessage = pendingMessage:sub(1, idx - 1)..("#"):rep(idx+sfx)..pendingMessage:sub(sfx + 1)
+          pendingMessage = pendingMessage:sub(1, idx - 1)..textCensored..pendingMessage:sub(sfx + 1)
           -- Update the compare string
-          _pendingMessage = _pendingMessage:sub(1, idx - 1)..("#"):rep(idx+sfx).._pendingMessage:sub(sfx + 1)
+          _pendingMessage = _pendingMessage:sub(1, idx - 1)..textCensored.._pendingMessage:sub(sfx + 1)
         end
 
       until not _pendingMessage:find(text)
@@ -103,6 +125,10 @@ AddEventHandler('__vac_internel:initialize', function(module)
   end
 
   chatFilterEnabled = GetConvarBool('vac:chat:enable_filter', false)
+
+  if chatFilterEnabled then
+    initializeFilterData()
+  end
 
   log.info(('[CHAT]: Data synced | Chat filter: %s'):format(chatFilterEnabled == true and 'Enabled' or 'Disabled'))
 end)
