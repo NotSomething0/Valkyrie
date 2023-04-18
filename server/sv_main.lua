@@ -33,7 +33,7 @@ AddEventHandler('onResourceStart', function(resourceName)
     end
   end)
 
-  TriggerEvent('__vac_internel:initialize', 'all')
+  TriggerEvent('__vac_internal:initialize', 'all')
 end)
 
 local function checkForInvincibility()
@@ -81,7 +81,7 @@ CreateThread(function()
   end
 end)
 
-AddEventHandler('__vac_internel:initialize', function(module)
+AddEventHandler('__vac_internal:initialize', function(module)
   if GetInvokingResource() ~= RESOURCE_NAME or module ~= 'all' and module ~= 'main' then
     return
   end
