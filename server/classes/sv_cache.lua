@@ -18,8 +18,8 @@
 ---@field valueLock string 'any' or a type to prevent any values not of that type from being created
 ---@field data table cache storage
 VCache = {
-    keyLock = 'any',
-    valueLock = 'any',
+    keyLock = '',
+    valueLock = '',
     data = {}
 }
 
@@ -27,11 +27,10 @@ VCache = {
 ---@param keyLock string|nil a type to do internal type checking on or any to skip type checking
 ---@param valueLock string|nil a type to do internal type checking on or any to skip type checking
 function VCache:new(keyLock, valueLock)
-    local cache = {
-        keyLock = keyLock or 'any',
-        valueLock = valueLock or 'any',
-        data = {}
-    }
+    local cacheObject = {}
+
+    self.keyLock = keyLock or 'any'
+    self.valueLock = valueLock or 'any'
 
     self.__index = self
     self.__call = function(self, key)
@@ -42,7 +41,7 @@ function VCache:new(keyLock, valueLock)
         return self:get(key)
     end
 
-    return setmetatable(cache, self)
+    return setmetatable(cacheObject, self)
 end
 
 ---Sets a key value in the data store
