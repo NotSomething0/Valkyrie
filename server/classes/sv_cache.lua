@@ -13,11 +13,19 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-VCache = {}
+---@class VCache
+---@field keyLock string 'any' or a type to prevent any keys not of that type from being created
+---@field valueLock string 'any' or a type to prevent any values not of that type from being created
+---@field data table cache storage
+VCache = {
+    keyLock = 'any',
+    valueLock = 'any',
+    data = {}
+}
 
--- Create a new cache object
--- @param keyLock | string | a type to do internal type checking on or any to skip type checking
--- @param valueLock | string | a type to do internal type checking on or any to skip type checking
+---Create a new cache object
+---@param keyLock string|nil a type to do internal type checking on or any to skip type checking
+---@param valueLock string|nil a type to do internal type checking on or any to skip type checking
 function VCache:new(keyLock, valueLock)
     local cache = {
         keyLock = keyLock or 'any',
@@ -37,9 +45,9 @@ function VCache:new(keyLock, valueLock)
     return setmetatable(cache, self)
 end
 
--- Set a key/value in the data store
--- @param key | any | key to set data for
--- @param vcalue | any | value for the key
+---Sets a key value in the data store
+---@param key any key to set data for
+---@param value any value for the key
 function VCache:set(key, value)
     local keyLock = self.keyLock
     local valueLock = self.valueLock
@@ -55,9 +63,9 @@ function VCache:set(key, value)
     rawset(self.data, key, value)
 end
 
--- Get the value of a key in the data store
--- @param key | any | key to get the value of
--- @return any | value of the key
+---Get the value of a key in the data store
+---@param key any key to get the value of
+---@return any value of the key
 function VCache:get(key)
     local keyLock = self.keyLock
 
@@ -68,8 +76,8 @@ function VCache:get(key)
     return rawget(self.data, key)
 end
 
--- Set the value of the key in the data store to nil
--- @param key | any | the key to remove from the cache
+---Set the value of the key in the data store to nil
+---@param key any the key to remove from the cache
 function VCache:invalidate(key)
     local keyLock = self.keyLock
 
