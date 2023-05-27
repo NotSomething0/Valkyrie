@@ -18,8 +18,13 @@ dependencies {
 }
 
 server_scripts {
-    'server/util/sv_*.lua',
-    'server/classes/sv_*.lua',
+    'util/sv_*.lua',
+
+    -- ensure load order
+    'server/classes/sv_cache.lua',
+    'server/classes/sv_player.lua',
+    'server/classes/sv_banManager.lua',
+
     'server/modules/sv_*.lua',
     'server/sv_*.lua',
 }

@@ -23,14 +23,11 @@ VCache = {
     data = {}
 }
 
----Create a new cache object
+---Creates and returns a new VCache object
 ---@param keyLock string|nil a type to do internal type checking on or any to skip type checking
 ---@param valueLock string|nil a type to do internal type checking on or any to skip type checking
 function VCache:new(keyLock, valueLock)
     local cacheObject = {}
-
-    self.keyLock = keyLock or 'any'
-    self.valueLock = valueLock or 'any'
 
     self.__index = self
     self.__call = function(self, key)
@@ -40,6 +37,9 @@ function VCache:new(keyLock, valueLock)
 
         return self:get(key)
     end
+
+    self.keyLock = keyLock or 'any'
+    self.valueLock = valueLock or 'any'
 
     return setmetatable(cacheObject, self)
 end
@@ -77,7 +77,7 @@ end
 
 ---Set the value of the key in the data store to nil
 ---@param key any the key to remove from the cache
-function VCache:invalidate(key)
+function VCache:delete(key)
     local keyLock = self.keyLock
 
     if keyLock ~= 'any' and type(key) ~= keyLock then
