@@ -1,4 +1,4 @@
--- Copyright (C) 2019 - 2022  NotSomething
+-- Copyright (C) 2019 - 2023  NotSomething
 
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -17,55 +17,33 @@ local RESOURCE_NAME <const> = GetCurrentResourceName()
 
 local chatFilterEnabled = false
 local chatFilterData = {
-  prohibited_text = {},
-  censored_text = {}
+  censoredText = {},
+  prohibitedText = {},
 }
 
-local function initializeFilterData()
-  local filterData, _, errMsg = json.decode(GetConvar('vac:chat:filter_data', '{}'))
+local function censorMessage(message)
+  local censoredText = chatFilterData['censoredText']
 
-  local censoredText = filterData['censored_text']
-  local prohibitedText = filterData['prohibited_text']
-
-  table.clear(chatFilterData.prohibited_text)
-  table.clear(chatFilterData.censored_text)
-
-  for i = 1, #censoredText do
-    local text = censoredText[i]
-
-    chatFilterData.censored_text[i] = text:lower()
-  end
-
-  for i = 1, #prohibitedText do
-    local text = prohibitedText[i]
-
-    chatFilterData.prohibited_text[i] = text:lower()
-  end
-end
-
-local function doesMessageContainProhibitedText(message)
-  message = message:lower()
-
-  local prohibitedText = chatFilterData['prohibited_text']
-
-  for i = 1, #prohibitedText do
-    local text = prohibitedText[i]
+  for index = 1, #censoredText do
+    local text = censoredText[index]
+    local textLength = text:len()
+    local textCensored = ("#"):rep(textLength)
 
     if message:find(text) then
-      return true
+      message = message:gsub(text, textCensored)
     end
   end
 
-  return false
+  return message
 end
 
-local function doesMessageContainCensoredText(message)
+local function doesMessageContainProhibitedText(message)
+  local prohibitedText = chatFilterData['prohibitedText']
+
   message = message:lower()
 
-  local censoredText = chatFilterData['censored_text']
-
-  for i = 1, #censoredText do
-    local text = censoredText[i]
+  for i = 1, #prohibitedText do
+    local text = prohibitedText[i]:lower()
 
     if message:find(text) then
       return true
@@ -80,55 +58,61 @@ exports.chat:registerMessageHook(function(source, out, hook)
     return
   end
 
-  if tonumber(source) < 1 or IsPlayerAceAllowed(source, 'vac:chat') then
+  local author = out.args[1]
+  local message = out.args[2]
+
+  if not author then
     return
   end
 
-  local authorName = out.args[1]
-  local pendingMessage = out.args[2]
+  if IsPlayerAceAllowed(source, 'vac.chat') then
+    return
+  end
 
-  if doesMessageContainProhibitedText(pendingMessage) then
+  local censoredMessage = censorMessage(message)
+
+  if message ~= censoredMessage then
+    message = censoredMessage
+
+    hook.updateMessage({
+      args = {
+        author,
+        message
+      }
+    })
+  end
+
+  if doesMessageContainProhibitedText(message) then
     hook.cancel()
     return
   end
-
-  if doesMessageContainCensoredText(pendingMessage) then
-    local _pendingMessage = pendingMessage:lower()
-
-    for i = 1, #chatFilterData['censored_text'] do
-      local text = chatFilterData['censored_text'][i]:lower()
-      local textCensored = ("#"):rep(text:len())
-      local idx, sfx
-
-      repeat
-        idx, sfx = _pendingMessage:find(text)
-
-        if idx and sfx then
-          pendingMessage = pendingMessage:sub(1, idx - 1)..textCensored..pendingMessage:sub(sfx + 1)
-          -- Update the compare string
-          _pendingMessage = _pendingMessage:sub(1, idx - 1)..textCensored.._pendingMessage:sub(sfx + 1)
-        end
-
-      until not _pendingMessage:find(text)
-    end
-
-    hook.updateMessage({args = {
-      authorName,
-      pendingMessage
-    }})
-  end
 end)
 
-AddEventHandler('__vac_internel:initialize', function(module)
+AddEventHandler('vac:internal:sync', function(module)
   if GetInvokingResource() ~= RESOURCE_NAME or module ~= 'all' and module ~= 'chat' then
     return
   end
 
-  chatFilterEnabled = GetConvarBool('vac:chat:enable_filter', false)
+---@diagnostic disable-next-line: undefined-field
+  table.clear(chatFilterData.prohibitedText)
+---@diagnostic disable-next-line: undefined-field
+  table.clear(chatFilterData.censoredText)
 
-  if chatFilterEnabled then
-    initializeFilterData()
+  chatFilterEnabled = GetConvarBool('vac:chat:filter', false)
+
+  if not chatFilterEnabled then
+    log.info('[CHAT]: Data synced | Filter: Disabled')
+    return
   end
 
-  log.info(('[CHAT]: Data synced | Chat filter: %s'):format(chatFilterEnabled == true and 'Enabled' or 'Disabled'))
+  local filterData, _, errMsg = json.decode(GetConvar('vac:chat:filterData', '{}'))
+
+  if not filterData or errMsg then
+    error(('An error occured while trying to parse vac:chat:filterData %s. Please check your configuration and execute vac:sync'):format(errMsg))
+  end
+
+  chatFilterData.censoredText = filterData.censoredText
+  chatFilterData.prohibitedText = filterData.prohibitedText
+
+  log.info('[CHAT]: Data synced | Filter: enabled')
 end)
