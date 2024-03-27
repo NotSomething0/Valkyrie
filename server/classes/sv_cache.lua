@@ -13,76 +13,119 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
----@class VCache
----@field keyLock string 'any' or a type to prevent any keys not of that type from being created
----@field valueLock string 'any' or a type to prevent any values not of that type from being created
----@field data table cache storage
-VCache = {
-    keyLock = '',
-    valueLock = '',
-    data = {}
+---Tables with type checking!
+---@class CCache
+---@field private m__keyLock string|table Lua type or metatable to lock the key in the cache to
+---@field private m__valueLock string|table Lua type or metatable to lock the key in the cache to
+---@field private m__className string Name of the class only used for internal purposes
+---@field m_data table Isolated cache storage to prevent method scope poisoning
+CCache = {
+    m__keyLock = '',
+    m__valueLock = '',
+    m__className = 'CCache',
+    m_data = {}
 }
-
----Creates and returns a new VCache object
----@param keyLock string|nil a type to do internal type checking on or any to skip type checking
----@param valueLock string|nil a type to do internal type checking on or any to skip type checking
-function VCache:new(keyLock, valueLock)
-    local cacheObject = {}
-
-    self.__index = self
-    self.__call = function(self, key)
-        if not key then
-            return self.data
-        end
-
-        return self:get(key)
+CCache.__index = CCache
+CCache.__call = function(self, key)
+    if not key then
+        return self.m_data
     end
 
-    self.keyLock = keyLock or 'any'
-    self.valueLock = valueLock or 'any'
+    return self:get(key)
+end
 
-    return setmetatable(cacheObject, self)
+---Creates a new instance of CCache
+---@param keyLock string
+---@param valueLock string|table
+---@return CCache
+function CCache.new(keyLock, valueLock)
+    local cache = setmetatable({}, CCache)
+
+    cache.m__keyLock = keyLock or 'any'
+    cache.m__valueLock = valueLock or 'any'
+
+    return cache
+end
+
+---Get the currently set keyLock
+---@return string|table
+function CCache:getKeyLock()
+    return self.m__keyLock
+end
+
+---Get the currently set valueLock
+---@return string|table
+function CCache:getValueLock()
+    return self.m__valueLock
+end
+
+function CCache:checkKey(key)
+    local keyLock = self:getKeyLock()
+
+    if keyLock == 'any' then
+        return
+    end
+
+    if type(keyLock) == 'table' then
+        local keyMetaTable = getmetatable(key)
+
+        if not keyMetaTable or keyMetaTable ~= keyLock then
+            error(('Invalid type for key, expected instance of %s got %s'):format(keyLock.getClassName(), keyMetaTable.getClassName()))
+        end
+    end
+
+    local keyType = type(key)
+
+    if keyType ~= keyLock then
+        error(('Invalid type for key, expected %s got %s'):format(keyLock, keyType))
+    end
+end
+
+function CCache:checkValue(value)
+    local valueLock = self:getValueLock()
+
+    if valueLock == 'any' then
+        return
+    end
+
+    if type(valueLock) == 'table' then
+        local valueMetaTable = getmetatable(value)
+
+        if not valueMetaTable or valueMetaTable ~= valueLock then
+            error(('Invalid type for key, expected instance of %s got %s'):format(valueLock.getClassName(), valueMetaTable.getClassName()))
+        end
+    end
+
+    local valueType = type(value)
+
+    if valueType ~= valueLock then
+        error(('Invalid type for key, expected %s got %s'):format(valueLock, valueType))
+    end
 end
 
 ---Sets a key value in the data store
 ---@param key any key to set data for
 ---@param value any value for the key
-function VCache:set(key, value)
-    local keyLock = self.keyLock
-    local valueLock = self.valueLock
+function CCache:set(key, value)
+    self:checkKey(key)
+    self:checkValue(value)
 
-    if keyLock ~= 'any' and type(key) ~= keyLock then
-        error(('Invalid type for key, expected %s got %s')):format(keyLock, type(key))
-    end
-
-    if valueLock ~= 'any' and type(value) ~= valueLock then
-        error(('Invalid type for value, expected %s got %s'):format(valueLock, type(value)))
-    end
-
-    rawset(self.data, key, value)
+    rawset(self.m_data, key, value)
 end
 
 ---Get the value of a key in the data store
 ---@param key any key to get the value of
 ---@return any value of the key
-function VCache:get(key)
-    local keyLock = self.keyLock
+function CCache:get(key)
+    self:checkKey(key)
 
-    if keyLock ~= 'any' and type(key) ~= keyLock then
-        error(('Invalid type for key, expected %s got %s'):format(keyLock, type(key)))
-    end
-
-    return rawget(self.data, key)
+    return rawget(self.m_data, key)
 end
 
 ---Set the value of the key in the data store to nil
 ---@param key any the key to remove from the cache
-function VCache:delete(key)
-    local keyLock = self.keyLock
+function CCache:delete(key)
+    self:checkKey(key)
 
-    if keyLock ~= 'any' and type(key) ~= keyLock then
-        error(('Invalid type for key, expected %s got %s')):format(keyLock, type(key))
-    end
-
-    rawset(self.data, key, nil)
+    rawset(self.m_data, key, nil)
 end
