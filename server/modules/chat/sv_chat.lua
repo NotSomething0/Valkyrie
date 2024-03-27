@@ -15,8 +15,8 @@
 
 local RESOURCE_NAME <const> = GetCurrentResourceName()
 
-local chatFilterEnabled = false
 local chatFilterData = {
+  enabled = false,
   censoredText = {},
   prohibitedText = {},
 }
@@ -54,16 +54,12 @@ local function doesMessageContainProhibitedText(message)
 end
 
 exports.chat:registerMessageHook(function(source, out, hook)
-  if not chatFilterEnabled then
+  if not chatFilterData.enabled then
     return
   end
 
   local author = out.args[1]
   local message = out.args[2]
-
-  if not author then
-    return
-  end
 
   if IsPlayerAceAllowed(source, 'vac.chat') then
     return
@@ -93,26 +89,28 @@ AddEventHandler('vac:internal:sync', function(module)
     return
   end
 
----@diagnostic disable-next-line: undefined-field
-  table.clear(chatFilterData.prohibitedText)
----@diagnostic disable-next-line: undefined-field
-  table.clear(chatFilterData.censoredText)
+  chatFilterData.enabled = GetConvarBool('vac:chat:filter', false)
 
-  chatFilterEnabled = GetConvarBool('vac:chat:filter', false)
-
-  if not chatFilterEnabled then
-    log.info('[CHAT]: Data synced | Filter: Disabled')
+  if not chatFilterData.enabled then
+    logger:info('[CHAT]: Data synced | Filter: Disabled')
     return
   end
 
-  local filterData, _, errMsg = json.decode(GetConvar('vac:chat:filterData', '{}'))
+  local filterData = json.decode(GetConvar('vac:chat:filterData', '{}'))
 
-  if not filterData or errMsg then
-    error(('An error occured while trying to parse vac:chat:filterData %s. Please check your configuration and execute vac:sync'):format(errMsg))
+  if not filterData then
+    logger:error('Unable to parse vac:chat:filterData, please check your configuration and execute vac:sync.')
+  end
+
+  if #chatFilterData.censoredText >= 1 or #chatFilterData.prohibitedText >= 1 then
+    ---@diagnostic disable-next-line: undefined-field
+    table.clear(chatFilterData.censoredText)
+    ---@diagnostic disable-next-line: undefined-field
+    table.clear(chatFilterData.prohibitedText)
   end
 
   chatFilterData.censoredText = filterData.censoredText
   chatFilterData.prohibitedText = filterData.prohibitedText
 
-  log.info('[CHAT]: Data synced | Filter: enabled')
+  logger:info(('[CHAT]: Data synced | Filter: Enabled, %d Censored pattern(s), %d Prohibited pattern(s)'):format(#chatFilterData.censoredText, #chatFilterData.prohibitedText))
 end)
