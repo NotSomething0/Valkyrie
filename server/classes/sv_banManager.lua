@@ -1,4 +1,4 @@
--- Copyright (C) 2019 - 2023  NotSomething
+-- Copyright (C) 2019 - 2024  NotSomething
 
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -13,180 +13,297 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-local BAN_KEY <const> = 'vac_ban_%s'
+local CURRENT_RESOURCE_NAME <const> = GetCurrentResourceName()
+local BAN_PREFIX <const> = 'vac_ban_%s'
+local BAN_EXPIRES_PREFIX <const> = 'vac_ban_%s_expires'
+local BAN_IDENTIFIER_PREFIX <const> = 'vac_ban_%s_identifier_%'
+local BAN_TOKEN_PREFIX <const> = 'vac_ban_%s_token_%'
 local MINIMUM_BAN_TIME <const> = 86400
 
----@class BanManager: VCache
----@field ready boolean Is the BanManager ready to use
-BanManager = VCache:new('string', 'table')
-
----Prevents the creation of another instance of the BanManager
-function BanManager:new()
-    error('Cannot create another instance of BanManager')
-end
-
----Checks if the BanManager is ready.
----@return boolean ready Returns true if the BanManager is ready; otherwise, false.
-function BanManager:isReady()
-    return self.ready
-end
-
----Initializes the BanManager by retrieving bans from the database and storing them in memory
-function BanManager:initialize()
-    local kvpHandle = StartFindKvp(BAN_KEY)
-
-    self.ready = false
-
-    if kvpHandle == -1 then
-        self.ready = true
-        return
-    end
-
-    local kvpKey
-
-    repeat
-        kvpKey = FindKvp(kvpHandle)
-
-        if kvpKey then
-            self:set(kvpKey, {
-                reason = GetResourceKvpString(kvpKey),
-                expires = GetResourceKvpString(kvpKey..'_expires'),
-                identifiers = json.decode(GetResourceKvpString(kvpKey..'_identifiers')),
-                tokens = json.decode(GetResourceKvpString(kvpKey..'_tokens'))
-            })
-        end
-    until not kvpKey
-
-    EndFindKvp(kvpHandle)
-    self.ready = true
-end
+---@class CBanManager
+---@field m_logger CLogger
+---@field m_bans CCache
+CBanManager = {}
+CBanManager.__index = CBanManager
 
 ---Generates a random UUIDv4 string.
 ---@return string uuid The generated UUID string.
----@nodiscard
 local function uuid()
----@diagnostic disable-next-line: redundant-return-value
+    ---@diagnostic disable-next-line: redundant-return-value
     return string.gsub('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx', '[xy]', function(c)
         local v = (c == 'x') and math.random(0, 0xf) or math.random(8, 0xb)
         return string.format('%x', v)
     end)
 end
 
----@param reason string The reason for this ban
----@param expires number? The expiration timestamp of the ban in seconds since the epoch
----@param identifiers table A list of player identifiers associated with this ban.
----@param tokens table A list of player tokens associated with this ban.
-function BanManager:addBan(reason, expires, identifiers, tokens)
-    expires = ((expires >= MINIMUM_BAN_TIME and expires) or MINIMUM_BAN_TIME) + os.time()
+---Create a new instance of CBanManager
+---@param logger CLogger
+---@return CBanManager banManager
+function CBanManager.new(logger)
+    local banManager = setmetatable({
+        m_logger = logger,
+        m_bans = CCache.new('string', 'table'),
+    }, CBanManager)
 
-    if not identifiers or type(identifiers) ~= 'table' or not next(identifiers) then
-        error('Invalid argument at index #3: \'identifiers\' must be a non-empty table')
-    end
+    AddEventHandler('vac:internal:revokeBan', function(banId, reason)
+        if GetInvokingResource() ~= CURRENT_RESOURCE_NAME then
+            return
+        end
 
+        banManager:revokeBan(banId, reason)
+    end)
 
-    if not tokens or type(tokens) ~= 'table' or not next(tokens) then
-        error('Invalid argument at index #4: \'tokens\' must be a non-empty table')
-    end
+    banManager:cacheBanList()
 
-    local banId
-
-    repeat banId = BAN_KEY:format(uuid()) until not self.data[banId]
-
-    SetResourceKvp(banId, reason)
-    SetResourceKvpInt(banId..'_expires', expires)
-    SetResourceKvp(banId..'_identifiers', json.encode(identifiers))
-    SetResourceKvp(banId..'_tokens', json.encode(tokens))
-
-    return banId, expires
+    return banManager
 end
 
-function BanManager:removeBan(banId, reason)
-    reason = reason or 'No reason specified'
+---Caches the ban list in memory for faster iteration
+function CBanManager:cacheBanList()
+    local kvpHandle = StartFindKvp(BAN_PREFIX:format(''))
+    local kvpKey
 
-    if not self.data[banId] then
-        return false
+    repeat
+        kvpKey = FindKvp(kvpHandle)
+
+        if kvpKey and not kvpKey:find('_expires') and not kvpKey:find('_identifier') and not kvpKey:find('_token')  then
+            local banId = kvpKey:gsub(BAN_PREFIX, '')
+
+            self.m_bans:set(banId, {
+                reason = GetResourceKvpString(BAN_PREFIX:format(banId)),
+                expires = GetResourceKvpInt(BAN_EXPIRES_PREFIX:format(banId)),
+                identifiers = self:getStoredBannedIdentifiers(BAN_IDENTIFIER_PREFIX:format(banId, '')),
+                tokens = self:getStoredBannedTokens(BAN_TOKEN_PREFIX:format(banId, ''))
+            })
+        end
+    until not kvpKey
+
+    EndFindKvp(kvpHandle)
+end
+
+---Adds a new ban to the cache and database
+---@param banId string
+---@param data table
+function CBanManager:addBan(banId, data)
+    if self.m_bans:get(banId) then
+        self.m_logger:error(('CBanManager:addBan: BanId %s already exists cannot add new ban.'):format(banId))
+        return
+    end
+
+    SetResourceKvp(banId, data.reason)
+    SetResourceKvpInt(banId..'_expires', data.expires)
+
+    for identifierType, identifier in pairs(data.identifiers) do
+        SetResourceKvp(BAN_IDENTIFIER_PREFIX:format(banId)..identifierType, identifier)
+    end
+
+    for tokenType, token in pairs(data.tokens) do
+        SetResourceKvp(BAN_TOKEN_PREFIX:format(banId)..tokenType, token)
+    end
+
+    self.m_bans:set(banId, data)
+end
+
+---Revokes the specified banId with an optional reason
+---@param banId string
+---@param reason string?
+function CBanManager:revokeBan(banId, reason)
+    if type(banId) ~= 'string' or not self.m_bans:get(banId) then
+        self.m_logger:warn(('CBanManager:revokeBan: Invalid banId specified \'%s\' does not exist.'):format(banId))
+        return
+    end
+
+    if type(reason) ~= 'string' then
+        reason = 'No reason specified'
     end
 
     DeleteResourceKvp(banId)
     DeleteResourceKvp(banId..'_expires')
     DeleteResourceKvp(banId..'_identifiers')
     DeleteResourceKvp(banId..'_tokens')
+    self.m_bans:delete(banId)
 
-    return true
+    self.m_logger:info(('CBanManager:revokeBan: Revoked banId %s. Reason %s'):format(banId, reason))
 end
 
---- Edits the identifier value of a ban.
----@param banId string The formatted ban ID (vac_ban_xxxx).
----@param identifierType string The suffix of the identifier token to edit.
----@param identifierValue string The new value of the identifier token.
----@return boolean success True if the identifier was successfully edited; otherwise, false.
-function BanManager:editBanIdentifier(banId, identifierType, identifierValue)
-    if not self.data[banId] then
-        return false
+---Gets stored banned identifiers for the specified banId
+---@param identifiersPrefix string
+---@return table?
+function CBanManager:getStoredBannedIdentifiers(identifiersPrefix)
+    local bannedIdentifiers = {}
+
+    if not GetResourceKvpString(identifiersPrefix) then
+        self.m_logger:warn(('CBanManager:getStoredBannedIdentifiers: Unable to get stored identifiers for banId %s as it does not exist.'):format(identifiersPrefix))
+        return
     end
 
-    self.data[banId].tokens[identifierType] = identifierValue
-    SetResourceKvp(banId..'_identifiers', json.ecode(self.data[banId].identifiers))
+    local kvpHandlePrefix = identifiersPrefix
+    local kvpHandle = StartFindKvp(kvpHandlePrefix)
+    local kvpKey
+    repeat
+        kvpKey = FindKvp(kvpHandle)
 
-    return true
-end
+        if kvpKey then
+            local identifierType = kvpKey:gsub(kvpHandlePrefix, '')
 
----@param banId string Formatted banId vac_ban_xxxx
----@param tokenNum string Suffix of the token you want to edit
----@param tokenValue string New value of the token you want to edit
-function BanManager:editBanToken(banId, tokenNum, tokenValue)
-    if not self.data[banId] then
-        return false
-    end
-
-    self.data[banId].tokens[tokenNum] = tokenValue
-    SetResourceKvp(banId..'_tokens', json.ecode(self.data[banId].tokens))
-
-    return true
-end
-
-function BanManager:editBanReason(banId, reason)
-    if not self.data[banId] then
-        return false
-    end
-
-    self.data[banId].reason = reason
-    SetResourceKvp(banId..'_tokens', json.ecode(self.data[banId].tokens))
-
-    return true
-end
-
----Checks if a player is banned
----@param player VPlayer The player to check for a ban
----@return boolean banned True if the player is banned; otherwise, false
----@return table? banData The ban data associated with the player, or nil if not banned
-function BanManager:isPlayerBanned(player)
-    local playerIdentifiers
-    local playerTokens
-
-    if getmetatable(player) ~= VPlayer then
-        error('Invalid argument at index #1 not a valid VPlayer instance')
-    end
-
-    playerIdentifiers = player.identifiers
-    playerTokens = player.tokens
-
-    for _, banData in pairs(self.data) do
-        local bannedIdentifiers = banData.identifiers
-        local bannedTokens = banData.tokens
-
-        for identifierPrefix, identifierValue in pairs(bannedIdentifiers) do
-            if playerIdentifiers[identifierPrefix] == identifierValue then
-                return true, banData
-            end
+            bannedIdentifiers[identifierType] = GetResourceKvpString(kvpKey)
         end
 
-        for tokenNum, tokenValue in pairs(bannedTokens) do
-            if playerTokens[tokenNum] == tokenValue then
-                return true, banData
+    until not kvpKey
+
+    return bannedIdentifiers
+end
+
+---Gets stored banned tokens for the specified banId
+---@param tokensPrefix string
+---@return table?
+function CBanManager:getStoredBannedTokens(tokensPrefix)
+    local bannedTokens = {}
+
+    if not GetResourceKvpString(tokensPrefix) then
+        self.m_logger:warn(('CBanManager:getStoredBannedTokens: Unable to get stored tokens for banId %s as it does not exist.'):format(tokensPrefix))
+        return
+    end
+
+    local kvpHandlePrefix = tokensPrefix
+    local kvpHandle = StartFindKvp(kvpHandlePrefix)
+    local kvpKey
+    repeat
+        kvpKey = FindKvp(kvpHandle)
+
+        if kvpKey then
+            local tokenType = kvpKey:gsub(kvpHandlePrefix, '')
+
+            bannedTokens[tokenType] = GetResourceKvpString(kvpKey)
+        end
+
+    until not kvpKey
+
+    return bannedTokens
+end
+
+---Sets the reason for an already existing ban
+---@param banId string
+---@param reason string
+function CBanManager:setBanReason(banId, reason)
+    if not self.m_bans:get(banId) then
+        self.m_logger:warn('CBanManager:updateBanReason: Could not set ban reason for banId %s as it does not exist, try adding a ban instead.')
+        return
+    end
+
+    self.m_bans:get(banId).reason = reason
+    SetResourceKvp(BAN_PREFIX:format(banId), reason)
+end
+
+---comment
+---@param banId string
+---@param expiration number
+function CBanManager:setBanExpiration(banId, expiration)
+    if not self.m_bans:get(banId) then
+        self.m_logger:warn('CBanManager:updateBannedIdentifiers: Cannot set ban expiration for banId %s as it does not exist, try adding a ban instead.')
+        return
+    end
+
+    self.m_bans[banId].expires = expiration
+    SetResourceKvpInt(BAN_EXPIRES_PREFIX:format(banId), expiration)
+end
+
+---Sets the specified identifier on an already existing ban
+---@param banId string
+---@param identifierType string
+---@param identifierValue string
+function CBanManager:setBanIdentifierType(banId, identifierType, identifierValue)
+    if not self.m_bans:get(banId) then
+        self.m_logger:warn(('CBanManager:updateBannedIdentifiers: Cannot set banned identifierType %s for banId %s as it does not exist, try adding a ban instead.'):format(identifierType, banId))
+    end
+
+    self.m_bans[banId].identifiers[identifierType] = identifierValue
+    SetResourceKvp(BAN_IDENTIFIER_PREFIX:format(banId, identifierType), identifierValue)
+end
+
+---comment
+---@param banId any
+---@param tokenType any
+---@param tokenValue any
+function CBanManager:setBanTokenType(banId, tokenType, tokenValue)
+    if not self.m_bans:get(banId) then
+        self.m_logger:warn(('CBanManager:updateBannedIdentifiers: Cannot set banned tokenType %s for banId %s as it does not exist.'):format(tokenType, banId))
+    end
+
+    self.m_bans[banId].identifiers[tokenType] = tokenValue
+    SetResourceKvp(BAN_IDENTIFIER_PREFIX:format(banId, tokenType), tokenValue)
+end
+
+---Check if the specified player is banned
+---@param player VPlayer
+---@return boolean banned
+---@return string? banId
+function CBanManager:isPlayerBanned(player)
+    if getmetatable(player) ~= VPlayer then
+        self.m_logger:error('CBanManager:isPlayerBanned: Invalid argument at index #1 \'player\' must be an instance of VPlayer.')
+        return false
+    end
+
+    for banId, data in pairs(self.m_bans) do
+        local expired = data.expires - os.time() <= 0
+
+        if expired then
+            self:revokeBan(banId, 'automatically revoked ban has expired')
+        end
+
+        if not expired then
+            for identifierType, identifierValue in pairs(data.identifiers) do
+                if player.m_identifiers[identifierType] == identifierValue then
+                    return true, banId
+                end
+            end
+
+            for tokenPrefix, tokenValue in pairs(data.tokens) do
+                if player.m_tokens[tokenPrefix] == tokenValue then
+                    return true, banId
+                end
             end
         end
     end
 
     return false
+end
+
+---Bans the specified player for an optional reason and time
+---If no time is specified the expiration will default to one day 
+---@param player VPlayer
+---@param banReason string?
+---@param banExpiration number?
+---@TODO implement
+function CBanManager:banPlayer(player, banReason, banExpiration)
+    if getmetatable(player) ~= VPlayer then
+        self.m_logger:error('CBanManager:banPlayer: Invalid argument at index #1 \'player\' must be an instance of VPlayer.')
+        return
+    end
+
+    if not banReason or banReason == '' then
+        banReason = 'No reason specified'
+    end
+
+    if type(banExpiration) ~= 'number' or banExpiration < MINIMUM_BAN_TIME then
+        banExpiration = MINIMUM_BAN_TIME
+    end
+
+    banExpiration = banExpiration + os.time()
+
+    local banId
+
+    repeat
+        banId = BAN_PREFIX..uuid()
+    until not self.m_bans[banId]
+
+    self:addBan(banId, {
+        reason = banReason,
+        expires = banExpiration,
+        identifiers = player.m_identifiers,
+        tokens = player.m_tokens
+    })
+
+    self.m_logger:info(('%s has just been banned from this the server for %s. Their ban will expire on %s'):format(GetPlayerName(player.m_source), banReason, os.date('%c', banExpiration)))
+    DropPlayer(player.m_source, ('You have been banned from this server!\nBanId: %s\nExpires: %s\nReason: %s'):format(banId, os.date('%c', banExpiration), banReason))
 end
