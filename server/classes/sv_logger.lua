@@ -13,15 +13,15 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+local CURRENT_RESOURCE_NAME = GetCurrentResourceName()
 local LOG_FORMAT <const> = '%s | %s | %s'
 local LOG_LEVELS <const> = {
   OFF = 1,
-  FATAL = 2,
-  ERROR = 3,
-  WARN = 4,
-  INFO = 5,
-  DEBUG = 6,
-  TRACE = 7
+  ERROR = 2,
+  WARN = 3,
+  INFO = 4,
+  DEBUG = 5,
+  TRACE = 6
 }
 
 ---@class CLogger
@@ -49,6 +49,18 @@ function CLogger.new()
     end
   end)
 
+  AddEventHandler('vac:internal:sync', function(module)
+    if GetInvokingResource() ~= CURRENT_RESOURCE_NAME then
+      return
+    end
+
+    if module ~= 'all' and module ~= 'logger' then
+      return
+    end
+
+    logger:sync()
+  end)
+
   return logger
 end
 
@@ -58,7 +70,7 @@ function CLogger:sync()
 
   if not LOG_LEVELS[level] then
     self.m_level = LOG_LEVELS.OFF
-    warn('Logging has been disabled an invalid log level was specified for vac:logger:logLevel. Correct your configuration and execute vac:sync main.')
+    warn('Logging has been disabled an invalid log level was specified for vac:logger:logLevel. Correct your configuration and execute \'vac:sync logger\'.')
     return
   end
 
@@ -142,12 +154,6 @@ function CLogger:log(level, logMessage)
   }
 
   self.m_buffer[bufferLength + 1] = bufferEntry
-end
-
--- Logs a message with the level 'FATAL'.
--- @param logMessage The message to be logged.
-function CLogger:fatal(logMessage)
-  self:log('FATAL', logMessage)
 end
 
 -- Logs a message with the level 'ERROR'.
