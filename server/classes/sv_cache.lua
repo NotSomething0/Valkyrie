@@ -1,4 +1,4 @@
--- Copyright (C) 2019 - 2023  NotSomething0
+-- Copyright (C) 2019 - 2026  NotSomething0
 
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
----Tables with type checking!
+---Typed dictionary
 ---@class CCache
 ---@field private m__keyLock string|table Lua type or metatable to lock the key in the cache to
 ---@field private m__valueLock string|table Lua type or metatable to lock the key in the cache to
@@ -22,8 +22,7 @@
 CCache = {
     m__keyLock = '',
     m__valueLock = '',
-    m__className = 'CCache',
-    m_data = {}
+    m__className = 'CCache'
 }
 CCache.__index = CCache
 CCache.__call = function(self, key)
@@ -39,7 +38,9 @@ end
 ---@param valueLock string|table
 ---@return CCache
 function CCache.new(keyLock, valueLock)
-    local cache = setmetatable({}, CCache)
+    local cache = setmetatable({
+        m_data = {}
+    }, CCache)
 
     cache.m__keyLock = keyLock or 'any'
     cache.m__valueLock = valueLock or 'any'
