@@ -26,23 +26,34 @@ An open source [FiveM](https://fivem.net) Anti-cheat, helping keep your server f
 ## Resource Configuration:
 Note 🗒️: These settings can be updated during runtime using the `vac:sync` command or by restarting the resource 
 
-### General (main/internal) settings
-```
-LOG_LEVEL {
-  1 = info
-  2 = trace
-  3 = warn
+### Log settings
+```lua
+local LOG_LEVELS <const> = {
+  OFF = 1,
+  FATAL = 2,
+  ERROR = 3,
+  WARN = 4,
+  INFO = 5,
+  DEBUG = 6,
+  TRACE = 7
 }
 ```
 |      ConVar     | Default | Description | Parameter |
 | --------------- | ------- | ----------- | --------- |
-| vac:internal:contact_link | "" | Set the contact link or string for banned players to appeal or contact administration | string |
-| vac:internal:log_level | 1 | Sets the level of detail for server logs | `LOG_LEVEL` number |
-| vac:main:super_jump_check | false | Checks all players uisng IS_PLAYER_USING_SUPER_JUMP unless the "vac:superjump" permission has been granted | bool |
+| vac:logger:logLevel | "info" | Sets the level of detail for server logs | `LOG_LEVEL` string |
+| vac:logger:logPath | "default" | Sets path for where server logs will be stored | string |
+
+
+### General (main/internal) settings
+
+|      ConVar     | Default | Description | Parameter |
+| --------------- | ------- | ----------- | --------- |
+| vac:internal:contact_link | "" | The string append to a banned players message | string |
+| vac:main:super_jump_check | false | Checks all players using IS_PLAYER_USING_SUPER_JUMP unless the "vac:superjump" permission has been granted | bool |
 | vac:main:god_mode_check | false | Checks all players using GET_PLAYER_INVINCIBLE unless the "vac:invincibility" permission has been granted | bool |
 
 ### Entity Creation settings
-Best Practice 📈: It is recommed to use entity lockdown (sv_entityLockdown) and your own server side creation logic for better protection. A future implementation of Valkyrie may include a rudimentary example that can be used as a guide for server owners/developers.
+Best Practice 📈: It is recommended to use entity lockdown (sv_entityLockdown) and your own server side creation logic for better protection. A future implementation of Valkyrie may include a rudimentary example that can be used as a guide for server owners/developers.
 
 |      ConVar     | Default | Description | Parameter |
 | --------------- | ------- | ----------- | --------- |
@@ -89,11 +100,10 @@ Note 🗒️: These settings can be updated during runtime using the `vac:sync` 
 
 ### Q. Why is feature x, y, z not implemented, but it is in other Anti-cheats?
 
-TL;DR: Certain popular detection methods rely solely on the client having accurate data basic software security practices teach us to never rely on the client and is why certain features are "missing". If you believe a feature is missing and could be built into the Anti-cheat without relying on the client, don't hesitate to open an issue on GitHub describing implementation details!
+A. TL;DR: Certain popular detection methods rely solely on the client having accurate data basic software security practices teach us to never rely on the client and is why certain features are "missing". If you believe a feature is missing and could be built into the Anti-cheat without relying on the client, don't hesitate to open an issue on GitHub describing implementation details!
 
 <b>"Injection detection" (Prohibited variable detection)</b>
-
-Injected code on the client, usually written in a Lua source file utilizes the FiveM Lua ScRT, to gain access to GTA5 and FiveM native functions. Since the Lua runtime not specific to FiveM has a [global environment table](https://www.lua.org/pil/14.html) where all variables and their values are stored, this allows for checks on prohibited variables to be ran as shown below.
+Injected code on the client, usually written in a Lua source file utilizes the FiveM Lua [ScRT](https://docs.fivem.net/docs/scripting-manual/introduction/fact-sheet/#what-does-scrt-mean), to gain access to GTA5 and FiveM native functions. Since the Lua runtime not specific to FiveM has a [global environment table](https://www.lua.org/pil/14.html) where all variables and their values are stored, this allows for checks on prohibited variables to be ran as shown below.
 
 ```lua
 local PROHIBITED_VARIABLES <const> = {'Dopamine', 'LynxEvo', 'WarMenu'}
@@ -102,30 +112,34 @@ function checkVariables()
   for i = 1, #PROHIBITED_VARIABLES do
     local variable = PROHIBITED_VARIABLES[i]
 
-    if (_G[variable] ~= nil) then
+    if _G[variable] then
       TriggerServerEvent('anticheat:banMe')
     end
   end
 end
 ```
 
-This however can be easily bypassed, simply by setting the variable we want to hide to nil in the global envrionment table. This process could be easily automated as shown below.
+However this check can be easily be bypassed, simply by setting the variables you want to hide to nil
 
 ```lua
 local MY_VARIABLES <const> = {'Dopamine', 'Dopamine.openMenu'}
 
 function hideVariables()
   for i = 1, #MY_VARIABLES do
-    _G[MY_VARIABLES[i]] = nil
+    local variable = _G[MY_VARIABLES[i]]
+    
+    if _G[variable] then
+      _G[variable] = nil
+    end
   end
 end
 ```
 
-This also comes with the downside of modifying all resource manifest files to include a reference to this check (`client_script @anticheat/check.lua`). Although a small addition it has the potentional to break certain resources and depending on the resources requirements can cause false positive.
+The author of the injected code could also use a script to randomize the variables to any combination of letters and numbers, this also comes with the downside of modifying all resource manifest files to include a reference to this check (`client_script @anticheat/check.lua`). Although a small addition it has the potential to break certain resources and depending on the resources requirements can cause false positive.
 
 <b>Detect/Prevent connections with a VPN/Proxy</b>
 
-1. Valkyrie already purposefully skips over the IP addres of any player when saving identifiers. IP's are generally not static and have the chance of changing at any point making them unreliable for long term identification. 
+1. Valkyrie already purposefully skips over the IP address of any player when saving identifiers. IP's are generally not static and have the chance of changing at any point making them unreliable for long term identification. 
 
 2. Most people using a proxy (including myself) don't have any bad intentions in mind and may just want to hide their network activity as an overall [strategy](https://www.ivpn.net/blog/why-you-dont-need-a-vpn/) to protect their online privacy. 
 
@@ -133,15 +147,22 @@ This also comes with the downside of modifying all resource manifest files to in
 
 <b>Blocking NUI DevTools.</b>
 
-FiveM uses CEF [(Chromium Embedded Framework)](https://bitbucket.org/chromiumembedded/cef/src/master/) an embedded version of Chrome which "offers an asynchronous, performant way of creating in-game UI." CEF like Chrome comes with access to DevTools commonly found by pressing F12 or "Inspect Element" in your browser, for a while now users have been waiting to block access to these tools to protect their assets from getting "dumped" or to detect "malicious" individuals. But as is outlined in this [post](https://forum.cfx.re/t/stop-blocking-devtools-on-your-server-and-how-to-bypass-the-block/1979857/) it's rather easy to bypass.
+FiveM uses CEF [(Chromium Embedded Framework)](https://bitbucket.org/chromiumembedded/cef/src/master/) an embedded version of Chrome which "offers an asynchronous, performant way of creating in-game UI." CEF like Chrome comes with access to DevTools commonly found by pressing F12 or "Inspect Element" in your browser, for a while now users have been wanting to block access to these tools to protect their assets from getting "dumped" or to detect "malicious" individuals. But as is outlined in this [post](https://forum.cfx.re/t/stop-blocking-devtools-on-your-server-and-how-to-bypass-the-block/1979857/) it's rather easy to bypass.
 
 <b>Optical character recognition (OCR)</b>
 
-You've probably seen this advertised by other Anti-cheats are their "AI" detection system but more than likely they're just using [tesseract](https://github.com/tesseract-ocr/tesseract).....   
+You've more than likely seen this advertised by other Anti-cheat providers as their "AI" detection system, and while this is somewhat true, it's not to the extent advertised. More than likely they're using
+[tesseract](https://github.com/tesseract-ocr/tesseract) and [screenshot-basic](https://github.com/citizenfx/screenshot-basic) other providers will analyze the client's screen for any prohibited words, then punish them accordingly. Unfortunately this is usually implemented on the client and can easily be bypassed by deleting the resources NUI element or more commonly by the cheat author by rendering the cheat outside of the game view using C++.  
 
 <b>Abnormal Key Detection</b>
 
-Third party software for capturing gameplay for example Nvidia's ShadowPlay or SteelSeries Moments is very commonly used among players with the capture button(s) usually being assigned to what some server owners deem to be abnormal keys......
+This will not be implemented third party software for example Nvidia's ShadowPlay or SteelSeries Moments is very commonly used among players to capture gameplay usually be assigned to what server owners deem to be "abnormal keys".
+
+### Q. Is there an option to detect ClearPedTasks?
+
+A: Yes, the aptly named 'clearPedTasks' module includes functionality to prevent the usage of ClearPedTasks on remote player peds. This feature is always active and cannot be disabled or turned off. It was implemented to address abusive behavior where players would forcefully kick others out of their vehicles. By blocking these calls, the server retains control over whether a remote player's tasks can be cleared.
+
+The module achieves this by using the 'clearPedTasksEvent' event. When a player attempts to clear tasks on a remote ped, the module first checks if the ped is a player (IsPedAPlayer) then if it is, the event is canceled, preventing the tasks from being cleared. Additionally, the module logs relevant information such as the sender, the owner of the ped, and whether the cancellation was immediate or not.
 
 ### Q. What is Entity Lockdown
 
@@ -153,7 +174,7 @@ Resource creators may have legitimate use cases for wanting to make a player inv
 
 ```lua
 RegisterNetEvent('server:hospital:inpatient', function(data)
-  if exports["Valkyrie"]:addPermission(source, 'vac:godmode') then
+  if exports['Valkyrie']:addPermission(source, 'vac:godmode') then
     SetPlayerInvincible(source, true)
   end
 
@@ -164,17 +185,13 @@ RegisterNetEvent('server:hospital:outpatient', function(data)
   -- Remove player enhancements before removing permission
   SetPlayerInvincible(source, false)
   
-  if exports["Valkyrie"]:removePermission(source, 'vac:godmode') then
+  if exports['Valkyrie']:removePermission(source, 'vac:godmode') then
     -- Permission successfully removed 
   end
 
   -- event code
 end)
 ```
-## Road Map 
-[]: Add Grafana Loki as the prefered logging system\
-[]: Vulnerability scanner
-
 
 # Support
 Note: To maintain compatibility support will only be provided to those using the latest recommend or above [server artifacts]('https://runtime.fivem.net/artifacts/fivem/').
