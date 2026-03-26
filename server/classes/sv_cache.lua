@@ -13,6 +13,8 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+local ERROR_LEVEL_POSITION <const> = 3
+
 ---Typed dictionary
 ---@class CCache
 ---@field private m__keyLock string|table Lua type or metatable to lock the key in the cache to
@@ -60,6 +62,8 @@ function CCache:getValueLock()
     return self.m__valueLock
 end
 
+---Check the type of the key being passed
+---@param key any
 function CCache:checkKey(key)
     local keyLock = self:getKeyLock()
 
@@ -71,17 +75,21 @@ function CCache:checkKey(key)
         local keyMetaTable = getmetatable(key)
 
         if not keyMetaTable or keyMetaTable ~= keyLock then
-            error(('Invalid type for key, expected instance of %s got %s'):format(keyLock.getClassName(), keyMetaTable.getClassName()))
+            error(('Invalid type for key, expected instance of %s got %s'):format(keyLock.getClassName(), keyMetaTable.getClassName()), ERROR_LEVEL_POSITION)
         end
+
+        return
     end
 
     local keyType = type(key)
 
     if keyType ~= keyLock then
-        error(('Invalid type for key, expected %s got %s'):format(keyLock, keyType))
+        error(('Invalid type for key, expected %s got %s'):format(keyLock, keyType), ERROR_LEVEL_POSITION)
     end
 end
 
+---Check the type of the value being passed
+---@param value any
 function CCache:checkValue(value)
     local valueLock = self:getValueLock()
 
@@ -92,15 +100,17 @@ function CCache:checkValue(value)
     if type(valueLock) == 'table' then
         local valueMetaTable = getmetatable(value)
 
-        if not valueMetaTable or valueMetaTable ~= valueLock then
-            error(('Invalid type for key, expected instance of %s got %s'):format(valueLock.getClassName(), valueMetaTable.getClassName()))
+        if not valueMetaTable and valueMetaTable ~= valueLock then
+            error(('Invalid type for value, expected instance of %s got %s'):format(valueLock.getClassName(), valueMetaTable.getClassName()), ERROR_LEVEL_POSITION)
         end
+
+        return
     end
 
     local valueType = type(value)
 
     if valueType ~= valueLock then
-        error(('Invalid type for key, expected %s got %s'):format(valueLock, valueType))
+        error(('Invalid type for valu, expected %s got %s'):format(valueLock, valueType), ERROR_LEVEL_POSITION)
     end
 end
 
