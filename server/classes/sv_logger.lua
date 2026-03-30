@@ -1,4 +1,4 @@
--- Copyright (C) 2019 - 2026  NotSomething
+-- Copyright (C) 2019 - Present,  NotSomething
 
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 
 local CURRENT_RESOURCE_NAME = GetCurrentResourceName()
 local LOG_FORMAT <const> = '%s | %s | %s'
+
+---@enum LogLevels
 local LOG_LEVELS <const> = {
   OFF = 1,
   ERROR = 2,
@@ -25,12 +27,13 @@ local LOG_LEVELS <const> = {
 }
 
 ---@class CLogger
+---@field m_instance CLogger
 ---@field m_level number
 ---@field m_path string
 ---@field m_buffer table
 CLogger = {
   m_level = LOG_LEVELS.OFF,
-  m_path = '',
+  m_path = ('%s/log.txt'):format(GetResourcePath(CURRENT_RESOURCE_NAME)),
   m_buffer = {}
 }
 CLogger.__index = CLogger
@@ -38,9 +41,13 @@ CLogger.__index = CLogger
 ---Create a new instance of CLogger
 ---@return CLogger logger 
 function CLogger.new()
+  if CLogger.m_instance then
+    return CLogger.m_instance
+  end
+
   local logger = setmetatable({}, CLogger)
 
-  logger:sync()
+  logger:setLogLevel()
 
   CreateThread(function()
     while true do
@@ -49,55 +56,46 @@ function CLogger.new()
     end
   end)
 
-  AddEventHandler('vac:internal:sync', function(module)
-    if GetInvokingResource() ~= CURRENT_RESOURCE_NAME then
-      return
-    end
-
-    if module ~= 'all' and module ~= 'logger' then
-      return
-    end
-
-    logger:sync()
-  end)
+  CLogger.m_instance = logger
 
   return logger
 end
 
----Sets the level of detail and log path for server logs
-function CLogger:sync()
-  local level = GetConvar('vac:logger:logLevel', 'OFF')
-
-  if not LOG_LEVELS[level] then
-    self.m_level = LOG_LEVELS.OFF
-    warn('Logging has been disabled an invalid log level was specified for vac:logger:logLevel. Correct your configuration and execute \'vac:sync logger\'.')
-    return
+---Get the current instance of CLogger
+---@return CLogger logger
+function CLogger:getInstance()
+  if self.m_instance then
+    return self.m_instance
   end
 
-  self.m_level = LOG_LEVELS[level]
+  return CLogger.new()
+end
 
-  local logPath = GetConvar('vac:logger:logPath', 'default')
-
-  if logPath ~= 'default' then
-    local logFile, errorMessage = io.open(logPath, 'a+')
-
-    if not logFile then
-      warn(('Unable to open log file at %s for reading/writiing: %s. Using default log path'):format(errorMessage))
-      logPath = 'default'
+---Get the readable name of the current log level
+---@return string logLevel
+function CLogger:getLogLevel()
+  for levelName, levelValue in pairs(LOG_LEVELS) do
+    if self.m_level == levelValue then
+      return levelName
     end
   end
 
-  if logPath == 'default' then
-    local resourceName = GetCurrentResourceName()
-    local resourcePath = GetResourcePath(resourceName)
-
-    logPath = resourcePath..'\\log.txt'
-  end
-
-  self.m_path = logPath
+  return 'OFF'
 end
 
----Flushes buffered logs to the specified log file and writes the entry to stdout 
+---Sets the level of detail for server logs
+function CLogger:setLogLevel()
+  local newLogLevel = GetConvar('vac:logger:logLevel', 'OFF')
+
+  if not LOG_LEVELS[newLogLevel] then
+    warn(('%s is not a valid log level using previous log level %s'):format(newLogLevel, self:getLogLevel()))
+    return
+  end
+
+  self.m_level = LOG_LEVELS[newLogLevel]
+end
+
+---Flush buffered logs to the set log file and write the entries to stdout 
 function CLogger:flush()
   if self.m_level == LOG_LEVELS.OFF then
     return
@@ -113,32 +111,21 @@ function CLogger:flush()
 
   if not logFile then
     self.m_level = LOG_LEVELS.OFF
-    error(('Unable to open log file for reading/writing: %s. Logging has been disabled correct your configuration and execute vac:sync.'):format(errorMessage))
+    warn(('Logging has been disabled unable to open log file %s. Correct your configuration and execute \'vac:sync logger\'.'):format(errorMessage))
+    return
   end
 
-  for bufferIndex = 1, bufferLength do
-    local bufferEntry = self.m_buffer[bufferIndex]
-    local logEntry = LOG_FORMAT:format(bufferEntry.level, bufferEntry.time, bufferEntry.message)
+  local output = table.concat(self.m_buffer, '\n')
 
-    if bufferEntry.level == 'ERROR' then
-      error(logEntry, 2)
-    elseif bufferEntry.level == 'WARN' then
-      warn(logEntry)
-    else
-      print(logEntry)
-    end
+  table.wipe(self.m_buffer)
 
-    logFile:write(logEntry..'\n')
-    self.m_buffer[bufferIndex] = nil
-  end
-
+  logFile:write(output)
   logFile:close()
 end
 
----Adds the log message to the log buffer\
--- Note: This function should not be called directly; it serves as a backing function for the actual "log" functions, such as CLogger:info, CLogger:error, etc.
----@param level any
----@param logMessage any
+---Adds a log message to the log buffer
+---@param level string
+---@param logMessage string
 function CLogger:log(level, logMessage)
   local numericLevel = LOG_LEVELS[level]
 
@@ -146,42 +133,53 @@ function CLogger:log(level, logMessage)
     return
   end
 
-  local bufferLength = #self.m_buffer
-  local bufferEntry = {
-    level = level,
-    time = os.time(),
-    message = logMessage
-  }
+  local logEntry = LOG_FORMAT:format(level, os.time(), logMessage)
 
-  self.m_buffer[bufferLength + 1] = bufferEntry
+  if level == 'ERROR' then
+    print(('^1%s^7'):format(logEntry))
+  elseif level == 'WARN' then
+    print(('^3%s^7'):format(logEntry))
+  else
+    print(logEntry)
+  end
+
+  table.insert(self.m_buffer, logEntry)
 end
 
--- Logs a message with the level 'ERROR'.
--- @param logMessage The message to be logged.
+---Logs a message with the level 'ERROR'.
+---@param logMessage string The message to be logged.
 function CLogger:error(logMessage)
   self:log('ERROR', logMessage)
 end
 
--- Logs a message with the level 'WARN'.
--- @param logMessage The message to be logged.
+---Logs a message with the level 'WARN'.
+---@param logMessage string The message to be logged.
 function CLogger:warn(logMessage)
   self:log('WARN', logMessage)
 end
 
 -- Logs a message with the level 'INFO'.
--- @param logMessage The message to be logged.
+---@param logMessage string The message to be logged.
 function CLogger:info(logMessage)
   self:log('INFO', logMessage)
 end
 
--- Logs a message with the level 'DEBUG'.
--- @param logMessage The message to be logged.
+---Logs a message with the level 'DEBUG'.
+---@param logMessage string The message to be logged.
 function CLogger:debug(logMessage)
   self:log('DEBUG', logMessage)
 end
 
--- Logs a message with the level 'TRACE'.
--- @param logMessage The message to be logged.
+---Logs a message with the level 'TRACE'.
+---@param logMessage string The message to be logged.
 function CLogger:trace(logMessage)
   self:log('TRACE', logMessage)
 end
+
+AddConvarChangeListener('vac:logger:*', function(convarName)
+  local logger = CLogger:getInstance()
+
+  if convarName == 'vac:logger:logLevel' then
+    logger:setLogLevel()
+  end
+end)
