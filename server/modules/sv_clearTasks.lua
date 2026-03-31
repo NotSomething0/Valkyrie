@@ -1,4 +1,4 @@
--- Copyright (C) 2019 - 2023  NotSomething
+-- Copyright (C) 2019 - Present, NotSomething
 
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -19,13 +19,15 @@
 -- These were commonly used by abusive players to kick others out of their vehicle while driving
 -- Since the server should ultimately decide if a remote player can clear another player's tasks, we'll block any attempts at canceling a remote player's tasks
 
+local logger = CLogger:getInstance()
+
 AddEventHandler('clearPedTasksEvent', function(sender, data)
     local immediately = data.immediately
     local pedHandle = NetworkGetEntityFromNetworkId(data.pedId)
     local pedOwner = NetworkGetEntityOwner(pedHandle)
 
     if IsPedAPlayer(pedHandle) then
-        log.info(('%s attempted to clear tasks on %s, preventing sync. Immediate: %s'):format(GetPlayerName(sender), GetPlayerName(pedOwner), immediately))
+        logger:info(('%s attempted to clear tasks on %s, preventing sync. Immediate: %s'):format(GetPlayerName(sender), GetPlayerName(pedOwner), immediately))
         CancelEvent()
     end
 end)
