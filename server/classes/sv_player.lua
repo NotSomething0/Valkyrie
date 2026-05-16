@@ -1,4 +1,4 @@
--- Copyright (C) 2019 - 2023  NotSomething
+-- Copyright (C) 2019 - Present, NotSomething
 
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -13,115 +13,104 @@
 -- You should have received a copy of the GNU General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-local RESOURCE_NAME <const> = GetCurrentResourceName()
-local BAN_KEY <const> = 'vac_ban_%s'
+---@class CPlayer
+---@field m_banInProgress boolean Is the player currently being banned
+---@field m_source string Player index
+---@field m_identifiers table<string, string> Players identifiers constructed as follows \[license\] = 'xxxx'
+---@field m_tokens table<string, string> Players tokens constructed as follows \[token\] = 'xxxx'
+---@field m_strikes table<number, string> Players strike data constructed as follows \[strikeNum\] = 'strike reason'
+CPlayer = {
+  m_banInProgress = false,
+  m_source = '-1',
+  m_identifiers = {},
+  m_tokens = {},
+  m_strikes = {}
+}
+CPlayer.__index = CPlayer
 
-VPlayer = {}
-
--- Creates and returns a new instance of VPlayer for the specified player
--- @param netId | number | player source
--- @return table | VPlayer
-function VPlayer:new(netId)
-  if not tonumber(netId) or tonumber(netId) < 1 or not GetPlayerEndpoint(netId) then
-    error(('Invalid player specified: %s'):format(netId))
+---Retrives a table of player identifiers for the specified player index.
+---@param playerIndex string The player index you want to retrieve identifiers form
+---@return table playerIdentifiers 
+local function getPlayerIdentifiers(playerIndex)
+  if not DoesPlayerExist(playerIndex) then
+    error(('Invalid player index specified %s does not exist'):format(playerIndex))
   end
 
-  local playerObject = {
-    source = netId,
-    banInProgress = false,
-    identifiers = GetPlayerIdentifiers(netId),
-    strikes = {},
-    explosions = {}
-  }
+  -- FxDK does not support player identifiers
+  if GetConvarInt('sv_fxdkMode', 0) == 1 then
+    return {['license'] = 'h8xor'}
+  end
 
-  self.__index = self
+  local playerIdentifiers = {}
 
-  return setmetatable(playerObject, self)
+  for identifierIndex = 0, GetNumPlayerIdentifiers(playerIndex) - 1 do
+    local playerIdentifier = GetPlayerIdentifier(playerIndex, identifierIndex)
+    local identifierType, identifierValue = playerIdentifier:match("^([^:]+):(.+)$")
+
+    -- IP's are unreliable
+    if identifierType ~= 'ip' then
+      playerIdentifiers[identifierType] = identifierValue
+    end
+  end
+
+  return playerIdentifiers
 end
 
-local punishmentNameToType = {}
-
-function VPlayer:punish(punishmentName, punishmentReason, staffReason)
-  local punishmentType = punishmentNameToType[punishmentName]
-
-  if punishmentType == 'strike' then
-    self:strike(punishmentReason)
+---Retrives a table of player (HWID) tokens for the specified player index.
+---@param playerIndex string The player index you want to retrieve tokens from
+---@return table playerTokens
+local function getPlayerTokens(playerIndex)
+  if not DoesPlayerExist(playerIndex) then
+    error(('Invalid player index: %s does not exist'):format(playerIndex))
   end
 
-  if punishmentType == 'kick' then
-    -- TODO: Add a kick function
+  if GetConvarInt('sv_fxdkMode', 0) == 1 then
+    return {['fxdk'] = 'h8xor'}
   end
 
-  if tonumber(punishmentType) then
-    local duration = tonumber(punishmentType)
+  local playerTokens = {}
 
-    self:ban(duration, punishmentReason, staffReason)
-  end
-end
+  for i = 0, GetNumPlayerTokens(playerIndex) - 1 do
+    local rawToken = GetPlayerToken(playerIndex, i)
+    local baseType, tokenValue = rawToken:match("^([^:]+):(.+)$")
+    local finalKey = baseType
+    local counter = 0
 
-local strikeLimit = 5
-
--- @param reason | string
-function VPlayer:strike(reason)
-  self.strikes[#self.strikes + 1] = reason
-
-  log.info(('[INTERNAL]: %s has just recieved a strike for %s'):format(GetPlayerName(self.source), reason))
-
-  if #self.strikes >= strikeLimit and not self.banInProgress then
-    local staffReason = 'Strike Information: \n'
-    for i = 1, #self.strikes do
-      staffReason = staffReason..('Strike #%d: %s'):format(i, self.strikes[i])
+    while playerTokens[finalKey] do
+      counter += 1
+      finalKey = ("%s+%d"):format(baseType, counter)
     end
 
-    self:ban(0, 'Recieved more than the allotted amount of strikes', staffReason)
+    playerTokens[finalKey] = tokenValue
   end
+
+  return playerTokens
 end
 
--- This needs a rewrite we shouldn't store the entire json object in one entry
--- @param duration | number | epoch timestamp to be added to os.time()
--- @param reason | string | reason given to player as to why they've been banned
--- @param extended | string | reason given to staff/console as to why this player was banned
-function VPlayer:ban(duration, playerReason, staffReason)
-  local banId <const> = BAN_KEY:format(UUID())
+---Attempts to create a new CPlayer instance
+---@param playerIndex string player index
+---@return CPlayer? player
+function CPlayer.new(playerIndex)
+  assert(DoesPlayerExist(playerIndex), ('CPlayer.new unable to create new CPlayer instance for player %s as they do not exist'):format(playerIndex))
 
-  self.banInProgress = true
+  local player = setmetatable({
+    m_source = playerIndex,
+  }, CPlayer)
 
-  local playerIdentifiers = self.identifiers
-  local playerBanReason = playerReason or 'No reason specified'
-  local playerBanExpires = duration
-  local staffBanReason = staffReason or 'No reason specified'
+  player.m_identifiers = getPlayerIdentifiers(playerIndex)
+  player.m_tokens = getPlayerTokens(playerIndex)
 
-  if type(playerBanExpires) ~= 'number' or playerBanExpires < 86400 then
-    playerBanExpires = 86400 + os.time()
-  else
-    playerBanExpires = playerBanExpires + os.time()
-  end
-
-  local playerBanData = {
-    id = banId,
-    expires = playerBanExpires,
-    identifiers = playerIdentifiers,
-    reason = playerBanReason
-  }
-
-  SetResourceKvp(banId, json.encode(playerBanData))
-
-  if not GetResourceKvpString(banId) then
-    log.info(('Unable to create ban for %s dropping player with reason \'Goodbye\''):format(GetPlayerName(self.source)))
-    DropPlayer(self.source, 'Goodbye')
-    return
-  end
-
-  log.info(('%s has just been banned from the server for %s. Their ban will expire on %s'):format(GetPlayerName(self.source), staffBanReason, os.date('!%c', playerBanExpires)))
-  DropPlayer(self.source, ('You have been banned from this server!\nBanId: %s\nExpires: %s\nReason: %s'):format(banId, os.date('!%c', duration), playerBanReason))
+  return player
 end
 
-AddEventHandler('__vac_internel:initialize', function(module)
-  if GetInvokingResource() ~= RESOURCE_NAME or module ~= 'all' and module ~= 'internal' then
-    return
-  end
+---Get the players identifiers
+---@return table<string, string>
+function CPlayer:getIdentifiers()
+  return self.m_identifiers
+end
 
-  strikeLimit = GetConvarInt('vac:internal:strikeLimit', 5)
-
-  log.info(('[INTERNAL]: Data synced | Strike Limit %d'):format(strikeLimit))
-end)
+---Get the players tokens
+---@return table<string, string>
+function CPlayer:getTokens()
+  return self.m_tokens
+end
