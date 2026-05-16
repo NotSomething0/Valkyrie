@@ -20,6 +20,7 @@ local BAN_TOKEN_KEY <const> = 'record:%s:token:%s'
 local MINIMUM_BAN_TIME <const> = 86400
 
 ---@class CBanManager
+---@field m_instance CBanManager
 ---@field m_logger CLogger
 ---@field m_totalBans number
 ---@field m_identifierLookup table
@@ -42,7 +43,15 @@ function CBanManager.new()
         banManager:initialize()
     end)
 
+    CBanManager.m_instance = banManager
+
     return banManager
+end
+
+---Get the instance of CBanManager
+---@return CBanManager
+function CBanManager:getInstance()
+    return CBanManager.m_instance
 end
 
 ---Caches the ban list in memory for faster iteration
